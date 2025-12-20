@@ -1,0 +1,6 @@
+/vendor/
+/uploads/
+*.log
+*~
+~$*
+config.php
