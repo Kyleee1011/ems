@@ -4,3 +4,18 @@
 *~
 ~$*
 config.php
+# Ignore environment files
+.env
+.env.*
+!.env.example
+
+# Ignore vendor directory
+/vendor/
+
+# Ignore composer files
+composer.phar
+composer.lock
+
+# Ignore logs
+/logs/*.log
+!logs/.gitkeep

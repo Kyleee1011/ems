@@ -18,7 +18,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         $error = "Please enter AC No. and Password.";
     } else {
         try {
-            $conn = getDBConnection();
+            $conn = $pdo;
             
             // FETCH USER, APPROVAL ROLE, & DEPARTMENT DETAILS
             $sql = "SELECT e.emp_id, e.ac_no, e.first_name, e.last_name, e.dept_id, 

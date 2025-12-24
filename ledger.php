@@ -16,7 +16,7 @@ try {
 
 // Security Check: Only HR
 if (!isset($_SESSION['user_id']) || ($_SESSION['approval_role'] ?? '') !== 'HR') {
-    header("Location: index.php"); exit;
+    header("Location: home.php"); exit;
 }
 
 // ============================================

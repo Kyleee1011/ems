@@ -1,21 +1,15 @@
 <?php
 session_start();
 
+use App\Utils\AppHelpers;
+use App\Services\FileUploadService;
+
 // 1. DATABASE CONNECTION
-function getDBConnection() {
-    $serverName = "192.168.21.52,1433"; 
-    $database = "SchedulerDB"; 
-    $username = "sa"; 
-    $password = "Azzurro2025"; 
-    try {
-        $conn = new PDO("sqlsrv:server=$serverName;Database=$database", $username, $password);
-        $conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-        return $conn;
-    } catch (PDOException $e) { die("DB Connection failed."); }
-}
+
 
 if (!isset($_SESSION['user_id'])) { header("Location: login.php"); exit; }
-$conn = getDBConnection();
+require_once 'config.php';
+$conn = $pdo;
 $message = "";
 
 // 2. SAVE HANDLERS

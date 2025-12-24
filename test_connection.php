@@ -172,12 +172,13 @@ $tests['pdo_sqlsrv'] = [
 
 // Test 4: Database Connection
 try {
-    $connectionTest = testDBConnection();
+    $stmt = $pdo->query("SELECT @@VERSION AS version");
+    $result = $stmt->fetch();
     $tests['db_connection'] = [
         'name' => 'Database Connection',
-        'status' => $connectionTest['status'],
-        'message' => $connectionTest['message'],
-        'details' => isset($connectionTest['version']) ? $connectionTest['version'] : null
+        'status' => 'success',
+        'message' => 'Connected successfully to SQL Server',
+        'details' => $result['version']
     ];
 } catch(Exception $e) {
     $tests['db_connection'] = [
@@ -191,7 +192,7 @@ try {
 $tableCheck = ['status' => 'pending', 'message' => 'Skipped - Connection failed'];
 if ($tests['db_connection']['status'] === 'success') {
     try {
-        $conn = getDBConnection();
+        $conn = $pdo;
         $tables = ['Employees', 'Departments', 'Supervisors', 'TrainingCertifications', 'EmployeeStatusHistory', 'Users'];
         $existingTables = [];
         
@@ -226,7 +227,7 @@ $tests['tables'] = array_merge(['name' => 'Database Tables'], $tableCheck);
 $viewCheck = ['status' => 'pending', 'message' => 'Skipped - Connection failed'];
 if ($tests['db_connection']['status'] === 'success') {
     try {
-        $conn = getDBConnection();
+        $conn = $pdo;
         $stmt = $conn->query("SELECT COUNT(*) FROM INFORMATION_SCHEMA.VIEWS WHERE TABLE_NAME = 'vw_EmployeeList'");
         if ($stmt->fetchColumn() > 0) {
             $viewCheck = [

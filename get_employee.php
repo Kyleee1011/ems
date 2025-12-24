@@ -4,7 +4,7 @@ require_once 'config.php';
 header('Content-Type: application/json');
 
 try {
-    $conn = getDBConnection();
+    $conn = $pdo;
     
     if (isset($_GET['emp_id'])) {
         $empId = $_GET['emp_id'];

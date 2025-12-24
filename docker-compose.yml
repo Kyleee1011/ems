@@ -1,0 +1,17 @@
+version: '3.8'
+
+services:
+  app:
+    build: .
+    ports:
+      - "8080:80"
+    volumes:
+      - .:/var/www/html
+    environment:
+      - DB_SERVER=host.docker.internal
+      - DB_USER=sa
+      - DB_PASS=123456
+      - DB_NAME=EmployeeManagementSystem
+      - SCHEDULER_DB_NAME=SchedulerDB
+    extra_hosts:
+      - "host.docker.internal:host-gateway"

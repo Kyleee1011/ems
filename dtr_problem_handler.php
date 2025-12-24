@@ -2,7 +2,10 @@
 session_start();
 require_once 'config.php';
 
-$conn = getDBConnection();
+use App\Utils\AppHelpers;
+use App\Services\FileUploadService;
+
+$conn = $pdo;
 $current_role = $_SESSION['approval_role'] ?? 'Employee';
 $is_hr = ($current_role === 'HR');
 

@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites>
+  <testsuite name="" tests="53" assertions="145" errors="0" warnings="0" failures="0" skipped="0" time="0.301360">
+    <testsuite name="Unit Tests" tests="53" assertions="145" errors="0" warnings="0" failures="0" skipped="0" time="0.301360">
+      <testsuite name="Tests\Unit\AppHelpersTest" file="C:\xampp\htdocs\ems\tests\Unit\AppHelpersTest.php" tests="13" assertions="71" errors="0" warnings="0" failures="0" skipped="0" time="0.011802">
+        <testcase name="testCleanNumReturnsNullForEmptyString" class="Tests\Unit\AppHelpersTest" classname="Tests.Unit.AppHelpersTest" file="C:\xampp\htdocs\ems\tests\Unit\AppHelpersTest.php" line="12" assertions="1" time="0.006014"/>
+        <testcase name="testCleanNumReturnsNullForNull" class="Tests\Unit\AppHelpersTest" classname="Tests.Unit.AppHelpersTest" file="C:\xampp\htdocs\ems\tests\Unit\AppHelpersTest.php" line="18" assertions="1" time="0.000105"/>
+        <testcase name="testCleanNumReturnsValueForNonEmpty" class="Tests\Unit\AppHelpersTest" classname="Tests.Unit.AppHelpersTest" file="C:\xampp\htdocs\ems\tests\Unit\AppHelpersTest.php" line="24" assertions="2" time="0.000404"/>
+        <testcase name="testCleanDateReturnsNullForEmptyString" class="Tests\Unit\AppHelpersTest" classname="Tests.Unit.AppHelpersTest" file="C:\xampp\htdocs\ems\tests\Unit\AppHelpersTest.php" line="33" assertions="1" time="0.000053"/>
+        <testcase name="testCleanDateReturnsNullForNull" class="Tests\Unit\AppHelpersTest" classname="Tests.Unit.AppHelpersTest" file="C:\xampp\htdocs\ems\tests\Unit\AppHelpersTest.php" line="39" assertions="1" time="0.000047"/>
+        <testcase name="testCleanDateReturnsValueForNonEmpty" class="Tests\Unit\AppHelpersTest" classname="Tests.Unit.AppHelpersTest" file="C:\xampp\htdocs\ems\tests\Unit\AppHelpersTest.php" line="45" assertions="1" time="0.000047"/>
+        <testcase name="testCalculateRatesFromMonthlyReturnsCorrectRates" class="Tests\Unit\AppHelpersTest" classname="Tests.Unit.AppHelpersTest" file="C:\xampp\htdocs\ems\tests\Unit\AppHelpersTest.php" line="51" assertions="5" time="0.000909"/>
+        <testcase name="testCalculateRatesFromMonthlyReturnsZeroForZeroSalary" class="Tests\Unit\AppHelpersTest" classname="Tests.Unit.AppHelpersTest" file="C:\xampp\htdocs\ems\tests\Unit\AppHelpersTest.php" line="67" assertions="3" time="0.000072"/>
+        <testcase name="testCalculateRatesFromMonthlyReturnsZeroForNegativeSalary" class="Tests\Unit\AppHelpersTest" classname="Tests.Unit.AppHelpersTest" file="C:\xampp\htdocs\ems\tests\Unit\AppHelpersTest.php" line="76" assertions="3" time="0.000055"/>
+        <testcase name="testGenerateCutoffPeriodsReturnsArray" class="Tests\Unit\AppHelpersTest" classname="Tests.Unit.AppHelpersTest" file="C:\xampp\htdocs\ems\tests\Unit\AppHelpersTest.php" line="85" assertions="3" time="0.001779"/>
+        <testcase name="testGenerateCutoffPeriodsHasCorrectStructure" class="Tests\Unit\AppHelpersTest" classname="Tests.Unit.AppHelpersTest" file="C:\xampp\htdocs\ems\tests\Unit\AppHelpersTest.php" line="96" assertions="48" time="0.001397"/>
+        <testcase name="testGenerateCutoffPeriodsIncludesPeriod1" class="Tests\Unit\AppHelpersTest" classname="Tests.Unit.AppHelpersTest" file="C:\xampp\htdocs\ems\tests\Unit\AppHelpersTest.php" line="109" assertions="1" time="0.000710"/>
+        <testcase name="testGenerateCutoffPeriodsIncludesPeriod2" class="Tests\Unit\AppHelpersTest" classname="Tests.Unit.AppHelpersTest" file="C:\xampp\htdocs\ems\tests\Unit\AppHelpersTest.php" line="125" assertions="1" time="0.000211"/>
+      </testsuite>
+      <testsuite name="Tests\Unit\DashboardModelTest" file="C:\xampp\htdocs\ems\tests\Unit\DashboardModelTest.php" tests="5" assertions="16" errors="0" warnings="0" failures="0" skipped="0" time="0.019203">
+        <testcase name="testGetTotalEmployeesReturnsInteger" class="Tests\Unit\DashboardModelTest" classname="Tests.Unit.DashboardModelTest" file="C:\xampp\htdocs\ems\tests\Unit\DashboardModelTest.php" line="30" assertions="2" time="0.017909"/>
+        <testcase name="testGetNewHiresReturnsInteger" class="Tests\Unit\DashboardModelTest" classname="Tests.Unit.DashboardModelTest" file="C:\xampp\htdocs\ems\tests\Unit\DashboardModelTest.php" line="46" assertions="2" time="0.000265"/>
+        <testcase name="testGetAvgSalaryReturnsNumeric" class="Tests\Unit\DashboardModelTest" classname="Tests.Unit.DashboardModelTest" file="C:\xampp\htdocs\ems\tests\Unit\DashboardModelTest.php" line="62" assertions="2" time="0.000168"/>
+        <testcase name="testGetDepartmentStatsReturnsArray" class="Tests\Unit\DashboardModelTest" classname="Tests.Unit.DashboardModelTest" file="C:\xampp\htdocs\ems\tests\Unit\DashboardModelTest.php" line="78" assertions="4" time="0.000169"/>
+        <testcase name="testGetActiveEmployeesByDeptReturnsFormattedArray" class="Tests\Unit\DashboardModelTest" classname="Tests.Unit.DashboardModelTest" file="C:\xampp\htdocs\ems\tests\Unit\DashboardModelTest.php" line="101" assertions="6" time="0.000692"/>
+      </testsuite>
+      <testsuite name="Tests\Unit\FileUploadServiceTest" file="C:\xampp\htdocs\ems\tests\Unit\FileUploadServiceTest.php" tests="6" assertions="6" errors="0" warnings="0" failures="0" skipped="0" time="0.015408">
+        <testcase name="testHandleFileUploadReturnsNullForNoFile" class="Tests\Unit\FileUploadServiceTest" classname="Tests.Unit.FileUploadServiceTest" file="C:\xampp\htdocs\ems\tests\Unit\FileUploadServiceTest.php" line="22" assertions="1" time="0.003028"/>
+        <testcase name="testHandleFileUploadReturnsNullForEmptyArray" class="Tests\Unit\FileUploadServiceTest" classname="Tests.Unit.FileUploadServiceTest" file="C:\xampp\htdocs\ems\tests\Unit\FileUploadServiceTest.php" line="30" assertions="1" time="0.002525"/>
+        <testcase name="testHandleFileUploadReturnsNullForUploadError" class="Tests\Unit\FileUploadServiceTest" classname="Tests.Unit.FileUploadServiceTest" file="C:\xampp\htdocs\ems\tests\Unit\FileUploadServiceTest.php" line="38" assertions="1" time="0.002727"/>
+        <testcase name="testHandleFileUploadReturnsNullForInvalidExtension" class="Tests\Unit\FileUploadServiceTest" classname="Tests.Unit.FileUploadServiceTest" file="C:\xampp\htdocs\ems\tests\Unit\FileUploadServiceTest.php" line="50" assertions="1" time="0.002061"/>
+        <testcase name="testHandleFileUploadAcceptsPngExtension" class="Tests\Unit\FileUploadServiceTest" classname="Tests.Unit.FileUploadServiceTest" file="C:\xampp\htdocs\ems\tests\Unit\FileUploadServiceTest.php" line="63" assertions="1" time="0.001516"/>
+        <testcase name="testHandleFileUploadCreatesDirectoryIfNotExists" class="Tests\Unit\FileUploadServiceTest" classname="Tests.Unit.FileUploadServiceTest" file="C:\xampp\htdocs\ems\tests\Unit\FileUploadServiceTest.php" line="76" assertions="1" time="0.003552"/>
+      </testsuite>
+      <testsuite name="Tests\Unit\LeaveTest" file="C:\xampp\htdocs\ems\tests\Unit\LeaveTest.php" tests="4" assertions="6" errors="0" warnings="0" failures="0" skipped="0" time="0.004159">
+        <testcase name="testGetCreditsReturnsNumeric" class="Tests\Unit\LeaveTest" classname="Tests.Unit.LeaveTest" file="C:\xampp\htdocs\ems\tests\Unit\LeaveTest.php" line="26" assertions="2" time="0.001775"/>
+        <testcase name="testGetPendingLeavesReturnsArray" class="Tests\Unit\LeaveTest" classname="Tests.Unit.LeaveTest" file="C:\xampp\htdocs\ems\tests\Unit\LeaveTest.php" line="39" assertions="1" time="0.000359"/>
+        <testcase name="testUpdateLeaveStatusExecutesCorrectly" class="Tests\Unit\LeaveTest" classname="Tests.Unit.LeaveTest" file="C:\xampp\htdocs\ems\tests\Unit\LeaveTest.php" line="54" assertions="1" time="0.000642"/>
+        <testcase name="testApplyLeaveExecutesCorrectly" class="Tests\Unit\LeaveTest" classname="Tests.Unit.LeaveTest" file="C:\xampp\htdocs\ems\tests\Unit\LeaveTest.php" line="69" assertions="2" time="0.001383"/>
+      </testsuite>
+      <testsuite name="Tests\Unit\LoanTest" file="C:\xampp\htdocs\ems\tests\Unit\LoanTest.php" tests="4" assertions="8" errors="0" warnings="0" failures="0" skipped="0" time="0.001991">
+        <testcase name="testGetLoansReturnsArray" class="Tests\Unit\LoanTest" classname="Tests.Unit.LoanTest" file="C:\xampp\htdocs\ems\tests\Unit\LoanTest.php" line="23" assertions="2" time="0.000768"/>
+        <testcase name="testGetStatsReturnsData" class="Tests\Unit\LoanTest" classname="Tests.Unit.LoanTest" file="C:\xampp\htdocs\ems\tests\Unit\LoanTest.php" line="40" assertions="2" time="0.000231"/>
+        <testcase name="testUpdateStatusExecutesCorrectly" class="Tests\Unit\LoanTest" classname="Tests.Unit.LoanTest" file="C:\xampp\htdocs\ems\tests\Unit\LoanTest.php" line="53" assertions="2" time="0.000834"/>
+        <testcase name="testCreateLoanExecutesCorrectly" class="Tests\Unit\LoanTest" classname="Tests.Unit.LoanTest" file="C:\xampp\htdocs\ems\tests\Unit\LoanTest.php" line="64" assertions="2" time="0.000158"/>
+      </testsuite>
+      <testsuite name="Tests\Unit\PayrollConfigModelTest" file="C:\xampp\htdocs\ems\tests\Unit\PayrollConfigModelTest.php" tests="9" assertions="17" errors="0" warnings="0" failures="0" skipped="0" time="0.001740">
+        <testcase name="testGetSssDataReturnsArray" class="Tests\Unit\PayrollConfigModelTest" classname="Tests.Unit.PayrollConfigModelTest" file="C:\xampp\htdocs\ems\tests\Unit\PayrollConfigModelTest.php" line="23" assertions="3" time="0.000593"/>
+        <testcase name="testUpdateSssTableExecutesCorrectly" class="Tests\Unit\PayrollConfigModelTest" classname="Tests.Unit.PayrollConfigModelTest" file="C:\xampp\htdocs\ems\tests\Unit\PayrollConfigModelTest.php" line="41" assertions="2" time="0.000145"/>
+        <testcase name="testGetPhilHealthDataReturnsArray" class="Tests\Unit\PayrollConfigModelTest" classname="Tests.Unit.PayrollConfigModelTest" file="C:\xampp\htdocs\ems\tests\Unit\PayrollConfigModelTest.php" line="57" assertions="2" time="0.000149"/>
+        <testcase name="testGetPagIbigDataReturnsArray" class="Tests\Unit\PayrollConfigModelTest" classname="Tests.Unit.PayrollConfigModelTest" file="C:\xampp\htdocs\ems\tests\Unit\PayrollConfigModelTest.php" line="73" assertions="1" time="0.000139"/>
+        <testcase name="testGetTaxDataReturnsArray" class="Tests\Unit\PayrollConfigModelTest" classname="Tests.Unit.PayrollConfigModelTest" file="C:\xampp\htdocs\ems\tests\Unit\PayrollConfigModelTest.php" line="88" assertions="2" time="0.000143"/>
+        <testcase name="testGetOvertimeRulesReturnsArray" class="Tests\Unit\PayrollConfigModelTest" classname="Tests.Unit.PayrollConfigModelTest" file="C:\xampp\htdocs\ems\tests\Unit\PayrollConfigModelTest.php" line="105" assertions="1" time="0.000153"/>
+        <testcase name="testGetHolidayRulesReturnsArray" class="Tests\Unit\PayrollConfigModelTest" classname="Tests.Unit.PayrollConfigModelTest" file="C:\xampp\htdocs\ems\tests\Unit\PayrollConfigModelTest.php" line="120" assertions="1" time="0.000139"/>
+        <testcase name="testGetGeneralSettingsReturnsAssociativeArray" class="Tests\Unit\PayrollConfigModelTest" classname="Tests.Unit.PayrollConfigModelTest" file="C:\xampp\htdocs\ems\tests\Unit\PayrollConfigModelTest.php" line="135" assertions="4" time="0.000147"/>
+        <testcase name="testGetAllowanceTypesReturnsArray" class="Tests\Unit\PayrollConfigModelTest" classname="Tests.Unit.PayrollConfigModelTest" file="C:\xampp\htdocs\ems\tests\Unit\PayrollConfigModelTest.php" line="154" assertions="1" time="0.000133"/>
+      </testsuite>
+      <testsuite name="Tests\Unit\PayslipTest" file="C:\xampp\htdocs\ems\tests\Unit\PayslipTest.php" tests="6" assertions="11" errors="0" warnings="0" failures="0" skipped="0" time="0.003547">
+        <testcase name="testGetPayrollStatusReturnsData" class="Tests\Unit\PayslipTest" classname="Tests.Unit.PayslipTest" file="C:\xampp\htdocs\ems\tests\Unit\PayslipTest.php" line="28" assertions="2" time="0.001067"/>
+        <testcase name="testUpdatePayrollStatusExecutesCorrectly" class="Tests\Unit\PayslipTest" classname="Tests.Unit.PayslipTest" file="C:\xampp\htdocs\ems\tests\Unit\PayslipTest.php" line="43" assertions="1" time="0.000208"/>
+        <testcase name="testProcessLoanDeductionsExecutesCorrectly" class="Tests\Unit\PayslipTest" classname="Tests.Unit.PayslipTest" file="C:\xampp\htdocs\ems\tests\Unit\PayslipTest.php" line="56" assertions="1" time="0.000189"/>
+        <testcase name="testReverseLoanDeductionsExecutesCorrectly" class="Tests\Unit\PayslipTest" classname="Tests.Unit.PayslipTest" file="C:\xampp\htdocs\ems\tests\Unit\PayslipTest.php" line="67" assertions="1" time="0.000218"/>
+        <testcase name="testGetEmployeeDataReturnsArray" class="Tests\Unit\PayslipTest" classname="Tests.Unit.PayslipTest" file="C:\xampp\htdocs\ems\tests\Unit\PayslipTest.php" line="79" assertions="2" time="0.000493"/>
+        <testcase name="testGetAttendanceDataReturnsFormattedArray" class="Tests\Unit\PayslipTest" classname="Tests.Unit.PayslipTest" file="C:\xampp\htdocs\ems\tests\Unit\PayslipTest.php" line="104" assertions="4" time="0.001372"/>
+      </testsuite>
+      <testsuite name="Tests\Unit\ScheduleBatchTest" file="C:\xampp\htdocs\ems\tests\Unit\ScheduleBatchTest.php" tests="3" assertions="6" errors="0" warnings="0" failures="0" skipped="0" time="0.002157">
+        <testcase name="testGetPendingBatchesReturnsArray" class="Tests\Unit\ScheduleBatchTest" classname="Tests.Unit.ScheduleBatchTest" file="C:\xampp\htdocs\ems\tests\Unit\ScheduleBatchTest.php" line="23" assertions="3" time="0.001535"/>
+        <testcase name="testGetBatchStatusReturnsData" class="Tests\Unit\ScheduleBatchTest" classname="Tests.Unit.ScheduleBatchTest" file="C:\xampp\htdocs\ems\tests\Unit\ScheduleBatchTest.php" line="40" assertions="2" time="0.000395"/>
+        <testcase name="testUpdateStatusExecutesCorrectly" class="Tests\Unit\ScheduleBatchTest" classname="Tests.Unit.ScheduleBatchTest" file="C:\xampp\htdocs\ems\tests\Unit\ScheduleBatchTest.php" line="55" assertions="1" time="0.000228"/>
+      </testsuite>
+      <testsuite name="Tests\Unit\TimecardTest" file="C:\xampp\htdocs\ems\tests\Unit\TimecardTest.php" tests="3" assertions="4" errors="0" warnings="0" failures="0" skipped="0" time="0.241354">
+        <testcase name="testGetScheduleReturnsArray" class="Tests\Unit\TimecardTest" classname="Tests.Unit.TimecardTest" file="C:\xampp\htdocs\ems\tests\Unit\TimecardTest.php" line="25" assertions="1" time="0.240719"/>
+        <testcase name="testGetRawLogsReturnsArray" class="Tests\Unit\TimecardTest" classname="Tests.Unit.TimecardTest" file="C:\xampp\htdocs\ems\tests\Unit\TimecardTest.php" line="38" assertions="1" time="0.000331"/>
+        <testcase name="testUpdateManualLogExecutesCorrectly" class="Tests\Unit\TimecardTest" classname="Tests.Unit.TimecardTest" file="C:\xampp\htdocs\ems\tests\Unit\TimecardTest.php" line="43" assertions="2" time="0.000303"/>
+      </testsuite>
+    </testsuite>
+  </testsuite>
+</testsuites>

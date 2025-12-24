@@ -1,6 +1,8 @@
 <?php
 require_once 'config.php';
 
+use App\Utils\AppHelpers;
+
 // Initialize notification variables
 $notification_message = '';
 $notification_type = '';
@@ -27,7 +29,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['bulk_file'])) {
         $notification_type = 'error';
     } else {
         try {
-            $conn = getDBConnection();
+            $conn = $pdo;
             $conn->beginTransaction();
             $file_handle = fopen($file['tmp_name'], 'r');
             
@@ -106,8 +108,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['bulk_file'])) {
                         $data[$field] = is_numeric($value) ? (float)$value : null;
                     } elseif (in_array($field, ['birth_date', 'hire_date'])) {
                         // Date fields: Check simple date format (YYYY-MM-DD or similar)
-                        $data[$field] = (strtotime($value) !== false) ? date('Y-m-d', strtotime($value)) : null;
-                    } else {
+                                                    $data[$field] = AppHelpers::cleanDate($value);                    } else {
                         $data[$field] = $value;
                     }
                 }

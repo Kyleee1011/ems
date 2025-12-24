@@ -1,0 +1,11 @@
+# Apache .htaccess for URL rewriting
+# Redirect all requests to index_new.php (front controller)
+
+RewriteEngine On
+
+# If the request is for an existing file or directory, serve it directly
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+
+# Route everything else through the front controller (index_new.php)
+RewriteRule ^(.*)$ index_new.php [QSA,L]

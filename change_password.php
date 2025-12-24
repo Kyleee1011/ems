@@ -1,6 +1,9 @@
 <?php
 require_once 'config.php';
 
+use App\Utils\AppHelpers;
+use App\Services\FileUploadService;
+
 $message = '';
 $msgType = '';
 
@@ -18,7 +21,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         $msgType = "error";
     } else {
         try {
-            $conn = getDBConnection();
+            $conn = $pdo;
             
             // Verify User
             $stmt = $conn->prepare("SELECT emp_id, ac_no, password_hash FROM Employees WHERE ac_no = :ac_no");
