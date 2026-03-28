@@ -6,13 +6,11 @@ use PDO;
 class Router
 {
     private $routes = [];
-    private $emsPdo;
-    private $schedulerPdo;
+    private $pdo;
 
-    public function __construct(PDO $emsPdo, PDO $schedulerPdo)
+    public function __construct(PDO $pdo)
     {
-        $this->emsPdo = $emsPdo;
-        $this->schedulerPdo = $schedulerPdo;
+        $this->pdo = $pdo;
     }
 
     public function get($path, $handler)
@@ -47,7 +45,7 @@ class Router
                 $action = $route['handler'][1];
                 
                 // Instantiate Controller
-                $controller = new $controllerClass($this->emsPdo, $this->schedulerPdo);
+                $controller = new $controllerClass($this->pdo);
                 return $controller->$action();
             }
         }

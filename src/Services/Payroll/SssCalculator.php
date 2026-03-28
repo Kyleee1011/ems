@@ -1,0 +1,37 @@
+<?php
+
+namespace App\Services\Payroll;
+
+use PDO;
+
+/**
+ * Calculates the employee's SSS contribution.
+ */
+class SssCalculator
+{
+    protected $pdo;
+
+    public function __construct(PDO $pdo)
+    {
+        $this->pdo = $pdo;
+    }
+
+    /**
+     * Calculates the SSS deduction based on the employee's salary.
+     *
+     * @param float $salary The employee's monthly salary.
+     * @return float The employee's share of the SSS contribution.
+     */
+    public function calculate(float $salary): float
+    {
+        // Select the row where salary falls between min and max
+        $stmt = $this->pdo->prepare(
+            "SELECT ee_share FROM payroll_sss_table WHERE ? BETWEEN min_salary AND max_salary LIMIT 1"
+        );
+        $stmt->execute([$salary]);
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        // Return the deduction or 0.00 if not found
+        return $row ? (float)$row['ee_share'] : 0.00;
+    }
+}

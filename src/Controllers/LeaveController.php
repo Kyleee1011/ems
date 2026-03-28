@@ -12,11 +12,11 @@ class LeaveController
     protected $userRole;
     protected $userDept;
 
-    public function __construct(PDO $emsPdo, PDO $schedulerPdo)
+    public function __construct(PDO $pdo)
     {
-        $this->model = new Leave($emsPdo, $schedulerPdo);
+        $this->model = new Leave($pdo);
         
-        if (!isset($_SESSION['user_id'])) { header("Location: login.php"); exit; }
+        if (!isset($_SESSION['user_id'])) { header("Location: " . baseUrl('login')); exit; }
         
         $this->currentUserId = $_SESSION['user_id'];
         $this->userRole = $_SESSION['approval_role'] ?? 'Employee';
@@ -25,58 +25,97 @@ class LeaveController
 
     public function index()
     {
-        $isManager = ($this->userRole === 'DeptHead' || $this->userRole === 'Manager' || $this->userRole === 'CEO');
-        $isHr = ($this->userRole === 'HR');
-
-        $message = $_SESSION['flash_message'] ?? '';
-        $messageType = $_SESSION['flash_type'] ?? '';
-        unset($_SESSION['flash_message'], $_SESSION['flash_type']); // Clear flash
-
-        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-            $this->handlePost($isManager, $isHr);
-        }
-
-        // Fetch Data for View
+        $this->loadSharedData();
+        
         $mySilCredits = $this->model->getCredits($this->currentUserId);
         $myLeaves = $this->model->getLeaveHistory($this->currentUserId);
-        $mySchedChanges = $this->model->getScheduleChangeHistory($this->currentUserId);
-        
-        $shifts = $this->model->getAllShifts();
-        $deptEmployees = $isManager ? $this->model->getEmployeesByDept($this->userDept) : [];
-        $overtimes = $this->model->getOvertimeHistory($isManager ? null : $this->currentUserId, $isManager ? $this->userDept : null);
-
-        $hrLeaves = $isHr ? $this->model->getPendingLeaves() : [];
-        $hrOts = $isHr ? $this->model->getPendingOvertimes() : [];
-        $hrChanges = $isHr ? $this->model->getPendingScheduleChanges() : [];
+        $consumedData = $this->model->getConsumedLeaveHistory($this->currentUserId);
+        $hrLeaves = $this->isHr ? $this->model->getPendingLeaves() : [];
         
         $leaveTypes = [
             'Service Incentive Leave', 'Vacation Leave', 'Sick Leave', 'Emergency Leave',
             'Maternity/Paternity', 'Bereavement', 'DAYOFF', 'FLEX', 'HOLIDAY OFF', 'Leave Without Pay', 'Leave With Pay'
         ];
 
-        extract([
-            'message' => $message,
-            'messageType' => $messageType,
-            'is_manager' => $isManager,
-            'is_hr' => $isHr,
+        $vars = array_merge($this->sharedVars, [
             'my_sil_credits' => $mySilCredits,
             'my_leaves' => $myLeaves,
-            'my_sched_changes' => $mySchedChanges,
-            'shifts' => $shifts,
-            'deptEmployees' => $deptEmployees,
-            'overtimes' => $overtimes,
+            'consumed_history' => $consumedData['history'],
+            'consumed_totals' => $consumedData['totals'],
             'hr_leaves' => $hrLeaves,
-            'hr_ots' => $hrOts,
-            'hr_changes' => $hrChanges,
             'leaveTypes' => $leaveTypes
         ]);
-
+        
+        extract($vars);
         require __DIR__ . '/../Views/leave_view.php';
     }
 
-    private function handlePost($isManager, $isHr)
+    public function changeSchedule()
+    {
+        $this->loadSharedData();
+        
+        $mySchedChanges = $this->model->getScheduleChangeHistory($this->currentUserId);
+        $shifts = $this->model->getAllShifts();
+        $hrChanges = $this->isHr ? $this->model->getPendingScheduleChanges() : [];
+
+        $vars = array_merge($this->sharedVars, [
+            'my_sched_changes' => $mySchedChanges,
+            'shifts' => $shifts,
+            'hr_changes' => $hrChanges
+        ]);
+
+        extract($vars);
+        require __DIR__ . '/../Views/changesched_view.php';
+    }
+
+    public function overtime()
+    {
+        $this->loadSharedData();
+        
+        $deptEmployees = $this->isManager ? $this->model->getEmployeesByDept($this->userDept) : [];
+        $overtimes = $this->model->getOvertimeHistory($this->isManager ? null : $this->currentUserId, $this->isManager ? $this->userDept : null);
+        $hrOts = $this->isHr ? $this->model->getPendingOvertimes() : [];
+
+        $vars = array_merge($this->sharedVars, [
+            'deptEmployees' => $deptEmployees,
+            'overtimes' => $overtimes,
+            'hr_ots' => $hrOts
+        ]);
+
+        extract($vars);
+        require __DIR__ . '/../Views/overtime_view.php';
+    }
+
+    protected $isManager;
+    protected $isHr;
+    protected $sharedVars;
+
+    private function loadSharedData()
+    {
+        $this->isManager = ($this->userRole === 'DeptHead' || $this->userRole === 'Manager' || $this->userRole === 'CEO');
+        $this->isHr = ($this->userRole === 'HR');
+
+        $message = $_SESSION['flash_message'] ?? '';
+        $messageType = $_SESSION['flash_type'] ?? '';
+        unset($_SESSION['flash_message'], $_SESSION['flash_type']);
+
+        $this->sharedVars = [
+            'message' => $message,
+            'messageType' => $messageType,
+            'is_manager' => $this->isManager,
+            'is_hr' => $this->isHr
+        ];
+        
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            $this->handlePost();
+        }
+    }
+
+    private function handlePost()
     {
         $action = $_POST['action'] ?? '';
+        $redirect = 'leave';
+
         try {
             switch ($action) {
                 case 'apply_leave':
@@ -85,7 +124,8 @@ class LeaveController
                     break;
 
                 case 'apply_ot':
-                    if (!$isManager) throw new Exception("Unauthorized.");
+                    $redirect = 'overtime';
+                    if (!$this->isManager) throw new Exception("Unauthorized.");
                     $emps = isset($_POST['ot_employees']) ? array_unique($_POST['ot_employees']) : [];
                     if (empty($emps)) throw new Exception("Select employees.");
                     
@@ -96,24 +136,27 @@ class LeaveController
                     break;
 
                 case 'apply_change_sched':
+                    $redirect = 'changesched';
                     $this->model->applyScheduleChange($this->currentUserId, $_POST['sched_date'], $_POST['new_shift_code'], $_POST['reason']);
                     $this->setFlash("Schedule change request submitted!", "success");
                     break;
 
                 case 'update_leave_status':
-                    if (!$isHr) throw new Exception("Unauthorized.");
+                    if (!$this->isHr) throw new Exception("Unauthorized.");
                     $this->model->updateLeaveStatus($_POST['leave_id'], $_POST['status'], $this->currentUserId);
                     $this->setFlash("Leave " . strtolower($_POST['status']), "success");
                     break;
 
                 case 'update_ot_status':
-                    if (!$isHr) throw new Exception("Unauthorized.");
+                    $redirect = 'overtime';
+                    if (!$this->isHr) throw new Exception("Unauthorized.");
                     $this->model->updateOvertimeStatus($_POST['ot_id'], $_POST['status'], $this->currentUserId);
                     $this->setFlash("Overtime " . strtolower($_POST['status']), "success");
                     break;
 
                 case 'update_change_status':
-                    if (!$isHr) throw new Exception("Unauthorized.");
+                    $redirect = 'changesched';
+                    if (!$this->isHr) throw new Exception("Unauthorized.");
                     $this->model->updateScheduleChangeStatus($_POST['req_id'], $_POST['status'], $this->currentUserId);
                     $this->setFlash("Schedule change " . strtolower($_POST['status']), "success");
                     break;
@@ -122,7 +165,7 @@ class LeaveController
             $this->setFlash("Error: " . $e->getMessage(), "error");
         }
         
-        header("Location: leave.php");
+        header("Location: " . baseUrl($redirect));
         exit;
     }
 

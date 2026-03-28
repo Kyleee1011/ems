@@ -8,10 +8,10 @@ class EmployeeApiController extends BaseApiController
 {
     private $employeeModel;
 
-    public function __construct(PDO $emsPdo, PDO $schedulerPdo)
+    public function __construct(PDO $pdo)
     {
-        parent::__construct($emsPdo, $schedulerPdo);
-        $this->employeeModel = new Employee($emsPdo);
+        parent::__construct($pdo);
+        $this->employeeModel = new Employee($pdo);
     }
 
     /**

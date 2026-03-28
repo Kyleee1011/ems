@@ -5,7 +5,7 @@
  * This file bootstraps the application:
  * - Loads environment variables
  * - Sets up error handling
- * - Establishes database connections
+ * - Establishes database connection
  */
 
 // Load Composer autoloader
@@ -25,11 +25,9 @@ date_default_timezone_set('Asia/Manila');
 
 // Database Configuration from environment variables
 $dbServer = getenv('DB_SERVER') ?: 'localhost';
-$dbName = getenv('DB_NAME') ?: 'EmployeeManagementSystem';
-$dbUser = getenv('DB_USER') ?: 'sa';
+$dbName = getenv('DB_NAME') ?: 'ems';
+$dbUser = getenv('DB_USER') ?: 'root';
 $dbPass = getenv('DB_PASS') ?: '';
-
-$schedulerDbName = getenv('SCHEDULER_DB_NAME') ?: 'SchedulerDB';
 
 // Connection Options
 $dbOptions = [
@@ -39,16 +37,12 @@ $dbOptions = [
 ];
 
 /**
- * Create Database Connections
+ * Create Database Connection
  */
 try {
-    // Main EMS Database Connection
-    $dsn = "sqlsrv:server={$dbServer};Database={$dbName}";
+    // Main Database Connection
+    $dsn = "mysql:host={$dbServer};dbname={$dbName};charset=utf8mb4";
     $pdo = new PDO($dsn, $dbUser, $dbPass, $dbOptions);
-    
-    // Scheduler Database Connection
-    $schedulerDsn = "sqlsrv:server={$dbServer};Database={$schedulerDbName}";
-    $schedulerPdo = new PDO($schedulerDsn, $dbUser, $dbPass, $dbOptions);
     
 } catch(PDOException $e) {
     // Error handler will catch and log this
@@ -56,4 +50,4 @@ try {
 }
 
 // Application is now ready
-// $pdo and $schedulerPdo are available globally
+// $pdo is available globally

@@ -9,10 +9,10 @@ class LoanApiController extends BaseApiController
 {
     protected $model;
 
-    public function __construct(PDO $emsPdo, PDO $schedulerPdo)
+    public function __construct(PDO $pdo)
     {
-        parent::__construct($emsPdo, $schedulerPdo);
-        $this->model = new Loan($emsPdo); // Loan only needs EMS PDO
+        parent::__construct($pdo);
+        $this->model = new Loan($pdo); // Loan only needs EMS PDO
     }
 
     public function index()

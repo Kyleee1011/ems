@@ -5,15 +5,13 @@ use PDO;
 
 abstract class BaseApiController
 {
-    protected $emsPdo;
-    protected $schedulerPdo;
+    protected $pdo;
     protected $userId;
     protected $userRole;
 
-    public function __construct(PDO $emsPdo, PDO $schedulerPdo)
+    public function __construct(PDO $pdo)
     {
-        $this->emsPdo = $emsPdo;
-        $this->schedulerPdo = $schedulerPdo;
+        $this->pdo = $pdo;
 
         // Middleware: Check Auth
         $this->checkAuth();

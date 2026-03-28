@@ -8,7 +8,7 @@ class DashboardApiController extends BaseApiController
 {
     public function stats()
     {
-        $totalEmp = $this->emsPdo->query("SELECT COUNT(*) FROM [EmployeeManagementSystem].[dbo].[Employees] WHERE IsActive = 1 AND employee_status = 'Active'")->fetchColumn();
+        $totalEmp = $this->pdo->query("SELECT COUNT(*) FROM employees WHERE IsActive = 1 AND employee_status = 'Active'")->fetchColumn();
         $this->jsonResponse(['active_employees' => $totalEmp]);
     }
 
@@ -22,7 +22,7 @@ class DashboardApiController extends BaseApiController
 
         list($start, $end) = explode('|', $range);
 
-        $scheduleBatchModel = new \App\Models\ScheduleBatchModel($this->schedulerPdo);
+        $scheduleBatchModel = new \App\Models\ScheduleBatchModel($this->pdo);
         $batch = $scheduleBatchModel->getBatchStatus($deptId, $start);
 
         $status = $batch ? $batch['status'] : 'Not Started';
@@ -30,11 +30,11 @@ class DashboardApiController extends BaseApiController
         
         $rows = [];
         if ($status === 'Approved') {
-            $sql = "SELECT e.emp_id as employee_id, fs.schedule_Date as schedule_date, fs.Shift_code, fs.Time_In, fs.Time_Out 
-                         FROM FinalizedSchedule fs
-                         JOIN [EmployeeManagementSystem].[dbo].[Employees] e ON fs.Ac_no = e.ac_no
-                         WHERE e.dept_id = ? AND fs.schedule_Date BETWEEN ? AND ?";
-            $stmt = $this->schedulerPdo->prepare($sql);
+            $sql = "SELECT e.emp_id as employee_id, fs.schedule_date, fs.shift_code, fs.time_in, fs.time_out 
+                         FROM finalized_schedule fs
+                         JOIN employees e ON fs.ac_no = e.ac_no
+                         WHERE e.dept_id = ? AND fs.schedule_date BETWEEN ? AND ?";
+            $stmt = $this->pdo->prepare($sql);
             $stmt->execute([$deptId, $start, $end]);
             $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
         } else {
@@ -42,7 +42,7 @@ class DashboardApiController extends BaseApiController
                          FROM schedules es
                          LEFT JOIN shift_types st ON es.shift_code = st.shift_code
                          WHERE es.batch_id = ? AND es.schedule_date BETWEEN ? AND ?";
-            $stmt = $this->schedulerPdo->prepare($sql);
+            $stmt = $this->pdo->prepare($sql);
             $stmt->execute([$batch_id, $start, $end]);
             $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
         }
@@ -81,7 +81,7 @@ class DashboardApiController extends BaseApiController
     public function getPendingBatches()
     {
         // GET /dashboard/batches/pending
-        $schModel = new \App\Models\ScheduleBatch($this->emsPdo, $this->schedulerPdo);
+        $schModel = new \App\Models\ScheduleBatch($this->pdo);
         $batches = $schModel->getPendingBatches($this->userRole);
         $this->jsonResponse(['success' => true, 'data' => $batches]);
     }
@@ -94,12 +94,12 @@ class DashboardApiController extends BaseApiController
         $range = $input['range'];
         $status = $input['status'];
 
-        $schModel = new \App\Models\ScheduleBatch($this->emsPdo, $this->schedulerPdo);
+        $schModel = new \App\Models\ScheduleBatch($this->pdo);
         // Note: The model needs a specific method to find batch by ID or we find ID first.
         // Legacy logic: find batch_id via dept/start
         list($start, $end) = explode('|', $range);
         
-        $stmt = $this->schedulerPdo->prepare("SELECT batch_id FROM ScheduleBatches WHERE dept_id = ? AND cutoff_start = ?");
+        $stmt = $this->pdo->prepare("SELECT batch_id FROM schedule_batches WHERE dept_id = ? AND cutoff_start = ?");
         $stmt->execute([$deptId, $start]);
         $batch = $stmt->fetch();
 
@@ -125,7 +125,7 @@ class DashboardApiController extends BaseApiController
     {
         // GET /dashboard/employees?dept_id=X
         $deptId = $_GET['dept_id'] ?? 0;
-        $stmt = $this->emsPdo->prepare("SELECT emp_id as id, (first_name + ' ' + last_name) as name FROM Employees WHERE dept_id = ? AND IsActive=1 ORDER BY last_name");
+        $stmt = $this->pdo->prepare("SELECT emp_id as id, CONCAT(first_name, ' ', last_name) as name FROM employees WHERE dept_id = ? AND IsActive=1 ORDER BY last_name");
         $stmt->execute([$deptId]);
         $this->jsonResponse(['success' => true, 'employees' => $stmt->fetchAll()]);
     }

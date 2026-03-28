@@ -7,18 +7,16 @@ use DateTime;
 
 class ScheduleBatch
 {
-    protected $schedulerPdo;
-    protected $emsPdo;
+    protected $pdo;
 
-    public function __construct(PDO $schedulerPdo, PDO $emsPdo = null)
+    public function __construct(PDO $pdo)
     {
-        $this->schedulerPdo = $schedulerPdo;
-        if($emsPdo) $this->emsPdo = $emsPdo;
+        $this->pdo = $pdo;
     }
 
     public function getPendingBatches($status) {
         $pending = [];
-        $stmt = $this->schedulerPdo->prepare("SELECT b.batch_id, b.cutoff_start, b.cutoff_end, b.dept_id, d.dept_name FROM SchedulerDB.dbo.ScheduleBatches b LEFT JOIN EmployeeManagementSystem.dbo.Departments d ON b.dept_id = d.dept_id WHERE b.status = ? ORDER BY b.updated_at DESC");
+        $stmt = $this->pdo->prepare("SELECT b.batch_id, b.cutoff_start, b.cutoff_end, b.dept_id, d.dept_name FROM schedule_batches b LEFT JOIN departments d ON b.dept_id = d.dept_id WHERE b.status = ? ORDER BY b.updated_at DESC");
         $stmt->execute([$status]);
         while($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
             $cS = is_object($row['cutoff_start']) ? $row['cutoff_start']->format('Y-m-d') : $row['cutoff_start'];
@@ -34,7 +32,7 @@ class ScheduleBatch
     }
 
     public function getBatchStatus($deptId, $start) {
-        $stmt = $this->schedulerPdo->prepare("SELECT batch_id, status FROM ScheduleBatches WHERE dept_id = ? AND cutoff_start = ?");
+        $stmt = $this->pdo->prepare("SELECT batch_id, status FROM schedule_batches WHERE dept_id = ? AND cutoff_start = ?");
         $stmt->execute([$deptId, $start]);
         return $stmt->fetch(PDO::FETCH_ASSOC);
     }
@@ -43,18 +41,18 @@ class ScheduleBatch
         $schedules = [];
         
         if ($isApproved) {
-            $sql = "SELECT e.emp_id as employee_id, fs.schedule_Date, fs.Shift_code, fs.Time_In, fs.Time_Out 
-                    FROM FinalizedSchedule fs
-                    JOIN EmployeeManagementSystem.dbo.Employees e ON fs.Ac_no = e.ac_no
-                    WHERE e.dept_id = ? AND fs.schedule_Date BETWEEN ? AND ?";
-             $stmt = $this->schedulerPdo->prepare($sql);
+            $sql = "SELECT e.emp_id as employee_id, fs.schedule_date, fs.shift_code, fs.time_in, fs.time_out 
+                    FROM finalized_schedule fs
+                    JOIN employees e ON fs.ac_no = e.ac_no
+                    WHERE e.dept_id = ? AND fs.schedule_date BETWEEN ? AND ?";
+             $stmt = $this->pdo->prepare($sql);
              $stmt->execute([$deptId, $start, $end]);
         } elseif ($batchId) {
              $sql = "SELECT es.employee_id, es.schedule_date, es.shift_code, st.time_in, st.time_out 
                      FROM schedules es
                      LEFT JOIN shift_types st ON es.shift_code = st.shift_code
                      WHERE es.batch_id = ? AND es.schedule_date BETWEEN ? AND ?";
-             $stmt = $this->schedulerPdo->prepare($sql);
+             $stmt = $this->pdo->prepare($sql);
              $stmt->execute([$batchId, $start, $end]);
         }
 
@@ -80,9 +78,9 @@ class ScheduleBatch
         $batchData = $this->getBatchStatus($deptId, $start);
         if ($batchData) {
             $batchId = $batchData['batch_id'];
-            $this->schedulerPdo->prepare("UPDATE ScheduleBatches SET status = ? WHERE batch_id = ?")->execute([$status, $batchId]);
+            $this->pdo->prepare("UPDATE schedule_batches SET status = ? WHERE batch_id = ?")->execute([$status, $batchId]);
             
-            $this->schedulerPdo->prepare("INSERT INTO ScheduleHistory (batch_id, action, actor_name, actor_role, comments) VALUES (?, ?, ?, ?, ?)")
+            $this->pdo->prepare("INSERT INTO schedule_history (batch_id, action, actor_name, actor_role, comments) VALUES (?, ?, ?, ?, ?)")
                  ->execute([$batchId, $status, $actorName, $actorRole, 'Status update via Dashboard']);
 
             if ($status === 'Approved') {
@@ -93,20 +91,20 @@ class ScheduleBatch
 
     private function finalizeSchedule($batchId, $start, $end) {
         // Clear existing
-        $this->schedulerPdo->prepare("DELETE FROM FinalizedSchedule WHERE Ac_no IN (SELECT e.ac_no FROM SchedulerDB.dbo.schedules es JOIN EmployeeManagementSystem.dbo.Employees e ON es.employee_id = e.emp_id WHERE es.batch_id = ?) AND schedule_Date BETWEEN ? AND ?")->execute([$batchId, $start, $end]);
+        $this->pdo->prepare("DELETE FROM finalized_schedule WHERE ac_no IN (SELECT e.ac_no FROM schedules es JOIN employees e ON es.employee_id = e.emp_id WHERE es.batch_id = ?) AND schedule_date BETWEEN ? AND ?")->execute([$batchId, $start, $end]);
         
         // Insert new
-        $sql = "INSERT INTO FinalizedSchedule (Ac_no, Name, Department, schedule_Date, Shift_code, Time_In, Time_Out)
-                SELECT e.ac_no, (e.first_name + ' ' + e.last_name), d.dept_name, es.schedule_date, es.shift_code,
-                    CASE WHEN st.time_in IS NULL THEN NULL ELSE CAST(es.schedule_date AS DATETIME) + CAST(st.time_in AS DATETIME) END,
+        $sql = "INSERT INTO finalized_schedule (ac_no, name, department, schedule_date, shift_code, time_in, time_out)
+                SELECT e.ac_no, CONCAT(e.first_name, ' ', e.last_name), d.dept_name, es.schedule_date, es.shift_code,
+                    CASE WHEN st.time_in IS NULL THEN NULL ELSE TIMESTAMP(es.schedule_date, st.time_in) END,
                     CASE WHEN st.time_out IS NULL THEN NULL 
-                         WHEN st.time_out < st.time_in THEN DATEADD(day, 1, CAST(es.schedule_date AS DATETIME)) + CAST(st.time_out AS DATETIME)
-                         ELSE CAST(es.schedule_date AS DATETIME) + CAST(st.time_out AS DATETIME) END
-                FROM SchedulerDB.dbo.schedules es
-                JOIN EmployeeManagementSystem.dbo.Employees e ON es.employee_id = e.emp_id
-                JOIN EmployeeManagementSystem.dbo.Departments d ON e.dept_id = d.dept_id
-                LEFT JOIN SchedulerDB.dbo.shift_types st ON es.shift_code = st.shift_code
+                         WHEN st.time_out < st.time_in THEN TIMESTAMP(DATE_ADD(es.schedule_date, INTERVAL 1 DAY), st.time_out)
+                         ELSE TIMESTAMP(es.schedule_date, st.time_out) END
+                FROM schedules es
+                JOIN employees e ON es.employee_id = e.emp_id
+                JOIN departments d ON e.dept_id = d.dept_id
+                LEFT JOIN shift_types st ON es.shift_code = st.shift_code
                 WHERE es.batch_id = ?";
-        $this->schedulerPdo->prepare($sql)->execute([$batchId]);
+        $this->pdo->prepare($sql)->execute([$batchId]);
     }
 }

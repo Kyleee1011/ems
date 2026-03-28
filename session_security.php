@@ -4,17 +4,14 @@
 $cookieParams = session_get_cookie_params();
 session_set_cookie_params([
     'lifetime' => 0, // Session lasts until browser closes (unless timed out server-side)
-    'path' => $cookieParams['path'],
-    'domain' => $cookieParams['domain'],
+    'path' => '/', // Use root path for maximum compatibility
     'secure' => isset($_SERVER['HTTPS']), // Only send over HTTPS if enabled
     'httponly' => true, // Prevent JavaScript access (XSS protection)
     'samesite' => 'Strict' // Prevent CSRF
 ]);
 
 // Start the session
-if (session_status() === PHP_SESSION_NONE) {
-    session_start();
-}
+require_once __DIR__ . '/config_session.php';
 
 // ==========================================
 // SESSION TIMEOUT LOGIC

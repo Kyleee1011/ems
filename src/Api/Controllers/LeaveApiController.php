@@ -9,10 +9,10 @@ class LeaveApiController extends BaseApiController
 {
     protected $model;
 
-    public function __construct(PDO $emsPdo, PDO $schedulerPdo)
+    public function __construct(PDO $pdo)
     {
-        parent::__construct($emsPdo, $schedulerPdo);
-        $this->model = new Leave($emsPdo, $schedulerPdo);
+        parent::__construct($pdo);
+        $this->model = new Leave($pdo);
     }
 
     public function index()

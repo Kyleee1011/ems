@@ -7,19 +7,6 @@ use DateTime;
 
 class AppHelper
 {
-    public static function getBiologsConnection() {
-        $serverName = "192.168.21.52,1433"; 
-        $database = "biologs_db"; 
-        $username = "sa"; 
-        $password = "Azzurro2025"; 
-        try {
-            $conn = new PDO("sqlsrv:server=$serverName;Database=$database", $username, $password);
-            $conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-            return $conn;
-        } catch (\PDOException $e) { 
-            return null; 
-        }
-    }
 
     public static function generateCutoffPeriods() {
         $periods = [];

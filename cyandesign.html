@@ -1,0 +1,1718 @@
+<!DOCTYPE html>
+<html lang="en" data-mode="light">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Azzurro HR — Dashboard</title>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,300;0,14..32,400;0,14..32,500;0,14..32,600;0,14..32,700;1,14..32,400&family=DM+Mono:wght@400;500&display=swap"
+        rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+    <style>
+        /* ── TOKENS ─────────────────────────────────────── */
+        :root {
+            --teal: hsl(188, 64%, 36%);
+            --teal-bg: hsl(188, 60%, 95%);
+            --teal-border: hsl(188, 50%, 80%);
+            --teal-deep: hsl(188, 72%, 24%);
+            --teal-mid: hsl(188, 55%, 55%);
+            --teal-glow: hsla(188, 64%, 36%, 0.14);
+
+            --bg-page: hsl(214, 20%, 96%);
+            --bg-card: hsl(0, 0%, 100%);
+            --bg-raised: hsl(214, 18%, 98%);
+            --bg-subtle: hsl(214, 16%, 94%);
+            --bg-hover: hsl(188, 40%, 95%);
+
+            --border: hsl(214, 16%, 88%);
+            --border-lt: hsl(214, 16%, 92%);
+            --border-focus: hsl(188, 50%, 62%);
+
+            --ink-1: hsl(218, 28%, 10%);
+            --ink-2: hsl(218, 18%, 26%);
+            --ink-3: hsl(218, 12%, 46%);
+            --ink-4: hsl(218, 10%, 64%);
+
+            --red: hsl(2, 68%, 50%);
+            --red-bg: hsla(2, 68%, 50%, 0.07);
+            --red-bdr: hsla(2, 68%, 50%, 0.18);
+            --amber: hsl(34, 90%, 44%);
+            --amber-bg: hsla(34, 90%, 44%, 0.07);
+            --amber-bdr: hsla(34, 90%, 44%, 0.18);
+            --green: hsl(154, 52%, 34%);
+            --green-bg: hsla(154, 52%, 34%, 0.07);
+            --green-bdr: hsla(154, 52%, 34%, 0.18);
+            --blue: hsl(216, 72%, 48%);
+            --blue-bg: hsla(216, 72%, 48%, 0.07);
+            --blue-bdr: hsla(216, 72%, 48%, 0.18);
+            --purple: hsl(258, 58%, 54%);
+            --purple-bg: hsla(258, 58%, 54%, 0.07);
+            --purple-bdr: hsla(258, 58%, 54%, 0.18);
+
+            --sidebar-w: 228px;
+            --r: 10px;
+            --r-sm: 7px;
+            --sh-sm: 0 1px 2px hsla(218, 28%, 10%, 0.05), 0 1px 4px hsla(218, 28%, 10%, 0.04);
+            --sh-md: 0 4px 14px hsla(218, 28%, 10%, 0.08), 0 1px 4px hsla(218, 28%, 10%, 0.04);
+        }
+
+        [data-mode="dark"] {
+            --teal: hsl(188, 80%, 52%);
+            --teal-bg: hsl(188, 55%, 14%);
+            --teal-border: hsl(188, 50%, 22%);
+            --teal-deep: hsl(188, 80%, 36%);
+            --teal-mid: hsl(188, 65%, 48%);
+            --teal-glow: hsla(188, 80%, 52%, 0.16);
+
+            --bg-page: hsl(224, 16%, 7%);
+            --bg-card: hsl(224, 14%, 10%);
+            --bg-raised: hsl(224, 13%, 13%);
+            --bg-subtle: hsl(224, 12%, 16%);
+            --bg-hover: hsl(224, 12%, 19%);
+
+            --border: hsl(224, 10%, 18%);
+            --border-lt: hsl(224, 10%, 14%);
+            --border-focus: hsl(188, 55%, 35%);
+
+            --ink-1: hsl(0, 0%, 96%);
+            --ink-2: hsl(0, 0%, 80%);
+            --ink-3: hsl(224, 10%, 54%);
+            --ink-4: hsl(224, 8%, 38%);
+
+            --red: hsl(2, 76%, 62%);
+            --red-bg: hsla(2, 76%, 62%, 0.11);
+            --red-bdr: hsla(2, 76%, 62%, 0.22);
+            --amber: hsl(34, 90%, 56%);
+            --amber-bg: hsla(34, 90%, 56%, 0.11);
+            --amber-bdr: hsla(34, 90%, 56%, 0.22);
+            --green: hsl(154, 62%, 52%);
+            --green-bg: hsla(154, 62%, 52%, 0.11);
+            --green-bdr: hsla(154, 62%, 52%, 0.22);
+            --blue: hsl(216, 82%, 62%);
+            --blue-bg: hsla(216, 82%, 62%, 0.11);
+            --blue-bdr: hsla(216, 82%, 62%, 0.22);
+            --purple: hsl(258, 70%, 68%);
+            --purple-bg: hsla(258, 70%, 68%, 0.11);
+            --purple-bdr: hsla(258, 70%, 68%, 0.22);
+
+            --sh-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
+            --sh-md: 0 4px 14px rgba(0, 0, 0, 0.5);
+        }
+
+        *,
+        *::before,
+        *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0
+        }
+
+        html,
+        body {
+            height: 100%
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            font-size: 13px;
+            line-height: 1.5;
+            background: var(--bg-page);
+            color: var(--ink-1);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* ── TOPBAR ──────────────────────────────────────── */
+        .topbar {
+            position: relative;
+            z-index: 20;
+            height: 52px;
+            background: var(--bg-card);
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            padding: 0 20px;
+            gap: 12px;
+            flex-shrink: 0;
+            box-shadow: var(--sh-sm);
+        }
+
+        .topbar::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: linear-gradient(90deg, transparent 8%, var(--teal) 40%, var(--teal-mid) 60%, transparent 92%);
+            opacity: .45;
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            text-decoration: none;
+        }
+
+        .brand-mark {
+            width: 30px;
+            height: 30px;
+            border-radius: 8px;
+            background: linear-gradient(140deg, var(--teal-deep), var(--teal));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 2px 6px var(--teal-glow);
+            flex-shrink: 0;
+        }
+
+        .brand-name {
+            font-size: 15px;
+            font-weight: 700;
+            letter-spacing: -0.025em;
+            color: var(--ink-1);
+        }
+
+        .brand-name em {
+            font-style: normal;
+            color: var(--teal);
+        }
+
+        .spacer {
+            flex: 1
+        }
+
+        .topbar-right {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .icon-btn {
+            width: 34px;
+            height: 34px;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            background: var(--bg-raised);
+            color: var(--ink-3);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all .15s;
+        }
+
+        .icon-btn:hover {
+            border-color: var(--teal-border);
+            color: var(--teal);
+            background: var(--teal-bg)
+        }
+
+        .theme-toggle {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 0 12px;
+            height: 34px;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            background: var(--bg-raised);
+            color: var(--ink-3);
+            font-size: 11.5px;
+            font-weight: 500;
+            font-family: 'Inter', sans-serif;
+            cursor: pointer;
+            transition: all .15s;
+        }
+
+        .theme-toggle:hover {
+            border-color: var(--teal-border);
+            color: var(--teal);
+            background: var(--teal-bg)
+        }
+
+        .user-pill {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 4px 10px 4px 4px;
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            background: var(--bg-raised);
+            cursor: pointer;
+            transition: all .15s;
+        }
+
+        .user-pill:hover {
+            border-color: var(--border-focus)
+        }
+
+        .avatar {
+            width: 26px;
+            height: 26px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--teal-deep), var(--teal));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 9.5px;
+            font-weight: 700;
+            color: #fff;
+            letter-spacing: 0.02em;
+            flex-shrink: 0;
+        }
+
+        .user-name {
+            font-size: 12px;
+            font-weight: 500;
+            color: var(--ink-2);
+            white-space: nowrap
+        }
+
+        /* ── APP SHELL ───────────────────────────────────── */
+        .app {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+            position: relative;
+            z-index: 1
+        }
+
+        /* ── SIDEBAR ─────────────────────────────────────── */
+        .sidebar {
+            width: var(--sidebar-w);
+            background: var(--bg-card);
+            border-right: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            flex-shrink: 0;
+            overflow-y: auto;
+        }
+
+        .sidebar-head {
+            padding: 18px 16px 14px;
+            border-bottom: 1px solid var(--border-lt);
+        }
+
+        .sidebar-logo {
+            font-size: 17px;
+            font-weight: 700;
+            letter-spacing: -0.025em;
+            color: var(--ink-1)
+        }
+
+        .sidebar-logo em {
+            font-style: normal;
+            color: var(--teal)
+        }
+
+        .sidebar-tagline {
+            font-size: 10.5px;
+            color: var(--ink-4);
+            margin-top: 2px;
+            font-weight: 400
+        }
+
+        .nav-group {
+            padding: 14px 0 4px
+        }
+
+        .nav-label {
+            font-size: 9.5px;
+            font-weight: 600;
+            color: var(--ink-4);
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            padding: 0 16px 6px
+        }
+
+        .nav-item {
+            display: flex;
+            align-items: center;
+            gap: 9px;
+            padding: 7px 16px;
+            color: var(--ink-3);
+            font-size: 12.5px;
+            font-weight: 400;
+            cursor: pointer;
+            border: none;
+            background: none;
+            width: 100%;
+            text-align: left;
+            font-family: 'Inter', sans-serif;
+            position: relative;
+            transition: all .12s;
+        }
+
+        .nav-item:hover {
+            background: var(--bg-hover);
+            color: var(--teal-deep)
+        }
+
+        .nav-item.active {
+            background: var(--teal-bg);
+            color: var(--teal-deep);
+            font-weight: 600
+        }
+
+        [data-mode="dark"] .nav-item.active {
+            color: var(--teal)
+        }
+
+        .nav-item.active::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 4px;
+            bottom: 4px;
+            width: 3px;
+            background: var(--teal);
+            border-radius: 0 3px 3px 0;
+        }
+
+        .nav-ico {
+            width: 16px;
+            height: 16px;
+            flex-shrink: 0;
+            opacity: .65;
+            transition: opacity .12s
+        }
+
+        .nav-item:hover .nav-ico,
+        .nav-item.active .nav-ico {
+            opacity: 1
+        }
+
+        .nav-caret {
+            margin-left: auto;
+            width: 12px;
+            height: 12px;
+            opacity: .35
+        }
+
+        .nav-sub {
+            display: none
+        }
+
+        .nav-sub.open {
+            display: block
+        }
+
+        .nav-sub-item {
+            display: flex;
+            align-items: center;
+            padding: 6px 16px 6px 41px;
+            color: var(--ink-3);
+            font-size: 12px;
+            cursor: pointer;
+            border: none;
+            background: none;
+            width: 100%;
+            text-align: left;
+            font-family: 'Inter', sans-serif;
+            transition: color .12s, background .12s;
+            position: relative;
+        }
+
+        .nav-sub-item::before {
+            content: '';
+            position: absolute;
+            left: 26px;
+            top: 0;
+            bottom: 0;
+            width: 1px;
+            background: var(--border);
+        }
+
+        .nav-sub-item:hover {
+            color: var(--teal);
+            background: var(--bg-hover)
+        }
+
+        .nav-divider {
+            height: 1px;
+            background: var(--border-lt);
+            margin: 6px 12px
+        }
+
+        .sidebar-footer {
+            margin-top: auto;
+            padding: 12px 16px;
+            border-top: 1px solid var(--border-lt);
+            display: flex;
+            align-items: center;
+            gap: 9px;
+            background: var(--bg-raised);
+        }
+
+        .sf-name {
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--ink-2)
+        }
+
+        .sf-dept {
+            font-size: 10.5px;
+            color: var(--ink-4)
+        }
+
+        .logout-btn {
+            margin-left: auto;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            padding: 5px 9px;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            background: transparent;
+            color: var(--ink-4);
+            font-size: 11px;
+            font-weight: 500;
+            cursor: pointer;
+            font-family: 'Inter', sans-serif;
+            transition: all .15s;
+        }
+
+        .logout-btn:hover {
+            border-color: var(--red-bdr);
+            color: var(--red);
+            background: var(--red-bg)
+        }
+
+        /* ── MAIN ────────────────────────────────────────── */
+        .main {
+            flex: 1;
+            overflow-y: auto;
+            padding: 24px 28px 32px
+        }
+
+        /* ── PAGE HEADER ─────────────────────────────────── */
+        .page-header {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            margin-bottom: 22px
+        }
+
+        .page-title {
+            font-size: 19px;
+            font-weight: 700;
+            color: var(--ink-1);
+            letter-spacing: -0.025em;
+            line-height: 1.2
+        }
+
+        .page-sub {
+            font-size: 12px;
+            color: var(--ink-4);
+            margin-top: 4px
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 8px;
+            align-items: center
+        }
+
+        .pill-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 13px;
+            border: 1px solid var(--border);
+            border-radius: 7px;
+            background: var(--bg-card);
+            color: var(--ink-3);
+            font-size: 12px;
+            font-weight: 500;
+            font-family: 'Inter', sans-serif;
+            cursor: pointer;
+            transition: all .15s;
+            box-shadow: var(--sh-sm);
+        }
+
+        .pill-btn:hover {
+            border-color: var(--border-focus);
+            color: var(--teal);
+            background: var(--teal-bg)
+        }
+
+        .btn-primary {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 14px;
+            border: none;
+            border-radius: 7px;
+            background: var(--teal);
+            color: #fff;
+            font-size: 12px;
+            font-weight: 600;
+            font-family: 'Inter', sans-serif;
+            cursor: pointer;
+            transition: all .15s;
+            box-shadow: 0 1px 3px var(--teal-glow), 0 0 0 1px var(--teal-deep);
+        }
+
+        .btn-primary:hover {
+            background: var(--teal-deep);
+            box-shadow: 0 3px 10px var(--teal-glow)
+        }
+
+        /* ── SECTION HEADING ─────────────────────────────── */
+        .section-hd {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 12px;
+            margin-top: 20px
+        }
+
+        .section-hd:first-of-type {
+            margin-top: 0
+        }
+
+        .section-hd-label {
+            font-size: 10px;
+            font-weight: 600;
+            color: var(--ink-4);
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            white-space: nowrap
+        }
+
+        .section-hd-line {
+            flex: 1;
+            height: 1px;
+            background: var(--border-lt)
+        }
+
+        /* ── STAT GRID ───────────────────────────────────── */
+        .stat-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+            margin-bottom: 10px
+        }
+
+        .stat-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--r);
+            padding: 16px;
+            position: relative;
+            overflow: hidden;
+            box-shadow: var(--sh-sm);
+            transition: transform .18s, box-shadow .18s, border-color .18s;
+        }
+
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+        }
+
+        .stat-card.c-teal::before {
+            background: linear-gradient(90deg, var(--teal-deep), var(--teal))
+        }
+
+        .stat-card.c-amber::before {
+            background: linear-gradient(90deg, hsl(34, 80%, 36%), var(--amber))
+        }
+
+        .stat-card.c-blue::before {
+            background: linear-gradient(90deg, hsl(216, 65%, 38%), var(--blue))
+        }
+
+        .stat-card.c-green::before {
+            background: linear-gradient(90deg, hsl(154, 48%, 26%), var(--green))
+        }
+
+        .stat-card:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--sh-md);
+            border-color: var(--border-focus)
+        }
+
+        .stat-ico-wrap {
+            width: 34px;
+            height: 34px;
+            border-radius: 9px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 12px;
+            flex-shrink: 0;
+        }
+
+        .ico-teal {
+            background: var(--teal-bg);
+            color: var(--teal)
+        }
+
+        .ico-amber {
+            background: var(--amber-bg);
+            color: var(--amber)
+        }
+
+        .ico-blue {
+            background: var(--blue-bg);
+            color: var(--blue)
+        }
+
+        .ico-green {
+            background: var(--green-bg);
+            color: var(--green)
+        }
+
+        .ico-red {
+            background: var(--red-bg);
+            color: var(--red)
+        }
+
+        .ico-purple {
+            background: var(--purple-bg);
+            color: var(--purple)
+        }
+
+        .stat-lbl {
+            font-size: 10px;
+            font-weight: 600;
+            color: var(--ink-4);
+            letter-spacing: 0.07em;
+            text-transform: uppercase;
+            margin-bottom: 6px
+        }
+
+        .stat-val {
+            font-size: 24px;
+            font-weight: 700;
+            letter-spacing: -0.03em;
+            line-height: 1.1;
+            margin-bottom: 4px;
+            font-variant-numeric: tabular-nums;
+            font-family: 'DM Mono', monospace
+        }
+
+        .stat-val.teal {
+            color: var(--teal)
+        }
+
+        .stat-val.amber {
+            color: var(--amber)
+        }
+
+        .stat-val.blue {
+            color: var(--blue)
+        }
+
+        .stat-val.green {
+            color: var(--green)
+        }
+
+        .stat-meta {
+            font-size: 11px;
+            color: var(--ink-4)
+        }
+
+        /* ── CONTRIBUTION CARDS ──────────────────────────── */
+        .contrib-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            margin-bottom: 10px
+        }
+
+        .contrib-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--r);
+            padding: 16px 16px 16px 20px;
+            position: relative;
+            overflow: hidden;
+            box-shadow: var(--sh-sm);
+            transition: transform .18s, box-shadow .18s, border-color .18s;
+        }
+
+        .contrib-card:hover {
+            transform: translateY(-1px);
+            box-shadow: var(--sh-md);
+            border-color: var(--border-focus)
+        }
+
+        .contrib-stripe {
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 4px
+        }
+
+        .contrib-lbl {
+            font-size: 10px;
+            font-weight: 600;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            color: var(--ink-4);
+            margin-bottom: 4px
+        }
+
+        .tag {
+            display: inline-flex;
+            align-items: center;
+            font-size: 10px;
+            font-weight: 500;
+            padding: 2px 8px;
+            border-radius: 4px;
+            margin-bottom: 10px;
+            border: 1px solid transparent;
+        }
+
+        .tag-blue {
+            background: var(--blue-bg);
+            color: var(--blue);
+            border-color: var(--blue-bdr)
+        }
+
+        .tag-green {
+            background: var(--green-bg);
+            color: var(--green);
+            border-color: var(--green-bdr)
+        }
+
+        .tag-purple {
+            background: var(--purple-bg);
+            color: var(--purple);
+            border-color: var(--purple-bdr)
+        }
+
+        .contrib-val {
+            font-size: 21px;
+            font-weight: 700;
+            letter-spacing: -0.02em;
+            margin-bottom: 2px;
+            font-variant-numeric: tabular-nums;
+            font-family: 'DM Mono', monospace
+        }
+
+        .contrib-sub {
+            font-size: 10.5px;
+            color: var(--ink-4);
+            margin-bottom: 10px
+        }
+
+        .contrib-split {
+            display: flex;
+            gap: 16px;
+            padding-top: 10px;
+            border-top: 1px solid var(--border-lt)
+        }
+
+        .contrib-split-item {
+            font-size: 10.5px;
+            color: var(--ink-4)
+        }
+
+        .contrib-split-item strong {
+            color: var(--ink-3);
+            font-weight: 600;
+            display: block;
+            margin-bottom: 1px
+        }
+
+        /* ── ANALYTICS TILES ─────────────────────────────── */
+        .analytics-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            margin-bottom: 10px
+        }
+
+        .analytics-tile {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--r);
+            padding: 16px;
+            display: flex;
+            gap: 14px;
+            align-items: flex-start;
+            box-shadow: var(--sh-sm);
+            transition: border-color .18s, box-shadow .18s;
+        }
+
+        .analytics-tile:hover {
+            border-color: var(--border-focus);
+            box-shadow: var(--sh-md)
+        }
+
+        .at-ico-wrap {
+            width: 38px;
+            height: 38px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            margin-top: 2px
+        }
+
+        .at-content {
+            flex: 1
+        }
+
+        .at-lbl {
+            font-size: 10px;
+            font-weight: 600;
+            color: var(--ink-4);
+            letter-spacing: 0.07em;
+            text-transform: uppercase;
+            margin-bottom: 4px
+        }
+
+        .at-val {
+            font-size: 28px;
+            font-weight: 700;
+            letter-spacing: -0.03em;
+            line-height: 1;
+            font-variant-numeric: tabular-nums;
+            font-family: 'DM Mono', monospace;
+            margin-bottom: 4px
+        }
+
+        .at-val.red {
+            color: var(--red)
+        }
+
+        .at-val.amber {
+            color: var(--amber)
+        }
+
+        .at-val.teal {
+            color: var(--teal)
+        }
+
+        .at-sub {
+            font-size: 11px;
+            color: var(--ink-4)
+        }
+
+        /* ── CARD ────────────────────────────────────────── */
+        .card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--r);
+            overflow: hidden;
+            box-shadow: var(--sh-sm);
+            transition: border-color .18s, box-shadow .18s
+        }
+
+        .card:hover {
+            border-color: var(--border-focus);
+            box-shadow: var(--sh-md)
+        }
+
+        .card-head {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px 16px;
+            border-bottom: 1px solid var(--border-lt);
+            background: var(--bg-raised)
+        }
+
+        .card-title {
+            font-size: 12.5px;
+            font-weight: 600;
+            color: var(--ink-1);
+            display: flex;
+            align-items: center;
+            gap: 7px
+        }
+
+        .card-meta {
+            font-size: 11px;
+            color: var(--ink-4)
+        }
+
+        /* ── EMPTY STATE ─────────────────────────────────── */
+        .empty-state {
+            padding: 36px 20px;
+            text-align: center;
+            color: var(--ink-4)
+        }
+
+        .empty-icon-wrap {
+            width: 42px;
+            height: 42px;
+            border-radius: 50%;
+            background: var(--green-bg);
+            border: 1.5px solid var(--green-bdr);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 10px;
+            color: var(--green)
+        }
+
+        .empty-msg {
+            font-size: 12.5px;
+            font-weight: 500;
+            color: var(--ink-3)
+        }
+
+        .empty-sub {
+            font-size: 11px;
+            color: var(--ink-4);
+            margin-top: 3px
+        }
+
+        /* ── TALLY CARDS ─────────────────────────────────── */
+        .tally-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--r);
+            padding: 15px 16px;
+            box-shadow: var(--sh-sm);
+            transition: border-color .18s, box-shadow .18s;
+        }
+
+        .tally-card:hover {
+            border-color: var(--border-focus);
+            box-shadow: var(--sh-md)
+        }
+
+        .tally-head {
+            display: flex;
+            align-items: center;
+            gap: 7px;
+            margin-bottom: 14px
+        }
+
+        .tally-title {
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--ink-2)
+        }
+
+        .tally-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 8px
+        }
+
+        .tally-row:last-child {
+            margin-bottom: 0
+        }
+
+        .tally-name {
+            font-size: 11.5px;
+            color: var(--ink-2);
+            min-width: 112px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis
+        }
+
+        .tally-bar-track {
+            flex: 1;
+            height: 5px;
+            background: var(--bg-subtle);
+            border-radius: 3px;
+            overflow: hidden
+        }
+
+        .tally-bar-fill {
+            height: 100%;
+            border-radius: 3px;
+            transition: width .5s ease
+        }
+
+        .fill-amber {
+            background: var(--amber)
+        }
+
+        .fill-red {
+            background: var(--red)
+        }
+
+        .tally-count {
+            font-size: 11.5px;
+            font-weight: 600;
+            min-width: 26px;
+            text-align: right;
+            font-family: 'DM Mono', monospace
+        }
+
+        /* ── CHARTS ──────────────────────────────────────── */
+        .chart-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px
+        }
+
+        .chart-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--r);
+            overflow: hidden;
+            box-shadow: var(--sh-sm);
+            transition: border-color .18s, box-shadow .18s
+        }
+
+        .chart-card:hover {
+            border-color: var(--border-focus);
+            box-shadow: var(--sh-md)
+        }
+
+        .chart-body {
+            padding: 14px 16px 16px;
+            height: 210px
+        }
+
+        /* ── HELPERS ─────────────────────────────────────── */
+        .grid-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px
+        }
+
+        .col-stack {
+            display: flex;
+            flex-direction: column;
+            gap: 10px
+        }
+
+        .mb-10 {
+            margin-bottom: 10px
+        }
+
+        ::-webkit-scrollbar {
+            width: 4px
+        }
+
+        ::-webkit-scrollbar-track {
+            background: transparent
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--border);
+            border-radius: 4px
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--teal-mid)
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- ══ TOPBAR ══ -->
+    <header class="topbar">
+        <a class="brand" href="#">
+            <div class="brand-mark">
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                    <rect x="2" y="5" width="12" height="10" rx="1" fill="white" fill-opacity="0.2" stroke="white"
+                        stroke-width="1.1" />
+                    <path d="M6 5V4a2 2 0 014 0v1" stroke="white" stroke-width="1.1" stroke-linecap="round" />
+                    <rect x="5" y="8" width="1.8" height="1.8" rx="0.4" fill="white" fill-opacity="0.85" />
+                    <rect x="9.2" y="8" width="1.8" height="1.8" rx="0.4" fill="white" fill-opacity="0.85" />
+                    <rect x="6.6" y="11" width="2.8" height="1.8" rx="0.4" fill="white" fill-opacity="0.7" />
+                </svg>
+            </div>
+            <span class="brand-name">Azzurro<em>HR</em></span>
+        </a>
+
+        <div class="spacer"></div>
+
+        <div class="topbar-right">
+            <button class="icon-btn" title="Notifications">
+                <svg width="15" height="15" viewBox="0 0 16 16" fill="none">
+                    <path d="M8 1.5A4.5 4.5 0 003.5 6v2.5l-1 2h11l-1-2V6A4.5 4.5 0 008 1.5z" stroke="currentColor"
+                        stroke-width="1.3" stroke-linejoin="round" />
+                    <path d="M6.5 12.5a1.5 1.5 0 003 0" stroke="currentColor" stroke-width="1.3"
+                        stroke-linecap="round" />
+                </svg>
+            </button>
+
+            <button class="theme-toggle" onclick="toggleTheme()" id="theme-btn">
+                <svg id="theme-ico" width="13" height="13" viewBox="0 0 16 16" fill="none">
+                    <circle cx="8" cy="8" r="3" stroke="currentColor" stroke-width="1.5" />
+                    <path
+                        d="M8 1v2M8 13v2M1 8h2M13 8h2M3.05 3.05l1.41 1.41M11.54 11.54l1.41 1.41M3.05 12.95l1.41-1.41M11.54 4.46l1.41-1.41"
+                        stroke="currentColor" stroke-width="1.4" stroke-linecap="round" />
+                </svg>
+                <span id="theme-label">Light</span>
+            </button>
+
+            <div class="user-pill">
+                <div class="avatar">KG</div>
+                <span class="user-name">Kenneth Gonzales</span>
+            </div>
+        </div>
+    </header>
+
+    <div class="app">
+
+        <!-- ══ SIDEBAR ══ -->
+        <nav class="sidebar">
+            <div class="sidebar-head">
+                <div class="sidebar-logo">Azzurro<em>HR</em></div>
+                <div class="sidebar-tagline">Human Resources Portal</div>
+            </div>
+
+            <div class="nav-group">
+                <div class="nav-label">Main</div>
+                <button class="nav-item active" onclick="setActive(this)">
+                    <svg class="nav-ico" viewBox="0 0 16 16" fill="none">
+                        <rect x="1" y="8" width="4" height="7" rx="1" stroke="currentColor" stroke-width="1.3" />
+                        <rect x="6" y="4" width="4" height="11" rx="1" stroke="currentColor" stroke-width="1.3" />
+                        <rect x="11" y="1" width="4" height="14" rx="1" stroke="currentColor" stroke-width="1.3" />
+                    </svg>
+                    Dashboard
+                </button>
+            </div>
+
+            <div class="nav-group">
+                <div class="nav-label">Workforce</div>
+                <button class="nav-item" onclick="toggleSub('sub-wf',this)">
+                    <svg class="nav-ico" viewBox="0 0 16 16" fill="none">
+                        <circle cx="6" cy="5" r="2.5" stroke="currentColor" stroke-width="1.3" />
+                        <path d="M1 14c0-2.8 2.2-4.5 5-4.5s5 1.7 5 4.5" stroke="currentColor" stroke-width="1.3"
+                            stroke-linecap="round" />
+                        <circle cx="12.5" cy="5" r="1.8" stroke="currentColor" stroke-width="1.2" />
+                        <path d="M15 13.5c0-1.8-1-3-2.5-3.5" stroke="currentColor" stroke-width="1.2"
+                            stroke-linecap="round" />
+                    </svg>
+                    Workforce
+                    <svg class="nav-caret" viewBox="0 0 12 12" fill="none">
+                        <path d="M3 4.5l3 3 3-3" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"
+                            stroke-linejoin="round" />
+                    </svg>
+                </button>
+                <div class="nav-sub open" id="sub-wf">
+                    <button class="nav-sub-item">Employee Directory</button>
+                    <button class="nav-sub-item">Onboarding</button>
+                </div>
+            </div>
+
+            <div class="nav-group">
+                <div class="nav-label">Operations</div>
+                <button class="nav-item" onclick="toggleSub('sub-ops',this)">
+                    <svg class="nav-ico" viewBox="0 0 16 16" fill="none">
+                        <rect x="2" y="3" width="12" height="11" rx="1.5" stroke="currentColor" stroke-width="1.3" />
+                        <path d="M5 1v4M11 1v4M2 7.5h12" stroke="currentColor" stroke-width="1.3"
+                            stroke-linecap="round" />
+                    </svg>
+                    Operations
+                    <svg class="nav-caret" viewBox="0 0 12 12" fill="none">
+                        <path d="M3 4.5l3 3 3-3" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"
+                            stroke-linejoin="round" />
+                    </svg>
+                </button>
+                <div class="nav-sub" id="sub-ops">
+                    <button class="nav-sub-item">Approvals</button>
+                    <button class="nav-sub-item">Loans</button>
+                </div>
+            </div>
+
+            <div class="nav-group">
+                <div class="nav-label">Payroll</div>
+                <button class="nav-item" onclick="toggleSub('sub-pay',this)">
+                    <svg class="nav-ico" viewBox="0 0 16 16" fill="none">
+                        <rect x="1.5" y="3.5" width="13" height="9" rx="1.5" stroke="currentColor" stroke-width="1.3" />
+                        <path d="M5.5 8h1.2m0 0a1.3 1.3 0 100-2.6H6a1.3 1.3 0 000 2.6h.5zm0 0a1.3 1.3 0 110 2.6H6"
+                            stroke="currentColor" stroke-width="1.2" stroke-linecap="round" />
+                        <path d="M11.5 6v4" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" />
+                    </svg>
+                    Payroll
+                    <svg class="nav-caret" viewBox="0 0 12 12" fill="none">
+                        <path d="M3 4.5l3 3 3-3" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"
+                            stroke-linejoin="round" />
+                    </svg>
+                </button>
+                <div class="nav-sub" id="sub-pay">
+                    <button class="nav-sub-item">Payslips</button>
+                    <button class="nav-sub-item">Contributions</button>
+                    <button class="nav-sub-item">Reports</button>
+                </div>
+            </div>
+
+            <div class="nav-divider"></div>
+
+            <div class="sidebar-footer">
+                <div class="avatar" style="width:28px;height:28px;font-size:10px;flex-shrink:0">KG</div>
+                <div>
+                    <div class="sf-name">Kenneth Gonzales</div>
+                    <div class="sf-dept">Human Resources</div>
+                </div>
+                <button class="logout-btn">
+                    <svg width="12" height="12" viewBox="0 0 16 16" fill="none">
+                        <path d="M10 2h3a1 1 0 011 1v10a1 1 0 01-1 1h-3M7 11l3-3-3-3M10 8H2" stroke="currentColor"
+                            stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" />
+                    </svg>
+                    Sign out
+                </button>
+            </div>
+        </nav>
+
+        <!-- ══ MAIN ══ -->
+        <main class="main">
+
+            <div class="page-header">
+                <div>
+                    <div class="page-title">HR Dashboard</div>
+                    <div class="page-sub">Welcome back, Kenneth &nbsp;&middot;&nbsp; Friday, March 27, 2026</div>
+                </div>
+                <div class="header-actions">
+                    <button class="pill-btn">
+                        <svg width="13" height="13" viewBox="0 0 16 16" fill="none">
+                            <rect x="2" y="3" width="12" height="11" rx="1.5" stroke="currentColor"
+                                stroke-width="1.3" />
+                            <path d="M5 1v4M11 1v4M2 7.5h12" stroke="currentColor" stroke-width="1.3"
+                                stroke-linecap="round" />
+                        </svg>
+                        Mar 23 – Apr 07, 2026
+                        <svg width="10" height="10" viewBox="0 0 12 12" fill="none">
+                            <path d="M3 4.5l3 3 3-3" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"
+                                stroke-linejoin="round" />
+                        </svg>
+                    </button>
+                    <button class="btn-primary">
+                        <svg width="13" height="13" viewBox="0 0 16 16" fill="none">
+                            <path d="M8 2v9M4 8l4 4 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"
+                                stroke-linejoin="round" />
+                            <path d="M2 13h12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
+                        </svg>
+                        Export Report
+                    </button>
+                </div>
+            </div>
+
+            <!-- SECTION: MANPOWER OVERHEAD -->
+            <div class="section-hd">
+                <span class="section-hd-label">Manpower Overhead</span>
+                <div class="section-hd-line"></div>
+            </div>
+
+            <div class="stat-grid mb-10">
+                <div class="stat-card c-teal">
+                    <div class="stat-ico-wrap ico-teal">
+                        <svg width="17" height="17" viewBox="0 0 16 16" fill="none">
+                            <rect x="1.5" y="3.5" width="13" height="9" rx="1.5" stroke="currentColor"
+                                stroke-width="1.3" />
+                            <path d="M5.5 8h1.2m0 0a1.3 1.3 0 100-2.6H6a1.3 1.3 0 000 2.6h.5zm0 0a1.3 1.3 0 110 2.6H6"
+                                stroke="currentColor" stroke-width="1.2" stroke-linecap="round" />
+                            <path d="M11.5 5.5v5" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" />
+                        </svg>
+                    </div>
+                    <div class="stat-lbl">Total Payroll</div>
+                    <div class="stat-val teal">&#8369;1,139,000</div>
+                    <div class="stat-meta">Gross this cutoff period</div>
+                </div>
+
+                <div class="stat-card c-amber">
+                    <div class="stat-ico-wrap ico-amber">
+                        <svg width="17" height="17" viewBox="0 0 16 16" fill="none">
+                            <path d="M2 11l4-6 3 4 2-2.5 3 4.5" stroke="currentColor" stroke-width="1.3"
+                                stroke-linecap="round" stroke-linejoin="round" />
+                        </svg>
+                    </div>
+                    <div class="stat-lbl">Average Salary Rate</div>
+                    <div class="stat-val amber">&#8369;17,000</div>
+                    <div class="stat-meta">Per employee / month</div>
+                </div>
+
+                <div class="stat-card c-blue">
+                    <div class="stat-ico-wrap ico-blue">
+                        <svg width="17" height="17" viewBox="0 0 16 16" fill="none">
+                            <path d="M8 2a6 6 0 100 12A6 6 0 008 2z" stroke="currentColor" stroke-width="1.3" />
+                            <path d="M8 5.5v5M5.5 8h5" stroke="currentColor" stroke-width="1.3"
+                                stroke-linecap="round" />
+                        </svg>
+                    </div>
+                    <div class="stat-lbl">ER Contributions</div>
+                    <div class="stat-val blue">&#8369;89,240</div>
+                    <div class="stat-meta">SSS + Pag-IBIG + PhilHealth</div>
+                </div>
+
+                <div class="stat-card c-green">
+                    <div class="stat-ico-wrap ico-green">
+                        <svg width="17" height="17" viewBox="0 0 16 16" fill="none">
+                            <circle cx="6" cy="5" r="2.5" stroke="currentColor" stroke-width="1.3" />
+                            <path d="M1 14c0-2.8 2.2-4.5 5-4.5s5 1.7 5 4.5" stroke="currentColor" stroke-width="1.3"
+                                stroke-linecap="round" />
+                            <path d="M12 6v4M10 8h4" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" />
+                        </svg>
+                    </div>
+                    <div class="stat-lbl">Active Employees</div>
+                    <div class="stat-val green">67</div>
+                    <div class="stat-meta">Current workforce</div>
+                </div>
+            </div>
+
+            <div class="contrib-grid">
+                <div class="contrib-card">
+                    <div class="contrib-stripe" style="background:var(--blue)"></div>
+                    <div class="contrib-lbl">Social Security System</div>
+                    <div class="tag tag-blue">SSS</div>
+                    <div class="contrib-val" style="color:var(--blue)">&#8369;31,720</div>
+                    <div class="contrib-sub">Employer share &nbsp;&middot;&nbsp; &#8369;473 avg / employee</div>
+                    <div class="contrib-split">
+                        <div class="contrib-split-item"><strong>EE Share</strong>&#8369;22,110</div>
+                        <div class="contrib-split-item"><strong>Combined</strong>&#8369;53,830</div>
+                    </div>
+                </div>
+                <div class="contrib-card">
+                    <div class="contrib-stripe" style="background:var(--green)"></div>
+                    <div class="contrib-lbl">Home Development Fund</div>
+                    <div class="tag tag-green">Pag-IBIG</div>
+                    <div class="contrib-val" style="color:var(--green)">&#8369;13,400</div>
+                    <div class="contrib-sub">Employer share &nbsp;&middot;&nbsp; &#8369;200 / employee</div>
+                    <div class="contrib-split">
+                        <div class="contrib-split-item"><strong>EE Share</strong>&#8369;13,400</div>
+                        <div class="contrib-split-item"><strong>Combined</strong>&#8369;26,800</div>
+                    </div>
+                </div>
+                <div class="contrib-card">
+                    <div class="contrib-stripe" style="background:var(--purple)"></div>
+                    <div class="contrib-lbl">National Health Insurance</div>
+                    <div class="tag tag-purple">PhilHealth</div>
+                    <div class="contrib-val" style="color:var(--purple)">&#8369;44,120</div>
+                    <div class="contrib-sub">Employer share &nbsp;&middot;&nbsp; 5% of basic salary</div>
+                    <div class="contrib-split">
+                        <div class="contrib-split-item"><strong>EE Share</strong>&#8369;44,120</div>
+                        <div class="contrib-split-item"><strong>Combined</strong>&#8369;88,240</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SECTION: WORKFORCE ANALYTICS -->
+            <div class="section-hd">
+                <span class="section-hd-label">Workforce Analytics</span>
+                <div class="section-hd-line"></div>
+            </div>
+
+            <div class="analytics-grid">
+                <div class="analytics-tile">
+                    <div class="at-ico-wrap ico-red">
+                        <svg width="18" height="18" viewBox="0 0 16 16" fill="none">
+                            <circle cx="8" cy="8" r="6.5" stroke="currentColor" stroke-width="1.3" />
+                            <path d="M5.5 5.5l5 5M10.5 5.5l-5 5" stroke="currentColor" stroke-width="1.4"
+                                stroke-linecap="round" />
+                        </svg>
+                    </div>
+                    <div class="at-content">
+                        <div class="at-lbl">Absences This Cutoff</div>
+                        <div class="at-val red">0</div>
+                        <div class="at-sub">No absences recorded &nbsp;&middot;&nbsp; Mar 23 – Apr 07</div>
+                    </div>
+                </div>
+                <div class="analytics-tile">
+                    <div class="at-ico-wrap ico-amber">
+                        <svg width="18" height="18" viewBox="0 0 16 16" fill="none">
+                            <circle cx="8" cy="8" r="6.5" stroke="currentColor" stroke-width="1.3" />
+                            <path d="M8 4.5V8.5l2.5 1.5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"
+                                stroke-linejoin="round" />
+                        </svg>
+                    </div>
+                    <div class="at-content">
+                        <div class="at-lbl">Late Arrivals This Cutoff</div>
+                        <div class="at-val amber">0</div>
+                        <div class="at-sub">Perfect on-time record &nbsp;&middot;&nbsp; Mar 23 – Apr 07</div>
+                    </div>
+                </div>
+                <div class="analytics-tile">
+                    <div class="at-ico-wrap ico-teal">
+                        <svg width="18" height="18" viewBox="0 0 16 16" fill="none">
+                            <rect x="2" y="3" width="12" height="11" rx="1.5" stroke="currentColor"
+                                stroke-width="1.3" />
+                            <path d="M5 1v4M11 1v4M2 7.5h12" stroke="currentColor" stroke-width="1.3"
+                                stroke-linecap="round" />
+                            <path d="M5.5 11h5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" />
+                        </svg>
+                    </div>
+                    <div class="at-content">
+                        <div class="at-lbl">On Leave This Cutoff</div>
+                        <div class="at-val teal">0</div>
+                        <div class="at-sub">No active leave requests</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SECTION: ATTENDANCE MONITORING -->
+            <div class="section-hd">
+                <span class="section-hd-label">Attendance Monitoring</span>
+                <div class="section-hd-line"></div>
+            </div>
+
+            <div class="grid-2 mb-10">
+                <div class="card">
+                    <div class="card-head">
+                        <div class="card-title">
+                            <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
+                                <circle cx="8" cy="8" r="6.5" stroke="var(--ink-3)" stroke-width="1.3" />
+                                <path d="M8 4.5V8.5l2.5 1.5" stroke="var(--ink-3)" stroke-width="1.3"
+                                    stroke-linecap="round" stroke-linejoin="round" />
+                            </svg>
+                            Late Watch
+                        </div>
+                        <span class="card-meta">Mar 23 – Apr 07, 2026</span>
+                    </div>
+                    <div class="empty-state">
+                        <div class="empty-icon-wrap">
+                            <svg width="18" height="18" viewBox="0 0 16 16" fill="none">
+                                <path d="M3 8.5l3.5 3.5 6.5-7" stroke="currentColor" stroke-width="1.6"
+                                    stroke-linecap="round" stroke-linejoin="round" />
+                            </svg>
+                        </div>
+                        <div class="empty-msg">No late employees this period</div>
+                        <div class="empty-sub">Attendance is on track</div>
+                    </div>
+                </div>
+
+                <div class="col-stack">
+                    <div class="tally-card">
+                        <div class="tally-head">
+                            <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
+                                <circle cx="8" cy="8" r="6.5" stroke="var(--amber)" stroke-width="1.3" />
+                                <path d="M8 4.5V8.5l2.5 1.5" stroke="var(--amber)" stroke-width="1.3"
+                                    stroke-linecap="round" stroke-linejoin="round" />
+                            </svg>
+                            <div class="tally-title">Late Arrivals — Historical</div>
+                        </div>
+                        <div class="tally-row">
+                            <span class="tally-name">Santos, Maria</span>
+                            <div class="tally-bar-track">
+                                <div class="tally-bar-fill fill-amber" style="width:70%"></div>
+                            </div>
+                            <span class="tally-count" style="color:var(--amber)">7</span>
+                        </div>
+                        <div class="tally-row">
+                            <span class="tally-name">Cruz, Jose</span>
+                            <div class="tally-bar-track">
+                                <div class="tally-bar-fill fill-amber" style="width:40%"></div>
+                            </div>
+                            <span class="tally-count" style="color:var(--amber)">4</span>
+                        </div>
+                        <div class="tally-row">
+                            <span class="tally-name">Reyes, Ana</span>
+                            <div class="tally-bar-track">
+                                <div class="tally-bar-fill fill-amber" style="width:20%"></div>
+                            </div>
+                            <span class="tally-count" style="color:var(--amber)">2</span>
+                        </div>
+                    </div>
+
+                    <div class="tally-card">
+                        <div class="tally-head">
+                            <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
+                                <circle cx="8" cy="8" r="6.5" stroke="var(--red)" stroke-width="1.3" />
+                                <path d="M5.5 5.5l5 5M10.5 5.5l-5 5" stroke="var(--red)" stroke-width="1.3"
+                                    stroke-linecap="round" />
+                            </svg>
+                            <div class="tally-title">Absences — Historical</div>
+                        </div>
+                        <div class="tally-row">
+                            <span class="tally-name">Villanueva, Mark</span>
+                            <div class="tally-bar-track">
+                                <div class="tally-bar-fill fill-red" style="width:60%"></div>
+                            </div>
+                            <span class="tally-count" style="color:var(--red)">3</span>
+                        </div>
+                        <div class="tally-row">
+                            <span class="tally-name">Lim, Grace</span>
+                            <div class="tally-bar-track">
+                                <div class="tally-bar-fill fill-red" style="width:40%"></div>
+                            </div>
+                            <span class="tally-count" style="color:var(--red)">2</span>
+                        </div>
+                        <div class="tally-row">
+                            <span class="tally-name">Torres, Ben</span>
+                            <div class="tally-bar-track">
+                                <div class="tally-bar-fill fill-red" style="width:20%"></div>
+                            </div>
+                            <span class="tally-count" style="color:var(--red)">1</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SECTION: DEMOGRAPHICS -->
+            <div class="section-hd">
+                <span class="section-hd-label">Distribution &amp; Demographics</span>
+                <div class="section-hd-line"></div>
+            </div>
+
+            <div class="chart-grid">
+                <div class="chart-card">
+                    <div class="card-head">
+                        <div class="card-title">
+                            <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
+                                <rect x="1" y="8" width="3" height="7" rx="1" stroke="var(--ink-3)"
+                                    stroke-width="1.2" />
+                                <rect x="6" y="4" width="4" height="11" rx="1" stroke="var(--ink-3)"
+                                    stroke-width="1.2" />
+                                <rect x="11" y="1" width="4" height="14" rx="1" stroke="var(--ink-3)"
+                                    stroke-width="1.2" />
+                            </svg>
+                            Department Distribution
+                        </div>
+                        <span class="card-meta">67 employees total</span>
+                    </div>
+                    <div class="chart-body"><canvas id="deptChart"></canvas></div>
+                </div>
+                <div class="chart-card">
+                    <div class="card-head">
+                        <div class="card-title">
+                            <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
+                                <circle cx="8" cy="8" r="6.5" stroke="var(--ink-3)" stroke-width="1.3" />
+                                <path d="M8 1.5v13M1.5 8h13" stroke="var(--ink-3)" stroke-width="1.2"
+                                    stroke-linecap="round" />
+                            </svg>
+                            Gender Distribution
+                        </div>
+                        <span class="card-meta">All departments</span>
+                    </div>
+                    <div class="chart-body"><canvas id="genderChart"></canvas></div>
+                </div>
+            </div>
+
+            <div style="height:24px"></div>
+        </main>
+    </div>
+
+    <script>
+        let isDark = false;
+
+        function toggleTheme() {
+            isDark = !isDark;
+            document.documentElement.setAttribute('data-mode', isDark ? 'dark' : 'light');
+            document.getElementById('theme-label').textContent = isDark ? 'Dark' : 'Light';
+            const ico = document.getElementById('theme-ico');
+            if (isDark) {
+                ico.innerHTML = `<path d="M12 8a4.5 4.5 0 01-6-6.3A6.5 6.5 0 108 14.5a4.5 4.5 0 014-6.5z" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>`;
+            } else {
+                ico.innerHTML = `<circle cx="8" cy="8" r="3" stroke="currentColor" stroke-width="1.5"/><path d="M8 1v2M8 13v2M1 8h2M13 8h2M3.05 3.05l1.41 1.41M11.54 11.54l1.41 1.41M3.05 12.95l1.41-1.41M11.54 4.46l1.41-1.41" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>`;
+            }
+            updateCharts();
+        }
+
+        function setActive(el) {
+            document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+            el.classList.add('active');
+        }
+        function toggleSub(id, btn) {
+            document.getElementById(id).classList.toggle('open');
+            setActive(btn);
+        }
+
+        const DEPT_LABELS = ['F&B', 'Housekeeping', 'Front Office', 'HR', 'Maintenance', 'Finance', 'Security'];
+        const DEPT_DATA = [14, 12, 10, 5, 8, 6, 12];
+        const FONT = { family: "'Inter',sans-serif", size: 11, weight: '500' };
+
+        function tv() {
+            const s = getComputedStyle(document.documentElement);
+            const g = v => s.getPropertyValue(v).trim();
+            return {
+                teal: g('--teal'),
+                purple: g('--purple'),
+                grid: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.055)',
+                tick: isDark ? 'rgba(255,255,255,0.38)' : 'rgba(28,38,56,0.5)',
+                legend: isDark ? 'rgba(255,255,255,0.5)' : 'rgba(28,38,56,0.6)',
+                ttBg: isDark ? 'hsl(224,14%,13%)' : '#fff',
+                ttBdr: isDark ? 'hsl(224,10%,22%)' : 'hsl(214,16%,88%)',
+                ttBody: isDark ? 'hsl(0,0%,76%)' : 'hsl(218,18%,26%)',
+                doBdr: isDark ? 'hsl(224,14%,10%)' : '#fff',
+            };
+        }
+
+        function bars() {
+            const h = isDark ? '188,80%,52%' : '188,64%,36%';
+            return [0.82, 0.64, 0.54, 0.42, 0.6, 0.48, 0.72].map(a => `hsla(${h},${a})`);
+        }
+
+        let dChart, gChart;
+
+        function buildDept() {
+            const t = tv();
+            dChart = new Chart(document.getElementById('deptChart').getContext('2d'), {
+                type: 'bar',
+                data: {
+                    labels: DEPT_LABELS,
+                    datasets: [{
+                        label: 'Employees', data: DEPT_DATA,
+                        backgroundColor: bars(),
+                        borderColor: t.teal, borderWidth: 1,
+                        borderRadius: 5, borderSkipped: false,
+                    }]
+                },
+                options: {
+                    responsive: true, maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: { backgroundColor: t.ttBg, titleColor: t.teal, bodyColor: t.ttBody, borderColor: t.ttBdr, borderWidth: 1, padding: 10, cornerRadius: 7 }
+                    },
+                    scales: {
+                        x: { grid: { color: t.grid, drawBorder: false }, ticks: { color: t.tick, font: FONT } },
+                        y: { grid: { color: t.grid }, border: { display: false }, ticks: { color: t.tick, font: FONT, stepSize: 2 } }
+                    }
+                }
+            });
+        }
+
+        function buildGender() {
+            const t = tv();
+            gChart = new Chart(document.getElementById('genderChart').getContext('2d'), {
+                type: 'doughnut',
+                data: {
+                    labels: ['Male', 'Female'],
+                    datasets: [{ data: [38, 29], backgroundColor: [t.teal, t.purple], borderColor: t.doBdr, borderWidth: 3, hoverOffset: 5 }]
+                },
+                options: {
+                    responsive: true, maintainAspectRatio: false, cutout: '66%',
+                    plugins: {
+                        legend: { position: 'bottom', labels: { color: t.legend, font: FONT, padding: 16, usePointStyle: true, pointStyleWidth: 8 } },
+                        tooltip: {
+                            backgroundColor: t.ttBg, titleColor: t.teal, bodyColor: t.ttBody, borderColor: t.ttBdr, borderWidth: 1, padding: 10, cornerRadius: 7,
+                            callbacks: { label: c => ` ${c.label}: ${c.parsed} (${Math.round(c.parsed / 67 * 100)}%)` }
+                        }
+                    }
+                }
+            });
+        }
+
+        function updateCharts() {
+            const t = tv();
+            if (dChart) {
+                dChart.data.datasets[0].backgroundColor = bars();
+                dChart.data.datasets[0].borderColor = t.teal;
+                ['x', 'y'].forEach(ax => {
+                    dChart.options.scales[ax].grid.color = t.grid;
+                    dChart.options.scales[ax].ticks.color = t.tick;
+                });
+                Object.assign(dChart.options.plugins.tooltip, { backgroundColor: t.ttBg, titleColor: t.teal, bodyColor: t.ttBody, borderColor: t.ttBdr });
+                dChart.update();
+            }
+            if (gChart) {
+                gChart.data.datasets[0].backgroundColor = [t.teal, t.purple];
+                gChart.data.datasets[0].borderColor = t.doBdr;
+                gChart.options.plugins.legend.labels.color = t.legend;
+                Object.assign(gChart.options.plugins.tooltip, { backgroundColor: t.ttBg, titleColor: t.teal, bodyColor: t.ttBody, borderColor: t.ttBdr });
+                gChart.update();
+            }
+        }
+
+        window.addEventListener('load', () => { buildDept(); buildGender() });
+    </script>
+</body>
+
+</html>

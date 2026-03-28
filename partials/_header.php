@@ -1,3 +1,9 @@
+<?php
+if (!defined('BASE_URL')) {
+    define('BASE_URL', '/ems1');
+}
+require_once __DIR__ . '/../src/Helpers/UrlHelper.php';
+?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -84,24 +90,24 @@
     <header class="bg-white/80 backdrop-blur-md border-b border-border sticky top-0 z-50">
         <div class="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
             <div class="flex items-center gap-12">
-                <a href="dashboard.php" class="flex items-center gap-2">
+                <a href="<?php echo baseUrl(getDashboardUrl()); ?>" class="flex items-center gap-2">
                     <div class="w-8 h-8 rounded-lg bg-primary text-primary-foreground flex items-center justify-center text-lg"><i class="fa-solid fa-layer-group"></i></div>
                     <span class="font-bold text-xl text-gray-900 tracking-tight">HRCore</span>
                 </a>
                 <nav class="hidden md:flex gap-2 text-sm">
-                    <a href="home.php" class="flex items-center gap-2 text-gray-500 hover:text-gray-900 transition-colors font-medium text-sm">
+                    <a href="<?php echo baseUrl('home'); ?>" class="flex items-center gap-2 text-gray-500 hover:text-gray-900 transition-colors font-medium text-sm">
                         <i class="fa-solid fa-arrow-left"></i> Return to Home
                     </a>
                     <?php $currentPage = basename($_SERVER['PHP_SELF']); ?>
                     <?php $activeTab = $_GET['tab'] ?? 'dashboard'; ?>
-                    <a href="dashboard.php" class="nav-link <?php echo ($currentPage == 'dashboard.php' && $activeTab == 'dashboard') ? 'active' : ''; ?>">Overview</a>
-                    <a href="employee.php" class="nav-link <?php echo ($currentPage == 'employee.php') ? 'active' : ''; ?>">Employees</a>
-                    <a href="dashboard.php?tab=approvals" class="nav-link relative <?php echo ($currentPage == 'dashboard.php' && $activeTab == 'approvals') ? 'active' : ''; ?>">
+                    <a href="<?php echo baseUrl(getDashboardUrl()); ?>" class="nav-link <?php echo (($currentPage == 'dashboard.php' || $currentPage == 'ceodashboard.php') && $activeTab == 'dashboard') ? 'active' : ''; ?>">Overview</a>
+                    <a href="<?php echo baseUrl('employee'); ?>" class="nav-link <?php echo ($currentPage == 'employee.php') ? 'active' : ''; ?>">Employees</a>
+                    <a href="<?php echo baseUrl(getDashboardUrl() . '?tab=approvals'); ?>" class="nav-link relative <?php echo ($currentPage == 'dashboard.php' && $activeTab == 'approvals') ? 'active' : ''; ?>">
                         Approvals <?php if(isset($totalPending) && $totalPending > 0): ?><span class="absolute top-0.5 right-0 w-2 h-2 bg-red-500 rounded-full"></span><?php endif; ?>
                     </a>
-                    <a href="dashboard.php?tab=global_schedule" class="nav-link <?php echo ($currentPage == 'dashboard.php' && $activeTab == 'global_schedule') ? 'active' : ''; ?>">Global Schedule</a>
-                    <a href="dashboard.php?tab=payroll" class="nav-link <?php echo ($currentPage == 'dashboard.php' && $activeTab == 'payroll') ? 'active' : ''; ?>">Payroll</a>
-                    <a href="loan.php" class="nav-link <?php echo ($currentPage == 'loan.php') ? 'active' : ''; ?>">Loans</a>
+                    <a href="<?php echo baseUrl(getDashboardUrl() . '?tab=global_schedule'); ?>" class="nav-link <?php echo ($currentPage == 'dashboard.php' && $activeTab == 'global_schedule') ? 'active' : ''; ?>">Global Schedule</a>
+                    <a href="<?php echo baseUrl(getDashboardUrl() . '?tab=payroll'); ?>" class="nav-link <?php echo ($currentPage == 'dashboard.php' && $activeTab == 'payroll') ? 'active' : ''; ?>">Payroll</a>
+                    <a href="<?php echo baseUrl('loan'); ?>" class="nav-link <?php echo ($currentPage == 'loan.php') ? 'active' : ''; ?>">Loans</a>
                 </nav>
             </div>
             <div class="flex items-center gap-4">

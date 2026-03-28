@@ -1,303 +1,256 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>HRCore | Loan Management</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    fontFamily: { sans: ['Inter', 'sans-serif'] },
-                    colors: { navy: { 800: '#1e293b', 900: '#0f172a' }, brand: { 500: '#10b981', 600: '#059669' } }
-                }
-            }
-        }
-    </script>
-    <style>
-        .fade-in { animation: fadeIn 0.4s ease-out forwards; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-        .nav-link.active { color: #0f172a; font-weight: 600; }
-        .select2-container .select2-selection--single { height: 42px; border-color: #e2e8f0; border-radius: 0.5rem; padding-top: 6px; }
-        .select2-container--default .select2-selection--single .select2-selection__arrow { height: 40px; }
-    </style>
-</head>
-<body class="bg-gray-50 text-slate-600 font-sans">
+<?php
+$pageTitle = 'Loan Management — Azzurro HR';
+require BASE_PATH . '/partials/layout_head.php';
+require BASE_PATH . '/partials/layout_topbar.php';
+require BASE_PATH . '/partials/layout_sidebar.php';
+?>
 
-    <header class="bg-white border-b border-gray-200 sticky top-0 z-50">
-        <div class="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
-            <div class="flex items-center gap-12">
-                <div class="flex items-center gap-2">
-                    <div class="w-8 h-8 rounded-full bg-green-500 text-white flex items-center justify-center text-lg"><i class="fa-solid fa-smile"></i></div>
-                    <span class="font-bold text-xl text-slate-800 tracking-tight">HRCore</span>
-                </div>
-                <nav class="hidden md:flex gap-8 text-sm text-gray-500">
-                    <a href="home.php" class="flex items-center gap-2 text-gray-500 hover:text-gray-900 transition-colors font-medium text-sm">
-                        <i class="fa-solid fa-arrow-left"></i> Return to Home
-                    </a>
-                    <a href="dashboard.php" class="nav-link hover:text-slate-900 transition-colors">Overview</a>
-                    <a href="employee.php" class="nav-link hover:text-slate-900 transition-colors">Employees</a>
-                    <a href="dashboard.php?tab=approvals" class="nav-link hover:text-slate-900 transition-colors">Approvals</a>
-                    <a href="dashboard.php?tab=global_schedule" class="nav-link hover:text-slate-900 transition-colors">Global Schedule</a>
-                    <a href="dashboard.php?tab=payroll" class="nav-link hover:text-slate-900 transition-colors">Payroll</a>
-                    <a href="loan.php" class="nav-link text-slate-900 font-semibold active">Loans</a>
-                </nav>
-            </div>
-            <div class="flex items-center gap-4">
-                <span class="text-xs font-semibold text-gray-500"><?php echo htmlspecialchars($current_fullname); ?></span>
-                <div class="w-8 h-8 rounded-full bg-navy-900 text-white flex items-center justify-center text-xs font-bold"><?php echo substr($user_role,0,2); ?></div>
-            </div>
+<div class="page-header">
+    <div>
+        <h1 class="page-title"><i class="fa-solid fa-hand-holding-dollar"></i> Financial Ledger</h1>
+        <p class="page-sub"><?php echo ($is_hr || $is_ceo) ? 'Employee loan administration and approvals' : 'My personal loan records and requests'; ?></p>
+    </div>
+    <div class="header-actions">
+        <button onclick="openModal()" class="btn-primary"><i class="fa-solid fa-plus"></i> <?php echo ($is_hr || $is_ceo) ? 'Grant New Loan' : 'Request Loan'; ?></button>
+    </div>
+</div>
+
+<?php if ($is_hr || $is_ceo): ?>
+    <!-- ADMIN STATS -->
+    <div class="stat-grid">
+        <div class="stat-card c-teal">
+            <div class="stat-ico-wrap ico-teal"><i class="fa-solid fa-piggy-bank"></i></div>
+            <div class="stat-lbl">Active Ledger</div>
+            <div class="stat-val teal"><?php echo number_format($totalActive); ?></div>
+            <div class="stat-meta">Active employee loans</div>
         </div>
-    </header>
-
-    <div class="bg-[#111827] pb-32 pt-10 px-6">
-        <div class="max-w-7xl mx-auto">
-            <h1 class="text-2xl font-bold text-white mb-1">Company Loans</h1>
-            <p class="text-gray-400 text-sm">Manage employee balances, advances, and amortizations</p>
+        <div class="stat-card c-amber">
+            <div class="stat-ico-wrap ico-amber"><i class="fa-solid fa-hourglass-half"></i></div>
+            <div class="stat-lbl">Pending Review</div>
+            <div class="stat-val amber"><?php echo number_format($totalPending); ?></div>
+            <div class="stat-meta">Awaiting your approval</div>
+        </div>
+        <div class="stat-card c-blue">
+            <div class="stat-ico-wrap ico-blue"><i class="fa-solid fa-coins"></i></div>
+            <div class="stat-lbl">Total Receivables</div>
+            <div class="stat-val blue">₱<?php echo number_format($totalReceivable / 1000, 1); ?>k</div>
+            <div class="stat-meta">Outstanding principal</div>
         </div>
     </div>
 
-    <main class="max-w-7xl mx-auto px-6 -mt-24 pb-12 relative min-h-screen">
-
-        <?php if ($message): ?>
-            <div class="mb-6 px-4 py-3 rounded-lg shadow-sm border-l-4 <?php echo $messageType == 'success' ? 'bg-white border-green-500 text-green-700' : 'bg-white border-red-500 text-red-700'; ?> flex items-center gap-3 animate-fade-in relative">
-                <i class="fa-solid <?php echo $messageType == 'success' ? 'fa-check-circle' : 'fa-exclamation-circle'; ?>"></i>
-                <p class="font-medium text-sm"><?php echo htmlspecialchars($message); ?></p>
-                <button onclick="this.parentElement.remove()" class="absolute right-4 text-gray-400 hover:text-gray-600"><i class="fa-solid fa-times"></i></button>
+    <!-- ADMIN TABS -->
+    <div class="flex-row mb-20 mt-20" style="border-bottom: 1px solid var(--border-lt); gap: 20px;">
+        <a href="?tab=pending" class="nav-item <?php echo $active_tab === 'pending' ? 'active' : ''; ?>" style="padding: 10px 5px; border-bottom: 2px solid <?php echo $active_tab === 'pending' ? 'var(--teal)' : 'transparent'; ?>; background: none;">
+            Approvals Queued <?php if(count($pendingLoans) > 0): ?><span class="tag tag-red" style="margin-left:5px;"><?php echo count($pendingLoans); ?></span><?php endif; ?>
+        </a>
+        <a href="?tab=all_loans" class="nav-item <?php echo $active_tab === 'all_loans' ? 'active' : ''; ?>" style="padding: 10px 5px; border-bottom: 2px solid <?php echo $active_tab === 'all_loans' ? 'var(--teal)' : 'transparent'; ?>; background: none;">Master Ledger</a>
+    </div>
+<?php else: ?>
+    <!-- EMPLOYEE SUMMARY -->
+    <?php $myBal = 0; foreach($myLoans as $ml) if($ml['status']=='Active') $myBal += $ml['remaining_balance']; ?>
+    <div class="card mb-20" style="background: linear-gradient(135deg, var(--teal-deep), var(--teal)); border: none;">
+        <div class="card-body flex-between" style="padding: 30px;">
+            <div>
+                <p style="color: var(--teal-bg); font-weight: 600; font-size: 11px; text-transform: uppercase; letter-spacing: 1px;">Outstanding Balance</p>
+                <h2 style="color: #fff; font-size: 32px; font-weight: 800; font-family: 'DM Mono';">₱ <?php echo number_format($myBal, 2); ?></h2>
+                <p style="color: var(--teal-bg); font-size: 12px; margin-top: 5px;">Automatically deducted per pay period.</p>
             </div>
+            <div style="background: rgba(255,255,255,0.1); width: 60px; height: 60px; border-radius: 12px; display: flex; align-items: center; justify-content: center;">
+                <i class="fa-solid fa-wallet" style="color: #fff; font-size: 24px;"></i>
+            </div>
+        </div>
+    </div>
+<?php endif; ?>
+
+<?php if ($message): ?>
+    <div class="card mb-20" style="background: <?php echo $messageType == 'success' ? 'var(--green-bg)' : 'var(--red-bg)'; ?>;">
+        <div class="card-body" style="color: <?php echo $messageType == 'success' ? 'var(--green)' : 'var(--red)'; ?>; font-weight: 600;">
+            <i class="fa-solid <?php echo $messageType == 'success' ? 'fa-check-circle' : 'fa-exclamation-circle'; ?>"></i>
+            <?php echo htmlspecialchars($message); ?>
+        </div>
+    </div>
+<?php endif; ?>
+
+<div class="card">
+    <div class="card-head">
+        <div class="card-title">
+            <?php echo ($active_tab === 'pending') ? 'Pending Requests' : (($is_hr || $is_ceo) ? 'Complete Loan History' : 'My Personal Ledger'); ?>
+        </div>
+        <?php if ($active_tab === 'all_loans'): ?>
+            <form method="GET" class="flex-row">
+                <input type="hidden" name="tab" value="all_loans">
+                <select name="status" onchange="this.form.submit()" class="input-field" style="width: 150px; height: 30px; font-size: 11px;">
+                    <option value="">All Statuses</option>
+                    <option value="Active" <?php echo $filter_status == 'Active' ? 'selected' : ''; ?>>Active</option>
+                    <option value="Paid" <?php echo $filter_status == 'Paid' ? 'selected' : ''; ?>>Paid</option>
+                    <option value="Hold" <?php echo $filter_status == 'Hold' ? 'selected' : ''; ?>>Hold</option>
+                    <option value="Rejected" <?php echo $filter_status == 'Rejected' ? 'selected' : ''; ?>>Rejected</option>
+                </select>
+            </form>
         <?php endif; ?>
+    </div>
+    <div class="card-body" style="padding: 0;">
+        <?php 
+            $loansToRender = ($is_hr || $is_ceo) ? ($active_tab === 'pending' ? $pendingLoans : $allLoans) : $myLoans;
+            renderUnifiedLoanTable($loansToRender, $approval_role, ($active_tab === 'pending')); 
+        ?>
+    </div>
+</div>
 
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6 fade-in">
-            <div class="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
-                <p class="text-gray-500 text-xs font-medium mb-2 uppercase tracking-wide">Active Loans</p>
-                <h2 class="text-3xl font-bold text-gray-800"><?php echo number_format($totalActive); ?></h2>
+<!-- MODALS -->
+<div id="modalBackdrop" class="modal-overlay" style="position:fixed; inset:0; background:rgba(0,0,0,0.5); backdrop-filter:blur(4px); z-index:100; display:none;" onclick="closeModal(); closeReview();"></div>
+
+<div id="addLoanModal" class="modal-container" style="position:fixed; top:50%; left:50%; transform:translate(-50%, -50%); width:450px; background:var(--bg-card); border-radius:16px; border:1px solid var(--border); box-shadow:var(--sh-md); z-index:101; display:none; flex-direction:column;">
+    <div class="modal-header" style="padding:15px 20px; border-bottom:1px solid var(--border-lt); display:flex; align-items:center; justify-content:space-between; background:var(--bg-raised); border-radius:16px 16px 0 0;">
+        <h3 class="card-title"><i class="fa-solid fa-plus-circle"></i> New Loan Record</h3>
+        <button onclick="closeModal()" class="icon-btn" style="border:none; background:none;"><i class="fa-solid fa-times"></i></button>
+    </div>
+    <form method="POST" action="">
+        <div class="modal-body" style="padding:20px;">
+            <input type="hidden" name="action" value="add_loan">
+            <?php if ($is_hr || $is_ceo): ?>
+                <div class="form-group">
+                    <label class="form-label">Employee Selection</label>
+                    <select name="emp_id" id="emp_selector" class="input-field" required style="width:100%;">
+                        <?php foreach($employees as $e): ?>
+                            <option value="<?php echo $e['emp_id']; ?>"><?php echo $e['last_name'] . ', ' . $e['first_name'] . ' (' . $e['ac_no'] . ')'; ?></option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
+            <?php endif; ?>
+            <div class="grid-2">
+                <div class="form-group"><label class="form-label">Category</label><select name="loan_category" class="input-field"><option value="Salary Advance">Salary Advance</option><option value="Emergency Loan">Emergency Loan</option><option value="Gadget Loan">Gadget Loan</option><option value="SSS/Pag-IBIG">SSS/Pag-IBIG</option><option value="Company Loan">Company Loan</option></select></div>
+                <div class="form-group"><label class="form-label">Frequency</label><select name="deduction_frequency" id="freq" class="input-field" onchange="calc()"><option value="Semi-monthly">Semi-monthly</option><option value="Monthly">Monthly</option></select></div>
             </div>
-            <div class="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
-                <p class="text-gray-500 text-xs font-medium mb-2 uppercase tracking-wide">New This Month</p>
-                <h2 class="text-3xl font-bold text-gray-800"><?php echo number_format($loansThisMonth); ?></h2>
+            <div class="form-group"><label class="form-label">Amount (Principal)</label><input type="number" step="0.01" name="principal_amount" id="principal" class="input-field" style="font-weight:700; font-family:'DM Mono';" required oninput="calc()"></div>
+            <div class="grid-2">
+                <div class="form-group"><label class="form-label">Terms (Months)</label><input type="number" name="months_to_pay" id="months" value="1" class="input-field" required oninput="calc()"></div>
+                <div class="form-group"><label class="form-label">Interest %</label><input type="number" step="0.01" name="interest_rate" id="rate" value="0" class="input-field" oninput="calc()"></div>
             </div>
-            <div class="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
-                <p class="text-gray-500 text-xs font-medium mb-2 uppercase tracking-wide">Total Receivables</p>
-                <h2 class="text-3xl font-bold text-indigo-600">₱<?php echo number_format($totalReceivable, 2); ?></h2>
+            <div style="background:var(--teal-bg); padding:15px; border-radius:8px; border:1px solid var(--teal-border); margin-top:10px;">
+                <div class="flex-between" style="font-size:11px; margin-bottom:5px;"><span>Total Payable:</span><span id="disp_total" style="font-weight:700;">₱ 0.00</span></div>
+                <div class="flex-between" style="font-size:13px; color:var(--teal-deep); font-weight:800;"><span>Deduction/Period:</span><span id="disp_deduction">₱ 0.00</span></div>
             </div>
         </div>
+        <div class="modal-footer" style="padding:15px 20px; border-top:1px solid var(--border-lt); display:flex; justify-content:flex-end; gap:10px; background:var(--bg-raised); border-radius:0 0 16px 16px;">
+            <button type="button" onclick="closeModal()" class="pill-btn">Cancel</button>
+            <button type="submit" class="btn-primary">Create Record</button>
+        </div>
+    </form>
+</div>
 
-        <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 fade-in">
-            <!-- Form -->
-            <div class="lg:col-span-4 space-y-6">
-                <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 sticky top-24">
-                    <div class="flex items-center gap-2 mb-6 border-b border-gray-100 pb-3">
-                        <div class="w-8 h-8 rounded bg-indigo-50 text-indigo-600 flex items-center justify-center"><i class="fa-solid fa-pen-to-square"></i></div>
-                        <h3 class="font-bold text-gray-800">New Application</h3>
-                    </div>
-
-                    <form method="POST">
-                        <input type="hidden" name="action" value="add_loan">
-                        
-                        <div class="mb-4">
-                            <label class="block text-xs font-bold text-gray-500 mb-1 uppercase">Employee</label>
-                            <select name="emp_id" id="emp_selector" class="w-full" required onchange="window.location.href='loan.php?view_emp='+this.value">
-                                <option value="">Select Employee...</option>
-                                <?php foreach($employees as $emp): ?>
-                                    <option value="<?php echo $emp['emp_id']; ?>" <?php echo ($filter_emp == $emp['emp_id']) ? 'selected' : ''; ?>>
-                                        <?php echo htmlspecialchars($emp['last_name'] . ', ' . $emp['first_name']); ?> (<?php echo $emp['ac_no']; ?>)
-                                    </option>
-                                <?php endforeach; ?>
-                            </select>
-                        </div>
-
-                        <div class="grid grid-cols-2 gap-4 mb-4">
-                            <div>
-                                <label class="block text-xs font-bold text-gray-500 mb-1 uppercase">Type</label>
-                                <select name="loan_category" class="w-full border border-gray-300 rounded-lg p-2 text-sm focus:ring-2 focus:ring-indigo-500 outline-none">
-                                    <option value="Salary Advance">Salary Advance</option>
-                                    <option value="Emergency Loan">Emergency Loan</option>
-                                    <option value="Gadget Loan">Gadget Loan</option>
-                                    <option value="SSS/Pag-IBIG">SSS/Pag-IBIG</option>
-                                    <option value="Company Loan">Company Loan</option>
-                                </select>
-                            </div>
-                            <div>
-                                <label class="block text-xs font-bold text-gray-500 mb-1 uppercase">Frequency</label>
-                                <select name="deduction_frequency" id="freq" class="w-full border border-gray-300 rounded-lg p-2 text-sm focus:ring-2 focus:ring-indigo-500 outline-none" onchange="calc()">
-                                    <option value="Semi-monthly">Semi-mo (x2)</option>
-                                    <option value="Monthly">Monthly (x1)</option>
-                                </select>
-                            </div>
-                        </div>
-
-                        <div class="mb-4">
-                            <label class="block text-xs font-bold text-gray-500 mb-1 uppercase">Description</label>
-                            <input type="text" name="description" placeholder="E.g. Hospital Bill" class="w-full border border-gray-300 rounded-lg p-2 text-sm focus:ring-2 focus:ring-indigo-500 outline-none">
-                        </div>
-
-                        <div class="grid grid-cols-2 gap-4 mb-4">
-                            <div>
-                                <label class="block text-xs font-bold text-gray-500 mb-1 uppercase">Principal (₱)</label>
-                                <input type="number" step="0.01" name="principal_amount" id="principal" class="w-full border border-gray-300 rounded-lg p-2 text-sm font-bold text-gray-700 focus:ring-2 focus:ring-indigo-500 outline-none" required oninput="calc()">
-                            </div>
-                            <div>
-                                <label class="block text-xs font-bold text-gray-500 mb-1 uppercase">Interest (%)</label>
-                                <input type="number" step="0.01" name="interest_rate" id="rate" value="0" class="w-full border border-gray-300 rounded-lg p-2 text-sm focus:ring-2 focus:ring-indigo-500 outline-none" oninput="calc()">
-                            </div>
-                        </div>
-
-                        <div class="mb-4">
-                            <label class="block text-xs font-bold text-gray-500 mb-1 uppercase">Terms (Months)</label>
-                            <input type="number" name="months_to_pay" id="months" value="1" class="w-full border border-gray-300 rounded-lg p-2 text-sm focus:ring-2 focus:ring-indigo-500 outline-none" required oninput="calc()">
-                        </div>
-
-                        <div class="mb-6 bg-indigo-50 p-4 rounded-lg border border-indigo-100">
-                            <div class="flex justify-between text-xs text-gray-500 mb-1">
-                                <span>Interest:</span>
-                                <span id="disp_interest">0.00</span>
-                            </div>
-                            <div class="flex justify-between text-xs text-gray-700 font-bold border-b border-indigo-200 pb-2 mb-2">
-                                <span>Total Payable:</span>
-                                <span id="disp_total">0.00</span>
-                            </div>
-                            <div class="flex justify-between items-center">
-                                <span class="text-xs uppercase font-bold text-indigo-800">Deduction<br>(Per Cutoff)</span>
-                                <span class="text-xl font-bold text-indigo-600 font-mono" id="disp_deduction">0.00</span>
-                            </div>
-                        </div>
-
-                        <div class="mb-6">
-                            <label class="block text-xs font-bold text-gray-500 mb-1 uppercase">Start Deduction</label>
-                            <input type="date" name="start_date" class="w-full border border-gray-300 rounded-lg p-2 text-sm focus:ring-2 focus:ring-indigo-500 outline-none" required value="<?php echo date('Y-m-d'); ?>">
-                        </div>
-
-                        <button type="submit" class="w-full bg-navy-900 hover:bg-navy-800 text-white font-bold py-3 rounded-lg shadow-md transition-transform transform hover:-translate-y-0.5">
-                            Submit Application
-                        </button>
-                    </form>
-                </div>
+<!-- REVIEW MODAL -->
+<div id="reviewLoanModal" class="modal-container" style="position:fixed; top:50%; left:50%; transform:translate(-50%, -50%); width:400px; background:var(--bg-card); border-radius:16px; border:1px solid var(--border); box-shadow:var(--sh-md); z-index:101; display:none; flex-direction:column;">
+    <div class="modal-header">
+        <h3 class="card-title">Review & Revise</h3>
+        <button onclick="closeReview()" class="icon-btn" style="border:none; background:none;"><i class="fa-solid fa-times"></i></button>
+    </div>
+    <form method="POST" action="">
+        <div class="modal-body">
+            <input type="hidden" name="action" value="revise_loan"><input type="hidden" name="loan_id" id="rev_loan_id">
+            <div class="form-group"><label class="form-label">Principal Amount</label><input type="number" step="0.01" name="principal_amount" id="rev_principal" class="input-field" required></div>
+            <div class="grid-2">
+                <div class="form-group"><label class="form-label">Terms (Mo)</label><input type="number" name="months_to_pay" id="rev_months" class="input-field" required></div>
+                <div class="form-group"><label class="form-label">Frequency</label><select name="deduction_frequency" id="rev_freq" class="input-field"><option value="Semi-monthly">Semi-monthly</option><option value="Monthly">Monthly</option></select></div>
             </div>
+        </div>
+        <div class="modal-footer">
+            <button type="submit" name="approve_now" value="1" class="btn-primary">Save & Approve</button>
+            <button type="submit" name="approve_now" value="0" class="pill-btn">Just Save</button>
+        </div>
+    </form>
+</div>
 
-            <!-- List -->
-            <div class="lg:col-span-8">
-                <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden min-h-[600px]">
-                    
-                    <div class="px-6 py-4 border-b border-gray-100 bg-gray-50/50 flex flex-col sm:flex-row justify-between items-center gap-4">
-                        <div class="flex items-center gap-2">
-                            <h3 class="font-bold text-gray-800">Loan History</h3>
-                            <?php if(!empty($filter_emp) || !empty($filter_status)): ?>
-                                <a href="loan.php" class="text-xs text-red-500 hover:underline ml-2 bg-red-50 px-2 py-1 rounded border border-red-100"><i class="fa-solid fa-times mr-1"></i>Clear Filters</a>
-                            <?php endif; ?>
-                        </div>
-                        
-                        <form method="GET" class="flex gap-2 w-full sm:w-auto">
-                            <?php if(!empty($filter_emp)): ?>
-                                <input type="hidden" name="view_emp" value="<?php echo $filter_emp; ?>">
-                            <?php endif; ?>
+<script>
+    function calc() {
+        let P = parseFloat($('#principal').val()) || 0;
+        let R = parseFloat($('#rate').val()) || 0;
+        let T = parseFloat($('#months').val()) || 1;
+        let f = $('#freq').val();
+        let total = P + (P * (R / 100));
+        let monthly = total / T;
+        let ded = (f === 'Semi-monthly') ? (monthly / 2) : monthly;
+        $('#disp_total').text('₱ ' + total.toLocaleString(undefined, {minimumFractionDigits:2}));
+        $('#disp_deduction').text('₱ ' + ded.toLocaleString(undefined, {minimumFractionDigits:2}));
+    }
+    function openModal() { $('#addLoanModal').css('display', 'flex'); $('#modalBackdrop').show(); }
+    function closeModal() { $('#addLoanModal').hide(); $('#modalBackdrop').hide(); }
+    function openReview(id, p, r, m, f) {
+        $('#rev_loan_id').val(id); $('#rev_principal').val(p); $('#rev_months').val(m); $('#rev_freq').val(f);
+        $('#reviewLoanModal').css('display', 'flex'); $('#modalBackdrop').show();
+    }
+    function closeReview() { $('#reviewLoanModal').hide(); $('#modalBackdrop').hide(); }
+</script>
 
-                            <select name="status" onchange="this.form.submit()" class="border border-gray-300 rounded-lg text-sm p-2 bg-white focus:ring-2 focus:ring-indigo-500 outline-none">
-                                <option value="">All Statuses</option>
-                                <option value="Active" <?php echo $filter_status == 'Active' ? 'selected' : ''; ?>>Active</option>
-                                <option value="Paid" <?php echo $filter_status == 'Paid' ? 'selected' : ''; ?>>Paid</option>
-                                <option value="Hold" <?php echo $filter_status == 'Hold' ? 'selected' : ''; ?>>Hold</option>
-                            </select>
-                        </form>
-                    </div>
-                    
-                    <div class="overflow-x-auto">
-                        <table class="w-full text-sm text-left">
-                            <thead class="bg-gray-50 text-gray-500 text-xs uppercase font-bold border-b border-gray-100">
-                                <tr>
-                                    <th class="px-6 py-3">Employee / Details</th>
-                                    <th class="px-6 py-3 text-right">Payable</th>
-                                    <th class="px-6 py-3 text-right">Balance</th>
-                                    <th class="px-6 py-3 text-right">Amortization</th>
-                                    <th class="px-6 py-3 text-center">Status</th>
-                                    <th class="px-6 py-3 text-center">Action</th>
-                                </tr>
-                            </thead>
-                            <tbody class="divide-y divide-gray-50">
-                                <?php if (count($loans) > 0): ?>
-                                    <?php foreach($loans as $loan): ?>
-                                        <tr class="hover:bg-gray-50 transition">
-                                            <td class="px-6 py-4">
-                                                <div class="font-bold text-navy-900"><?php echo htmlspecialchars($loan['last_name'].', '.$loan['first_name']); ?></div>
-                                                <div class="text-xs text-indigo-600 font-semibold"><?php echo htmlspecialchars($loan['loan_category']); ?></div>
-                                                <div class="text-xs text-gray-400 mt-1"><?php echo htmlspecialchars($loan['description']); ?></div>
-                                            </td>
-                                            <td class="px-6 py-4 text-right font-mono text-gray-600">
-                                                <?php echo number_format($loan['total_payable'], 2); ?>
-                                            </td>
-                                            <td class="px-6 py-4 text-right font-mono font-bold text-indigo-700">
-                                                <?php echo number_format($loan['remaining_balance'], 2); ?>
-                                            </td>
-                                            <td class="px-6 py-4 text-right">
-                                                <div class="font-mono text-red-500 font-medium">- <?php echo number_format($loan['per_cutoff_deduction'], 2); ?></div>
-                                                <div class="text-[10px] text-gray-400"><?php echo $loan['deduction_frequency']; ?></div>
-                                            </td>
-                                            <td class="px-6 py-4 text-center">
-                                                <?php 
-                                                    $s = $loan['status'];
-                                                    $cls = 'bg-gray-100 text-gray-500 border-gray-200';
-                                                    if($s == 'Active') $cls = 'bg-green-50 text-green-700 border-green-200';
-                                                    if($s == 'Hold') $cls = 'bg-yellow-50 text-yellow-700 border-yellow-200';
-                                                ?>
-                                                <span class="<?php echo $cls; ?> border px-2 py-1 rounded text-[10px] font-bold uppercase tracking-wider"><?php echo $s; ?></span>
-                                            </td>
-                                            <td class="px-6 py-4 text-center">
-                                                <form method="POST" class="inline-block">
-                                                    <input type="hidden" name="action" value="update_status">
-                                                    <input type="hidden" name="loan_id" value="<?php echo $loan['loan_id']; ?>">
-                                                    <select name="new_status" onchange="this.form.submit()" class="text-[10px] border border-gray-300 rounded px-1 py-1 bg-white focus:border-indigo-500 outline-none">
-                                                        <option value="" disabled selected>Edit</option>
-                                                        <option value="Active">Active</option>
-                                                        <option value="Hold">Hold</option>
-                                                        <option value="Paid">Paid</option>
-                                                    </select>
-                                                </form>
-                                            </td>
-                                        </tr>
-                                    <?php endforeach; ?>
-                                <?php else: ?>
-                                    <tr>
-                                        <td colspan="6" class="px-6 py-12 text-center text-gray-400 italic">
-                                            No loan records found matching criteria.
-                                        </td>
-                                    </tr>
+<?php
+function renderUnifiedLoanTable($loans, $role, $isPendingView) {
+    if (empty($loans)) {
+        echo '<div style="padding:50px; text-align:center; color:var(--ink-4);"><i class="fa-solid fa-ghost" style="font-size:30px; margin-bottom:10px; opacity:0.3;"></i><p>No loan records found.</p></div>';
+        return;
+    }
+    ?>
+    <div class="table-wrap" style="border:none; border-radius:0;">
+        <table>
+            <thead>
+                <tr>
+                    <th>Ref / Type</th>
+                    <th>Employee</th>
+                    <th style="text-align: right;">Principal</th>
+                    <th style="text-align: right;">Balance</th>
+                    <th style="text-align: center;">Status</th>
+                    <th style="text-align: right;">Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                <?php foreach($loans as $l): 
+                    $tag = match($l['status']) {
+                        'Active' => 'tag-green',
+                        'Pending HR', 'Pending CEO' => 'tag-amber',
+                        'Paid' => 'tag-blue',
+                        'Rejected' => 'tag-red',
+                        default => 'tag-teal'
+                    };
+                ?>
+                <tr>
+                    <td>
+                        <div style="font-family:'DM Mono'; font-size:10px; color:var(--ink-4);">#<?php echo str_pad($l['loan_id'], 5, '0', STR_PAD_LEFT); ?></div>
+                        <div style="font-weight:700; font-size:12px;"><?php echo $l['loan_category']; ?></div>
+                    </td>
+                    <td>
+                        <div style="font-weight:600;"><?php echo htmlspecialchars($l['last_name'].', '.$l['first_name']); ?></div>
+                        <div style="font-size:10px; color:var(--ink-4);"><?php echo date('M d, Y', strtotime($l['created_at'])); ?></div>
+                    </td>
+                    <td style="text-align: right; font-family:'DM Mono';">₱<?php echo number_format($l['principal_amount'], 2); ?></td>
+                    <td style="text-align: right;">
+                        <div style="font-weight:700; font-family:'DM Mono';">₱<?php echo number_format($l['remaining_balance'], 2); ?></div>
+                        <div style="font-size:9px; color:var(--red); font-weight:600;">-<?php echo number_format($l['per_cutoff_deduction'], 2); ?>/cut</div>
+                    </td>
+                    <td style="text-align: center;"><span class="tag <?php echo $tag; ?>"><?php echo $l['status']; ?></span></td>
+                    <td style="text-align: right;">
+                        <div class="flex-row" style="justify-content: flex-end; gap:4px;">
+                            <?php if ($isPendingView): ?>
+                                <?php if ($role == 'HR' && $l['status'] == 'Pending HR'): ?>
+                                    <button onclick="openReview(<?php echo $l['loan_id']; ?>, <?php echo $l['principal_amount']; ?>, <?php echo $l['interest_rate']; ?>, <?php echo $l['months_to_pay']; ?>, '<?php echo $l['deduction_frequency']; ?>')" class="icon-btn"><i class="fa-solid fa-pen"></i></button>
+                                    <form method="POST" style="display:inline;"><input type="hidden" name="action" value="status_update_hr"><input type="hidden" name="loan_id" value="<?php echo $l['loan_id']; ?>"><button name="status" value="Approved" class="icon-btn ico-green"><i class="fa-solid fa-check"></i></button></form>
+                                <?php elseif ($role == 'CEO' && $l['status'] == 'Pending CEO'): ?>
+                                    <form method="POST" style="display:inline;"><input type="hidden" name="action" value="status_update_ceo"><input type="hidden" name="loan_id" value="<?php echo $l['loan_id']; ?>"><button name="status" value="Approved" class="btn-primary" style="font-size:10px; height:26px; padding:0 10px;">Final Approve</button></form>
                                 <?php endif; ?>
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
-        </div>
+                            <?php else: ?>
+                                <?php if (($role == 'HR' || $role == 'CEO') && $l['status'] == 'Active'): ?>
+                                    <form method="POST"><input type="hidden" name="action" value="update_status"><input type="hidden" name="loan_id" value="<?php echo $l['loan_id']; ?>"><select name="new_status" onchange="this.form.submit()" class="input-field" style="width:80px; height:24px; font-size:9px;"><option value="">Action</option><option value="Hold">Hold</option><option value="Paid">Force Paid</option></select></form>
+                                <?php else: ?>
+                                    <span style="font-size:10px; color:var(--ink-4);">-</span>
+                                <?php endif; ?>
+                            <?php endif; ?>
+                        </div>
+                    </td>
+                </tr>
+                <?php endforeach; ?>
+            </tbody>
+        </table>
+    </div>
+    <?php
+}
+?>
 
-    </main>
-
-    <script>
-        $(document).ready(function() {
-            $('#emp_selector').select2({ placeholder: "Search Employee...", allowClear: true });
-        });
-
-        function calc() {
-            // Get inputs
-            let P = parseFloat(document.getElementById('principal').value) || 0;
-            let R = parseFloat(document.getElementById('rate').value) || 0;
-            let T = parseFloat(document.getElementById('months').value) || 1;
-            let freq = document.getElementById('freq').value;
-
-            // Compute
-            let interest = P * (R / 100);
-            let total = P + interest;
-            let monthly = total / T;
-            let deduction = (freq === 'Semi-monthly') ? (monthly / 2) : monthly;
-
-            // Display
-            document.getElementById('disp_interest').innerText = interest.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
-            document.getElementById('disp_total').innerText = total.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
-            document.getElementById('disp_deduction').innerText = deduction.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
-        }
-    </script>
-</body>
-</html>
+<?php require BASE_PATH . '/partials/layout_footer.php'; ?>

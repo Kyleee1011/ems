@@ -1,4 +1,3 @@
-        <div id="tab-bulk_upload" class="tab-content hidden fade-in">
             <div class="max-w-3xl mx-auto stat-card overflow-hidden text-center">
                 <div class="p-10">
                     <div class="w-16 h-16 bg-green-50 text-green-600 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl"><i class="fa-solid fa-cloud-arrow-up"></i></div>
@@ -15,4 +14,3 @@
                     </form>
                 </div>
             </div>
-        </div>

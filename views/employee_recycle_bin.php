@@ -1,4 +1,3 @@
-        <div id="tab-recycle" class="tab-content hidden fade-in">
              <div class="stat-card p-0 overflow-hidden">
                 <div class="px-6 py-4 border-b border-gray-100 bg-red-50/50 flex items-center gap-2"><i class="fa-solid fa-trash-can text-red-400"></i><h3 class="font-bold text-gray-800">Recycle Bin</h3></div>
                 <div class="overflow-x-auto">
@@ -14,4 +13,3 @@
                     </table>
                 </div>
              </div>
-        </div>

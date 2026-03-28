@@ -16,6 +16,9 @@ RUN pecl install sqlsrv pdo_sqlsrv \
 # Enable Apache mod_rewrite
 RUN a2enmod rewrite
 
+# Copy custom virtual host configuration
+COPY vhost.conf /etc/apache2/sites-available/000-default.conf
+
 # Set working directory
 WORKDIR /var/www/html
 

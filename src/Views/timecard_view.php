@@ -1,174 +1,246 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DTR | EMS</title>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
-    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    fontFamily: { sans: ['"Plus Jakarta Sans"', 'sans-serif'] },
-                    colors: {
-                        primary: { DEFAULT: '#a3e635', 50: '#f7fee7', 100: '#ecfccb', 500: '#84cc16', 600: '#65a30d', foreground: '#1F1F1F' }
-                    },
-                    borderRadius: { lg: '0.625rem' }
-                }
-            }
-        }
-    </script>
-    <style>
-        body { background-color: #FAFAFA; color: #1F1F1F; }
-        .editable { cursor: pointer; position: relative; }
-        .editable:hover { background-color: #fef3c7; color: #d97706; font-weight: bold; border: 1px dashed #d97706; }
-        .editable:hover::after { content: "✎ Edit"; position: absolute; top: -15px; right: 0; font-size: 9px; background: #d97706; color: white; padding: 2px 4px; border-radius: 4px; }
-        .manual-entry { color: #d97706; font-weight: bold; position: relative; }
-        .manual-entry::after { content: "•"; position: absolute; top: -5px; right: -5px; color: orange; font-size: 10px; }
-        .stat-card { background: white; border: 1px solid #e5e7eb; border-radius: 0.625rem; box-shadow: 0 1px 3px 0 rgba(0,0,0,0.1); }
-        .select2-container .select2-selection--single { height: 40px; border-color: #d1d5db; border-radius: 0.5rem; padding: 5px; }
-        @media print { .no-print { display: none !important; } .print-only { display: block; } body { background: white; } .shadow-sm, .border, .stat-card { box-shadow: none; border: none; } }
-    </style>
-</head>
-<body class="p-4 md:p-8">
+<?php
+$pageTitle = 'Daily Time Record — Azzurro HR';
+require BASE_PATH . '/partials/layout_head.php';
+require BASE_PATH . '/partials/layout_topbar.php';
+require BASE_PATH . '/partials/layout_sidebar.php';
+?>
 
-    <div class="max-w-5xl mx-auto">
-        <div class="stat-card p-6 mb-6 no-print">
-            <div class="mb-2">
-        <a href="home.php" class="inline-flex items-center gap-2 text-gray-400 hover:text-gray-900 transition-colors text-xs font-bold uppercase tracking-widest"><i class="fa-solid fa-arrow-left"></i> Return</a>
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+<style>
+    .editable { cursor: pointer; position: relative; }
+    .editable:hover { background-color: var(--amber-bg); color: var(--amber); font-weight: bold; border: 1px dashed var(--amber); }
+    .editable:hover::after { content: "✎ Edit"; position: absolute; top: -15px; right: 0; font-size: 9px; background: var(--amber); color: white; padding: 2px 4px; border-radius: 4px; }
+    
+    .manual-entry { color: var(--amber); font-weight: bold; position: relative; }
+    .manual-entry::after { content: "•"; position: absolute; top: -5px; right: -5px; color: var(--amber); font-size: 10px; }
+    
+    .select2-container .select2-selection--single { height: 36px; border-color: var(--border); border-radius: var(--r-sm); padding: 4px; background: var(--bg-card); color: var(--ink-1); }
+    .select2-container--default .select2-selection--single .select2-selection__rendered { color: var(--ink-1); line-height: 28px; }
+    .select2-dropdown { background: var(--bg-card); border-color: var(--border); color: var(--ink-1); }
+    
+    .cls-col { border-left: 1px solid var(--border-lt) !important; border-right: 1px solid var(--border-lt) !important; }
+    .bg-nd { background-color: var(--teal-bg) !important; }
+    .bg-rd { background-color: var(--blue-bg) !important; }
+    .bg-hol { background-color: var(--amber-bg) !important; }
+    .bg-red-tint { background-color: var(--red-bg) !important; }
+
+    @media print { 
+        .no-print { display: none !important; } 
+        body { background: white; padding: 0; } 
+        .main { padding: 0; animation: none; }
+        .sidebar, .topbar { display: none !important; }
+        .app { display: block; }
+        .card { border: none !important; box-shadow: none !important; }
+        table { border: 1px solid #000 !important; }
+        th, td { border: 1px solid #000 !important; color: #000 !important; font-size: 7px !important; padding: 2px !important; }
+    }
+</style>
+
+<div class="page-header no-print">
+    <div>
+        <h1 class="page-title"><i class="fa-regular fa-clock"></i> Daily Time Record</h1>
+        <p class="page-sub">Official attendance logs and comprehensive classification</p>
     </div>
-            <div class="flex flex-col md:flex-row justify-between items-end gap-4">
-                <div class="w-full md:w-auto">
-                    <h1 class="text-xl font-bold text-gray-900 mb-4"><i class="fa-regular fa-clock text-primary-600 mr-2"></i>Daily Time Record</h1>
-                    <form method="GET" class="flex flex-col md:flex-row gap-4">
-                        <?php if ($is_hr): ?>
-                        <div class="w-full md:w-64">
-                            <label class="block text-xs font-bold text-gray-500 mb-1 uppercase">Employee</label>
-                            <select name="search_ac" id="hr_search" class="w-full" onchange="this.form.submit()">
-                                <option value="<?php echo $_SESSION['ac_no']; ?>">Myself</option>
-                                <?php foreach ($empList as $emp): ?>
-                                    <option value="<?php echo $emp['ac_no']; ?>" <?php echo ($target_ac_no == $emp['ac_no']) ? 'selected' : ''; ?>>
-                                        <?php echo $emp['last_name'] . ', ' . $emp['first_name']; ?>
-                                    </option>
-                                <?php endforeach; ?>
-                            </select>
-                        </div>
-                        <?php endif; ?>
-                        <div class="w-full md:w-64">
-                            <label class="block text-xs font-bold text-gray-500 mb-1 uppercase">Period</label>
-                            <select name="cutoff" class="w-full border border-gray-300 rounded-lg p-2 text-sm outline-none bg-white h-10" onchange="this.form.submit()">
-                                <?php foreach ($cutoffs as $c): ?>
-                                    <option value="<?php echo $c['val']; ?>" <?php echo ($selected_cutoff == $c['val']) ? 'selected' : ''; ?>>
-                                        <?php echo $c['label']; ?>
-                                    </option>
-                                <?php endforeach; ?>
-                            </select>
-                        </div>
-                    </form>
-                </div>
-                <button onclick="window.print()" class="bg-gray-900 hover:bg-black text-white font-medium px-5 py-2.5 rounded-lg flex items-center gap-2 transition shadow-lg"><i class="fa-solid fa-print"></i> Print DTR</button>
-            </div>
+    <div class="header-actions">
+        <button onclick="window.print()" class="btn-primary"><i class="fa-solid fa-print"></i> Print DTR</button>
+    </div>
+</div>
+
+<div class="card p-20 mb-20 no-print">
+    <form method="GET" class="flex-row" style="flex-wrap: wrap; align-items: flex-end;">
+        <?php if ($is_hr): ?>
+        <div class="form-group mb-0" style="flex: 1; min-width: 250px;">
+            <label class="form-label">Employee Selection</label>
+            <select name="search_ac" id="hr_search" class="input-field" onchange="this.form.submit()">
+                <option value="<?php echo $_SESSION['ac_no']; ?>">-- My Personal Record --</option>
+                <?php foreach ($empList as $emp): ?>
+                    <option value="<?php echo $emp['ac_no']; ?>" <?php echo ($target_ac_no == $emp['ac_no']) ? 'selected' : ''; ?>>
+                        <?php echo $emp['last_name'] . ', ' . $emp['first_name']; ?> (<?php echo $emp['ac_no']; ?>)
+                    </option>
+                <?php endforeach; ?>
+            </select>
         </div>
+        <?php endif; ?>
+        <div class="form-group mb-0" style="width: 250px;">
+            <label class="form-label">Pay Period</label>
+            <select name="cutoff" class="input-field" onchange="this.form.submit()">
+                <?php foreach ($cutoffs as $c): ?>
+                    <option value="<?php echo $c['val']; ?>" <?php echo ($selected_cutoff == $c['val']) ? 'selected' : ''; ?>>
+                        <?php echo $c['label']; ?>
+                    </option>
+                <?php endforeach; ?>
+            </select>
+        </div>
+    </form>
+</div>
 
-        <div class="stat-card p-8" id="printable">
-            <div class="text-center mb-8 border-b-2 border-gray-900 pb-4">
-                <h1 class="text-2xl font-bold text-gray-900 tracking-wider">AZZURRO HOTEL</h1>
-                <p class="text-sm font-semibold text-gray-500 tracking-[0.2em] mt-1">OFFICIAL TIME RECORD</p>
-            </div>
-            
-            <div class="grid grid-cols-2 gap-x-12 gap-y-2 mb-6 text-sm">
-                <div class="flex justify-between border-b border-gray-100 pb-1"><span class="font-bold text-gray-500">NAME</span><span class="font-bold text-gray-900 uppercase"><?php echo htmlspecialchars($target_name); ?></span></div>
-                <div class="flex justify-between border-b border-gray-100 pb-1"><span class="font-bold text-gray-500">ID NUMBER</span><span class="font-bold text-gray-900 font-mono"><?php echo htmlspecialchars($target_ac_no); ?></span></div>
-                <div class="flex justify-between border-b border-gray-100 pb-1"><span class="font-bold text-gray-500">PERIOD</span><span class="font-bold text-gray-900"><?php echo date('M d', strtotime($start_date)) . ' - ' . date('M d, Y', strtotime($end_date)); ?></span></div>
-                <div class="flex justify-between border-b border-gray-100 pb-1"><span class="font-bold text-gray-500">DEPARTMENT</span><span class="font-bold text-gray-900">--</span></div>
-            </div>
+<div class="card p-20" id="printable">
+    <div style="text-align: center; border-bottom: 2px solid var(--ink-1); padding-bottom: 10px; margin-bottom: 15px;">
+        <h1 style="font-size: 20px; font-weight: 800; letter-spacing: 2px;">AZZURRO HOTEL</h1>
+        <p style="font-size: 10px; font-weight: 600; color: var(--ink-3); text-transform: uppercase; letter-spacing: 3px;">OFFICIAL TIME RECORD</p>
+    </div>
 
-            <div class="overflow-x-auto">
-                <table class="w-full border-collapse border border-gray-300 text-xs text-center">
-                    <thead>
-                        <tr class="bg-gray-100 text-gray-700">
-                            <th rowspan="2" class="border border-gray-300 p-2 w-16">Date</th>
-                            <th rowspan="2" class="border border-gray-300 p-2 w-12">Day</th>
-                            <th colspan="2" class="border border-gray-300 p-1 bg-gray-50">Schedule</th>
-                            <th colspan="2" class="border border-gray-300 p-1 bg-gray-50">Actual Log <?php if($is_hr) echo '<i class="fa-solid fa-pen-to-square text-orange-500 ml-1"></i>'; ?></th>
-                            <th rowspan="2" class="border border-gray-300 p-2 w-16">Total<br>Hrs</th>
-                            <th rowspan="2" class="border border-gray-300 p-2 w-12 bg-gray-50 text-gray-800">OT<br>Hrs</th>
-                            <th colspan="2" class="border border-gray-300 p-1 bg-gray-50">Variance</th>
-                            <th rowspan="2" class="border border-gray-300 p-2">Remarks</th>
-                        </tr>
-                        <tr class="bg-gray-50">
-                            <th class="border border-gray-300 p-1 text-gray-600">IN</th>
-                            <th class="border border-gray-300 p-1 text-gray-600">OUT</th>
-                            <th class="border border-gray-300 p-1 text-gray-900 font-bold">IN</th>
-                            <th class="border border-gray-300 p-1 text-gray-900 font-bold">OUT</th>
-                            <th class="border border-gray-300 p-1 text-red-600">Late</th>
-                            <th class="border border-gray-300 p-1 text-red-600">UT</th>
-                        </tr>
-                    </thead>
-                    <tbody class="font-mono text-gray-700">
-                        <?php foreach ($data as $day): 
-                            $rowColor = $day['status_color'] ?? ''; 
-                            $editIn = $is_hr ? "onclick=\"editTime('{$day['date']}', 'IN', '{$day['actual_in']}')\" class='editable'" : "";
-                            $editOut = $is_hr ? "onclick=\"editTime('{$day['date']}', 'OUT', '{$day['actual_out']}')\" class='editable'" : "";
-                            
-                            $clsIn = $day['is_manual_in'] ? 'manual-entry' : '';
-                            $clsOut = $day['is_manual_out'] ? 'manual-entry' : '';
-                        ?>
-                        <tr class="<?php echo $rowColor; ?>">
-                            <td class="border border-gray-300 p-2 font-sans"><?php echo date('m/d', strtotime($day['date'])); ?></td>
-                            <td class="border border-gray-300 p-2 font-sans text-[10px] uppercase font-bold text-gray-500"><?php echo substr($day['day'], 0, 3); ?></td>
-                            <td class="border border-gray-300 p-2 text-gray-500"><?php echo $day['sched_in'] ?: $day['sched_code']; ?></td>
-                            <td class="border border-gray-300 p-2 text-gray-500"><?php echo $day['sched_out']; ?></td>
-                            
-                            <td <?php echo $editIn; ?> class="border border-gray-300 p-2 font-bold <?php echo $clsIn; ?> <?php echo $day['late_mins'] > 0 ? 'text-red-600' : ''; ?>">
-                                <?php echo $day['actual_in'] ?: '<span class="text-gray-300">-</span>'; ?>
-                            </td>
-                            
-                            <td <?php echo $editOut; ?> class="border border-gray-300 p-2 font-bold <?php echo $clsOut; ?> <?php echo $day['ut_mins'] > 0 ? 'text-red-600' : ''; ?>">
-                                <?php echo $day['actual_out'] ?: '<span class="text-gray-300">-</span>'; ?>
-                            </td>
-                            
-                            <td class="border border-gray-300 p-2 font-bold"><?php echo $day['hours'] > 0 ? $day['hours'] : ''; ?></td>
-                            <td class="border border-gray-300 p-2 font-bold text-primary-700 bg-primary-50/20"><?php echo $day['ot_hours'] > 0 ? $day['ot_hours'] : '-'; ?></td>
-                            <td class="border border-gray-300 p-2 <?php echo $day['late_mins'] > 0 ? 'bg-red-50 text-red-600' : ''; ?>"><?php echo $day['late_mins'] > 0 ? $day['late_mins'] : ''; ?></td>
-                            <td class="border border-gray-300 p-2 <?php echo $day['ut_mins'] > 0 ? 'bg-red-50 text-red-600' : ''; ?>"><?php echo $day['ut_mins'] > 0 ? $day['ut_mins'] : ''; ?></td>
-                            <td class="border border-gray-300 p-2 text-[10px] text-left font-sans font-semibold text-gray-600">
-                                <?php echo htmlspecialchars($day['remarks']); ?>
-                            </td>
-                        </tr>
-                        <?php endforeach; ?>
-                    </tbody>
-                </table>
-            </div>
-
-            <div class="mt-12 grid grid-cols-2 gap-20 no-print">
-                <div class="text-center"><div class="border-b border-gray-900 w-full mb-2"></div><p class="text-xs font-bold text-gray-600 uppercase">Employee Signature</p></div>
-                <div class="text-center"><div class="border-b border-gray-900 w-full mb-2"></div><p class="text-xs font-bold text-gray-600 uppercase">Department Head / HR</p></div>
-            </div>
-            
-            <div class="mt-4 text-center text-[10px] text-gray-400 print-only">Generated by EMS System on <?php echo date('Y-m-d H:i:s'); ?></div>
+    <div class="grid-2 mb-15" style="gap: 30px; font-size: 11px;">
+        <div class="flex-between" style="border-bottom: 1px solid var(--border-lt); padding-bottom: 3px;">
+            <span style="font-weight: 700; color: var(--ink-4);">NAME</span>
+            <span style="font-weight: 800; text-transform: uppercase;"><?php echo htmlspecialchars($target_name); ?></span>
+        </div>
+        <div class="flex-between" style="border-bottom: 1px solid var(--border-lt); padding-bottom: 3px;">
+            <span style="font-weight: 700; color: var(--ink-4);">ID NUMBER</span>
+            <span style="font-weight: 800; font-family: 'DM Mono';"><?php echo htmlspecialchars($target_ac_no); ?></span>
+        </div>
+        <div class="flex-between" style="border-bottom: 1px solid var(--border-lt); padding-bottom: 3px;">
+            <span style="font-weight: 700; color: var(--ink-4);">PERIOD</span>
+            <span style="font-weight: 800;"><?php echo date('M d', strtotime($start_date)) . ' - ' . date('M d, Y', strtotime($end_date)); ?></span>
+        </div>
+        <div class="flex-between" style="border-bottom: 1px solid var(--border-lt); padding-bottom: 3px;">
+            <span style="font-weight: 700; color: var(--ink-4);">DEPARTMENT</span>
+            <span style="font-weight: 800; text-transform: uppercase;"><?php echo htmlspecialchars($targetDept); ?></span>
         </div>
     </div>
 
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
-    <script>
-        $(document).ready(function() { $('#hr_search').select2({ placeholder: "Search Employee...", width: '100%' }); });
+    <div class="table-wrap" style="border: 1px solid var(--border); border-radius: 4px; overflow-x: auto;">
+        <table id="dtrTable" style="font-size: 8px; text-align: center; border-collapse: collapse; min-width: 1200px;">
+            <thead>
+                <tr>
+                    <th rowspan="2" style="width: 45px;">Date</th>
+                    <th rowspan="2" style="width: 30px;">Day</th>
+                    <th colspan="2" style="background: var(--bg-subtle);">Schedule</th>
+                    <th colspan="2" style="background: var(--bg-subtle);">Actual Log</th>
+                    <th rowspan="2" style="width: 35px;">Total<br>Hrs</th>
+                    <th rowspan="2" style="width: 30px; background: var(--teal-bg);">OT<br>Hrs</th>
+                    <th colspan="2" style="background: var(--red-bg);">Variance</th>
+                    <th rowspan="2" style="min-width: 80px;">Remarks</th>
+                    <th rowspan="2" class="cls-col bg-nd">ND<br>Min</th>
+                    <th colspan="2" class="cls-col bg-nd">Night Diff</th>
+                    <th colspan="2" class="cls-col bg-rd">Rest Day</th>
+                    <th colspan="2" class="cls-col bg-hol">Regular Hol</th>
+                    <th colspan="2" class="cls-col bg-hol">Special Hol</th>
+                    <th colspan="2" class="cls-col bg-hol">Double Hol</th>
+                    <th colspan="2" class="cls-col bg-nd">ND<br>RH</th>
+                    <th colspan="2" class="cls-col bg-nd">ND<br>SH</th>
+                    <th colspan="2" class="cls-col bg-nd">ND<br>DH</th>
+                    <th colspan="2" class="cls-col bg-rd">RD<br>RH</th>
+                    <th colspan="2" class="cls-col bg-rd">RD<br>SH</th>
+                    <th rowspan="2" style="width: 40px;">Type</th>
+                </tr>
+                <tr>
+                    <th style="background: var(--bg-raised);">IN</th>
+                    <th style="background: var(--bg-raised);">OUT</th>
+                    <th style="background: var(--bg-card); font-weight: 800;">IN</th>
+                    <th style="background: var(--bg-card); font-weight: 800;">OUT</th>
+                    <th style="color: var(--red);">Late</th>
+                    <th style="color: var(--red);">UT</th>
+                    
+                    <th class="bg-nd">Hrs</th><th class="bg-nd">OT</th>
+                    <th class="bg-rd">Hrs</th><th class="bg-rd">OT</th>
+                    <th class="bg-hol">Hrs</th><th class="bg-hol">OT</th>
+                    <th class="bg-hol">Hrs</th><th class="bg-hol">OT</th>
+                    <th class="bg-hol">Hrs</th><th class="bg-hol">OT</th>
+                    <th class="bg-nd">Hrs</th><th class="bg-nd">OT</th>
+                    <th class="bg-nd">Hrs</th><th class="bg-nd">OT</th>
+                    <th class="bg-nd">Hrs</th><th class="bg-nd">OT</th>
+                    <th class="bg-rd">Hrs</th><th class="bg-rd">OT</th>
+                    <th class="bg-rd">Hrs</th><th class="bg-rd">OT</th>
+                </tr>
+            </thead>
+            <tbody style="font-family: 'DM Mono'; font-weight: 500;">
+                <?php 
+                $grand = [
+                    'hrs'=>0, 'ot'=>0, 'late'=>0, 'ut'=>0, 'nd_m'=>0,
+                    'nd_h'=>0, 'nd_ot'=>0, 'rd_h'=>0, 'rd_ot'=>0,
+                    'rh_h'=>0, 'rh_ot'=>0, 'sh_h'=>0, 'sh_ot'=>0, 'dh_h'=>0, 'dh_ot'=>0,
+                    'nd_rh_h'=>0, 'nd_rh_ot'=>0, 'nd_sh_h'=>0, 'nd_sh_ot'=>0, 'nd_dh_h'=>0, 'nd_dh_ot'=>0,
+                    'rd_rh_h'=>0, 'rd_rh_ot'=>0, 'rd_sh_h'=>0, 'rd_sh_ot'=>0
+                ];
+                foreach ($data as $day): 
+                    $grand['hrs'] += (float)$day['hours']; $grand['ot'] += (float)$day['ot_hours'];
+                    $grand['late'] += (int)$day['late_mins']; $grand['ut'] += (int)$day['ut_mins'];
+                    $grand['nd_m'] += (int)$day['night_diff_mins'];
+                    $grand['nd_h'] += (float)$day['nd_hrs']; $grand['nd_ot'] += (float)$day['nd_ot_hrs'];
+                    $grand['rd_h'] += (float)$day['rest_day_hrs']; $grand['rd_ot'] += (float)$day['rest_day_ot_hrs'];
+                    $grand['rh_h'] += (float)$day['regular_holiday_hrs']; $grand['rh_ot'] += (float)$day['regular_holiday_ot_hrs'];
+                    $grand['sh_h'] += (float)$day['special_holiday_hrs']; $grand['sh_ot'] += (float)$day['special_holiday_ot_hrs'];
+                    $grand['dh_h'] += (float)$day['double_holiday_hrs']; $grand['dh_ot'] += (float)$day['double_holiday_ot_hrs'];
+                    $grand['nd_rh_h'] += (float)$day['nd_regular_holiday_hrs']; $grand['nd_rh_ot'] += 0; // Model logic check?
+                    $grand['nd_sh_h'] += (float)$day['nd_special_holiday_hrs'];
+                    $grand['nd_dh_h'] += (float)$day['nd_double_holiday_hrs'];
+                    $grand['rd_rh_h'] += (float)$day['rest_day_regular_holiday_hrs'];
+                    $grand['rd_sh_h'] += (float)$day['rest_day_special_holiday_hrs'];
 
-        function editTime(date, type, currentVal) {
-            let newVal = prompt(`FORCE ADJUST ${type} for ${date}\nEnter Time (HH:MM):`, currentVal);
-            if (newVal !== null) { 
-                $.post('', {
-                    action: 'update_log', ac_no: '<?php echo $target_ac_no; ?>',
-                    date: date, type: type, new_time: newVal
-                }, function(res) {
-                    if (res.success) location.reload(); else alert("Error: " + res.message);
-                }, 'json');
-            }
+                    $editIn = $is_hr ? "onclick=\"editTime('{$day['date']}', 'IN', '{$day['actual_in']}')\" class='editable'" : "";
+                    $editOut = $is_hr ? "onclick=\"editTime('{$day['date']}', 'OUT', '{$day['actual_out']}')\" class='editable'" : "";
+                    $clsIn = $day['is_manual_in'] ? 'manual-entry' : ''; $clsOut = $day['is_manual_out'] ? 'manual-entry' : '';
+                    
+                    $v = fn($val) => ($val > 0) ? number_format($val, (floor($val) == $val ? 0 : 2)) : '';
+                ?>
+                <tr>
+                    <td style="font-family:'Inter'; font-weight:600;"><?php echo date('m/d', strtotime($day['date'])); ?></td>
+                    <td style="font-family:'Inter'; color:var(--ink-4); font-size:7px;"><?php echo substr($day['day'], 0, 3); ?></td>
+                    <td style="color:var(--ink-4);"><?php echo $day['sched_in'] ?: $day['sched_code']; ?></td>
+                    <td style="color:var(--ink-4);"><?php echo $day['sched_out']; ?></td>
+                    <td <?php echo $editIn; ?> class="<?php echo $clsIn; ?> <?php echo $day['late_mins'] > 0 ? 'text-red' : ''; ?>" style="font-weight:700;"><?php echo $day['actual_in'] ?: '-'; ?></td>
+                    <td <?php echo $editOut; ?> class="<?php echo $clsOut; ?> <?php echo $day['ut_mins'] > 0 ? 'text-red' : ''; ?>" style="font-weight:700;"><?php echo $day['actual_out'] ?: '-'; ?></td>
+                    <td style="font-weight:700;"><?php echo $v($day['hours']); ?></td>
+                    <td style="background:var(--teal-bg); font-weight:700;"><?php echo $v($day['ot_hours']); ?></td>
+                    <td style="color:var(--red);"><?php echo $day['late_mins'] ?: ''; ?></td>
+                    <td style="color:var(--red);"><?php echo $day['ut_mins'] ?: ''; ?></td>
+                    <td style="font-family:'Inter'; font-size:7px; text-align:left; padding-left:4px;"><?php echo $day['remarks']; ?></td>
+                    
+                    <td class="bg-nd" style="font-weight:700;"><?php echo $day['night_diff_mins'] ?: ''; ?></td>
+                    <td class="bg-nd"><?php echo $v($day['nd_hrs']); ?></td><td class="bg-nd"><?php echo $v($day['nd_ot_hrs']); ?></td>
+                    <td class="bg-rd"><?php echo $v($day['rest_day_hrs']); ?></td><td class="bg-rd"><?php echo $v($day['rest_day_ot_hrs']); ?></td>
+                    <td class="bg-hol"><?php echo $v($day['regular_holiday_hrs']); ?></td><td class="bg-hol"><?php echo $v($day['regular_holiday_ot_hrs']); ?></td>
+                    <td class="bg-hol"><?php echo $v($day['special_holiday_hrs']); ?></td><td class="bg-hol"><?php echo $v($day['special_holiday_ot_hrs']); ?></td>
+                    <td class="bg-hol"><?php echo $v($day['double_holiday_hrs']); ?></td><td class="bg-hol"><?php echo $v($day['double_holiday_ot_hrs']); ?></td>
+                    <td class="bg-nd"><?php echo $v($day['nd_regular_holiday_hrs']); ?></td><td class="bg-nd"></td>
+                    <td class="bg-nd"><?php echo $v($day['nd_special_holiday_hrs']); ?></td><td class="bg-nd"></td>
+                    <td class="bg-nd"><?php echo $v($day['nd_double_holiday_hrs']); ?></td><td class="bg-nd"></td>
+                    <td class="bg-rd"><?php echo $v($day['rest_day_regular_holiday_hrs']); ?></td><td class="bg-rd"></td>
+                    <td class="bg-rd"><?php echo $v($day['rest_day_special_holiday_hrs']); ?></td><td class="bg-rd"></td>
+                    <td style="font-family:'Inter'; font-size:6px; font-weight:700;"><?php echo $day['day_type']!=='REGULAR_DAY'?$day['day_type']:''; ?></td>
+                </tr>
+                <?php endforeach; ?>
+                
+                <tr style="font-weight:800; background:var(--bg-raised);">
+                    <td colspan="6" style="text-align:right; padding-right:10px; font-family:'Inter';">TOTALS</td>
+                    <td><?php echo number_format($grand['hrs'], 2); ?></td>
+                    <td style="background:var(--teal-bg);"><?php echo number_format($grand['ot'], 2); ?></td>
+                    <td style="color:var(--red);"><?php echo $grand['late']; ?></td>
+                    <td style="color:var(--red);"><?php echo $grand['ut']; ?></td>
+                    <td></td>
+                    <td class="bg-nd"><?php echo $grand['nd_m']; ?></td>
+                    <td class="bg-nd"><?php echo number_format($grand['nd_h'], 2); ?></td><td class="bg-nd"><?php echo number_format($grand['nd_ot'], 2); ?></td>
+                    <td class="bg-rd"><?php echo number_format($grand['rd_h'], 2); ?></td><td class="bg-rd"><?php echo number_format($grand['rd_ot'], 2); ?></td>
+                    <td class="bg-hol"><?php echo number_format($grand['rh_h'], 2); ?></td><td class="bg-hol"><?php echo number_format($grand['rh_ot'], 2); ?></td>
+                    <td class="bg-hol"><?php echo number_format($grand['sh_h'], 2); ?></td><td class="bg-hol"><?php echo number_format($grand['sh_ot'], 2); ?></td>
+                    <td class="bg-hol"><?php echo number_format($grand['dh_h'], 2); ?></td><td class="bg-hol"><?php echo number_format($grand['dh_ot'], 2); ?></td>
+                    <td class="bg-nd"><?php echo number_format($grand['nd_rh_h'], 2); ?></td><td class="bg-nd">-</td>
+                    <td class="bg-nd"><?php echo number_format($grand['nd_sh_h'], 2); ?></td><td class="bg-nd">-</td>
+                    <td class="bg-nd"><?php echo number_format($grand['nd_dh_h'], 2); ?></td><td class="bg-nd">-</td>
+                    <td class="bg-rd"><?php echo number_format($grand['rd_rh_h'], 2); ?></td><td class="bg-rd">-</td>
+                    <td class="bg-rd"><?php echo number_format($grand['rd_sh_h'], 2); ?></td><td class="bg-rd">-</td>
+                    <td></td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <div class="grid-2 no-print" style="margin-top: 40px; text-align: center; gap: 80px; padding: 0 40px;">
+        <div><div style="border-bottom: 1px solid var(--ink-1); margin-bottom: 8px;"></div><p style="font-size:9px; font-weight:700; color:var(--ink-3); text-transform:uppercase;">Employee Signature</p></div>
+        <div><div style="border-bottom: 1px solid var(--ink-1); margin-bottom: 8px;"></div><p style="font-size:9px; font-weight:700; color:var(--ink-3); text-transform:uppercase;">Authorized Signatory</p></div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+<script>
+    $(document).ready(function() { $('#hr_search').select2({ placeholder: "Search Employee...", width: '100%' }); });
+    function editTime(date, type, currentVal) {
+        let newVal = prompt(`FORCE ADJUST ${type} for ${date}\nEnter Time (HH:MM):`, currentVal);
+        if (newVal !== null) {
+            $.post('', { action:'update_log', ac_no:'<?php echo $target_ac_no; ?>', date:date, type:type, new_time:newVal }, res => { if(res.success) location.reload(); else alert("Error: "+res.message); }, 'json');
         }
-    </script>
-</body>
-</html>
+    }
+</script>
+
+<?php require BASE_PATH . '/partials/layout_footer.php'; ?>

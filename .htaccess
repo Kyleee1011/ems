@@ -1,5 +1,5 @@
 # Apache .htaccess for URL rewriting
-# Redirect all requests to index_new.php (front controller)
+# Redirect all requests to public/index.php (front controller)
 
 RewriteEngine On
 
@@ -7,5 +7,5 @@ RewriteEngine On
 RewriteCond %{REQUEST_FILENAME} !-f
 RewriteCond %{REQUEST_FILENAME} !-d
 
-# Route everything else through the front controller (index_new.php)
-RewriteRule ^(.*)$ index_new.php [QSA,L]
+# Route everything else through the front controller (public/index.php)
+RewriteRule ^(.*)$ public/index.php [QSA,L]

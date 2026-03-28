@@ -3,7 +3,6 @@
 *.log
 *~
 ~$*
-config.php
 # Ignore environment files
 .env
 .env.*
