@@ -1,6 +1,7 @@
     </main>
 </div> <!-- Closing .app -->
 
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 <script>
     // Theme Toggle Logic
     const themeToggle = document.getElementById('themeToggle');
@@ -32,6 +33,18 @@
             text.textContent = 'Dark';
         }
     }
+
+    // Global Select2 Initialization
+    $(document).ready(function() {
+        $('.select2').select2({
+            width: '100%'
+        });
+        
+        // Auto-initialize cutoff and employee selectors if they exist
+        $('select[name="cutoff"], select[name="search_ac"], #deptFilter, #hr_search, #cutoff_select, #dept_select').select2({
+            width: '100%'
+        });
+    });
 
     // Nav sub-menu toggle fix
     document.querySelectorAll('.nav-item.has-sub').forEach(item => {

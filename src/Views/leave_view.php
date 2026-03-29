@@ -50,7 +50,7 @@ require BASE_PATH . '/partials/layout_sidebar.php';
                     <input type="hidden" name="action" value="apply_leave">
                     <div class="form-group">
                         <label class="form-label">Leave Type</label>
-                        <select name="leave_type" required class="input-field">
+                        <select name="leave_type" required class="input-field select2">
                             <option value="">Select Type...</option>
                             <?php foreach($leaveTypes as $type): ?>
                                 <option value="<?php echo $type; ?>"><?php echo $type; ?></option>

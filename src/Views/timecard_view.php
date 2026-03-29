@@ -5,7 +5,6 @@ require BASE_PATH . '/partials/layout_topbar.php';
 require BASE_PATH . '/partials/layout_sidebar.php';
 ?>
 
-<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
 <style>
     .editable { cursor: pointer; position: relative; }
     .editable:hover { background-color: var(--amber-bg); color: var(--amber); font-weight: bold; border: 1px dashed var(--amber); }
@@ -13,10 +12,6 @@ require BASE_PATH . '/partials/layout_sidebar.php';
     
     .manual-entry { color: var(--amber); font-weight: bold; position: relative; }
     .manual-entry::after { content: "•"; position: absolute; top: -5px; right: -5px; color: var(--amber); font-size: 10px; }
-    
-    .select2-container .select2-selection--single { height: 36px; border-color: var(--border); border-radius: var(--r-sm); padding: 4px; background: var(--bg-card); color: var(--ink-1); }
-    .select2-container--default .select2-selection--single .select2-selection__rendered { color: var(--ink-1); line-height: 28px; }
-    .select2-dropdown { background: var(--bg-card); border-color: var(--border); color: var(--ink-1); }
     
     .cls-col { border-left: 1px solid var(--border-lt) !important; border-right: 1px solid var(--border-lt) !important; }
     .bg-nd { background-color: var(--teal-bg) !important; }
@@ -63,7 +58,7 @@ require BASE_PATH . '/partials/layout_sidebar.php';
         <?php endif; ?>
         <div class="form-group mb-0" style="width: 250px;">
             <label class="form-label">Pay Period</label>
-            <select name="cutoff" class="input-field" onchange="this.form.submit()">
+            <select name="cutoff" id="cutoff_select" class="input-field" onchange="this.form.submit()">
                 <?php foreach ($cutoffs as $c): ?>
                     <option value="<?php echo $c['val']; ?>" <?php echo ($selected_cutoff == $c['val']) ? 'selected' : ''; ?>>
                         <?php echo $c['label']; ?>
@@ -232,9 +227,7 @@ require BASE_PATH . '/partials/layout_sidebar.php';
     </div>
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 <script>
-    $(document).ready(function() { $('#hr_search').select2({ placeholder: "Search Employee...", width: '100%' }); });
     function editTime(date, type, currentVal) {
         let newVal = prompt(`FORCE ADJUST ${type} for ${date}\nEnter Time (HH:MM):`, currentVal);
         if (newVal !== null) {
