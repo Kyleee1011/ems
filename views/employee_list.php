@@ -15,11 +15,73 @@
             </select>
             <div style="position:relative;">
                 <i class="fa-solid fa-search" style="position:absolute; left:10px; top:10px; font-size:10px; color:var(--ink-4);"></i>
-                <input type="text" name="search" placeholder="Search name or AC..." value="<?php echo htmlspecialchars($searchTerm); ?>" class="input-field" style="padding-left:30px; width:220px; height:32px; font-size:11px;">
+                <input type="text" name="search" id="directorySearch" autocomplete="off" placeholder="Search name, AC, or dept..." value="<?php echo htmlspecialchars($searchTerm); ?>" class="input-field" style="padding-left:30px; width:220px; height:32px; font-size:11px;">
+                <div id="searchSuggestions" class="card" style="position:absolute; top:100%; left:0; right:0; z-index:1000; display:none; margin-top:5px; max-height:300px; overflow-y:auto; border-radius:var(--r-sm); box-shadow:var(--sh-lg);"></div>
             </div>
             <button type="submit" class="btn-primary" style="height:32px; padding:0 15px;">Search</button>
         </form>
     </div>
+
+    <script>
+    $(document).ready(function() {
+        const $input = $('#directorySearch');
+        const $suggestions = $('#searchSuggestions');
+        let debounceTimer;
+
+        $input.on('input', function() {
+            clearTimeout(debounceTimer);
+            const query = $(this).val().trim();
+
+            if (query.length < 2) {
+                $suggestions.hide().empty();
+                return;
+            }
+
+            debounceTimer = setTimeout(() => {
+                $.get('<?php echo baseUrl('employee?action=search_suggestions&q='); ?>' + encodeURIComponent(query), function(data) {
+                    if (data.length > 0) {
+                        let html = '';
+                        data.forEach(item => {
+                            html += `
+                                <div class="suggestion-item" onclick="applySuggestion('${item.value}', '${item.type}')" style="padding:10px 15px; cursor:pointer; border-bottom:1px solid var(--border-lt); display:flex; justify-content:space-between; align-items:center;">
+                                    <div>
+                                        <div style="font-weight:700; font-size:12px;">${item.label}</div>
+                                        <div style="font-size:10px; color:var(--ink-4);">${item.sub}</div>
+                                    </div>
+                                    <span class="tag ${item.tagClass}" style="font-size:8px;">${item.type}</span>
+                                </div>`;
+                        });
+                        $suggestions.html(html).show();
+                    } else {
+                        $suggestions.hide().empty();
+                    }
+                }, 'json');
+            }, 300);
+        });
+
+        $(document).on('click', function(e) {
+            if (!$(e.target).closest('#directorySearch, #searchSuggestions').length) {
+                $suggestions.hide();
+            }
+        });
+    });
+
+    function applySuggestion(value, type) {
+        const $input = $('#directorySearch');
+        const $form = $('#searchForm');
+        
+        $input.val(value);
+        if (type === 'Department') {
+            // If it's a department, we might want to set the filter instead
+            // but for simplicity we'll just search the text
+        }
+        $form.submit();
+    }
+    </script>
+    <style>
+        .suggestion-item:hover { background: var(--bg-hover); }
+        .suggestion-item:last-child { border-bottom: none; }
+    </style>
 
     <div class="table-wrap" style="border:none; border-radius:0;">
         <table>

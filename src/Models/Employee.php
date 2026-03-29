@@ -429,6 +429,40 @@ class Employee
         ];
     }
 
+    public function getSearchSuggestions($q)
+    {
+        $suggestions = [];
+        $q = "%$q%";
+
+        // 1. Search by Name
+        $stmt = $this->pdo->prepare("SELECT full_name as label, job_title as sub, ac_no as value FROM employees WHERE IsActive = 1 AND (full_name LIKE ? OR ac_no LIKE ?) LIMIT 5");
+        $stmt->execute([$q, $q]);
+        while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+            $suggestions[] = [
+                'label' => $row['label'],
+                'sub' => "AC: " . $row['value'] . " | " . $row['sub'],
+                'value' => $row['value'],
+                'type' => 'Employee',
+                'tagClass' => 'tag-blue'
+            ];
+        }
+
+        // 2. Search by Department
+        $stmt = $this->pdo->prepare("SELECT dept_name as label FROM departments WHERE dept_name LIKE ? LIMIT 3");
+        $stmt->execute([$q]);
+        while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+            $suggestions[] = [
+                'label' => $row['label'],
+                'sub' => "Search all in department",
+                'value' => $row['label'],
+                'type' => 'Department',
+                'tagClass' => 'tag-teal'
+            ];
+        }
+
+        return $suggestions;
+    }
+
     public function uploadDocument($emp_id, $doc_name, $filePath)
     {
         $stmt = $this->pdo->prepare("INSERT INTO employee_documents (emp_id, doc_name, file_path) VALUES (?, ?, ?)");

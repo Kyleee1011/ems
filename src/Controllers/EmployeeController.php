@@ -125,6 +125,12 @@ require_once dirname(dirname(__DIR__)) . '/config_session.php';
             catch (Exception $e) { echo json_encode(['success'=>false, 'message'=>$e->getMessage()]); }
             exit();
         }
+        if ($action == 'search_suggestions' && isset($_GET['q'])) {
+            ob_end_clean(); header('Content-Type: application/json');
+            try { echo json_encode($this->employeeModel->getSearchSuggestions($_GET['q'])); } 
+            catch (Exception $e) { echo json_encode([]); }
+            exit();
+        }
     }
 
     private function handlePostActions($action, &$message, &$messageType)
