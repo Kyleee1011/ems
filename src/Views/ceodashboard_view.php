@@ -48,6 +48,42 @@ require BASE_PATH . '/partials/layout_sidebar.php';
 </div>
 
 <?php if ($activeTab === 'dashboard'): ?>
+    <!-- MANPOWER EXPENSE CARDS -->
+    <div class="stat-grid mb-20">
+        <div class="stat-card c-purple" style="grid-column: 1 / -1; display: flex; align-items: center; justify-content: space-between;">
+            <div style="display: flex; align-items: center; gap: 20px;">
+                <div class="stat-ico-wrap ico-purple" style="margin-bottom: 0;"><i class="fa-solid fa-chart-line"></i></div>
+                <div>
+                    <div class="stat-lbl">Overall Total Manpower Expense</div>
+                    <div class="stat-val purple">₱<?php echo number_format($manpowerStats['total_manpower_expense'], 2); ?></div>
+                    <div class="stat-meta">Monthly Salary + ER Contributions (SSS, PH, PI)</div>
+                </div>
+            </div>
+            <div style="text-align: right; padding-right: 20px;">
+                <div class="stat-lbl" style="margin-bottom: 2px;">Total Monthly Salary</div>
+                <div style="font-size: 16px; font-weight: 700; color: var(--ink-2);">₱<?php echo number_format($manpowerStats['total_salary'], 2); ?></div>
+            </div>
+        </div>
+        <div class="stat-card c-blue">
+            <div class="stat-ico-wrap ico-blue"><i class="fa-solid fa-building-columns"></i></div>
+            <div class="stat-lbl">ER SSS Share Total</div>
+            <div class="stat-val blue">₱<?php echo number_format($manpowerStats['total_er_sss'], 2); ?></div>
+            <div class="stat-meta">Employer SSS Contribution</div>
+        </div>
+        <div class="stat-card c-purple">
+            <div class="stat-ico-wrap ico-purple"><i class="fa-solid fa-heart-pulse"></i></div>
+            <div class="stat-lbl">ER PhilHealth Total</div>
+            <div class="stat-val purple">₱<?php echo number_format($manpowerStats['total_er_philhealth'], 2); ?></div>
+            <div class="stat-meta">Employer PhilHealth Contribution</div>
+        </div>
+        <div class="stat-card c-green">
+            <div class="stat-ico-wrap ico-green"><i class="fa-solid fa-house-chimney-user"></i></div>
+            <div class="stat-lbl">ER Pag-IBIG Total</div>
+            <div class="stat-val green">₱<?php echo number_format($manpowerStats['total_er_pagibig'], 2); ?></div>
+            <div class="stat-meta">Employer Pag-IBIG Contribution</div>
+        </div>
+    </div>
+
     <div class="stat-grid">
         <div class="stat-card c-teal">
             <div class="stat-ico-wrap ico-teal"><i class="fa-solid fa-crown"></i></div>

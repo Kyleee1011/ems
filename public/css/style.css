@@ -712,6 +712,10 @@ body {
     background: linear-gradient(90deg, hsl(154, 48%, 26%), var(--green))
 }
 
+.stat-card.c-purple::before {
+    background: linear-gradient(90deg, hsl(258, 48%, 26%), var(--purple))
+}
+
 .stat-card:hover {
     transform: translateY(-2px);
     box-shadow: var(--sh-md);

@@ -60,8 +60,7 @@ class DashboardController
 
         // --- FETCH DATA (VIEW) ---
         $totalEmp = $this->dashboardModel->getTotalEmployees();
-        // ... (all the data fetching logic remains here) ...
-        $totalEmp = $this->dashboardModel->getTotalEmployees();
+        $manpowerStats = $this->dashboardModel->getManpowerStats();
         $avgSalary = $this->dashboardModel->getAvgSalary();
         $maleCount = $this->dashboardModel->getMaleEmployeeCount();
         $femaleCount = $this->dashboardModel->getFemaleEmployeeCount();
@@ -186,7 +185,7 @@ class DashboardController
 
         // Render the view
         $this->render('dashboard_view', compact(
-            'totalEmp', 'avgSalary', 'malePercent', 'femalePercent', 'otherPercent',
+            'totalEmp', 'avgSalary', 'manpowerStats', 'malePercent', 'femalePercent', 'otherPercent',
             'totalPending', 'pendingLeavesCount', 'pendingOTCount', 'pendingLoansCount', 'pendingChangeSched',
             'deptLabels', 'deptCounts', 'statusLabels', 'statusCounts', 'pendingLeaveList',
             'pendingOTList', 'pendingChangeSchedList', 'sssData', 'phData', 'piData', 'taxData', 'otRules',
@@ -370,6 +369,7 @@ class DashboardController
         $cutoff_options = \App\Utils\AppHelpers::generateCutoffPeriods($this->pdo);
 
         $totalEmp = $this->dashboardModel->getTotalEmployees();
+        $manpowerStats = $this->dashboardModel->getManpowerStats();
         $deptStats = $this->dashboardModel->getDepartmentStats();
         $deptLabels = json_encode(array_column($deptStats, 'dept_name'));
         $deptCounts = json_encode(array_column($deptStats, 'count'));
@@ -437,7 +437,7 @@ class DashboardController
         $employeesOnLeave = $this->pdo->query($sqlLeaves)->fetchAll(PDO::FETCH_ASSOC);
 
         $this->render('ceodashboard_view', compact(
-            'counts', 'totalPending', 'activeTab', 'totalEmp', 'deptLabels', 
+            'counts', 'totalPending', 'activeTab', 'totalEmp', 'manpowerStats', 'deptLabels', 
             'deptCounts', 'approvalData', 'depts', 'cutoff_options',
             'highestAbsentDept', 'lateEmployees', 'highestLateDept', 'employeesOnLeave', 'analytics_range_label'
         ));
