@@ -458,14 +458,21 @@ class Employee
         // First delete related records to avoid foreign key constraints
         $this->pdo->beginTransaction();
         try {
+            // Get AC No first to delete from users table
+            $stmtAc = $this->pdo->prepare("SELECT ac_no FROM employees WHERE emp_id = ?");
+            $stmtAc->execute([$emp_id]);
+            $ac_no = $stmtAc->fetchColumn();
+
             $this->pdo->prepare("DELETE FROM salary_history WHERE emp_id = ?")->execute([$emp_id]);
             $this->pdo->prepare("DELETE FROM employee_loans WHERE emp_id = ?")->execute([$emp_id]);
             $this->pdo->prepare("DELETE FROM employee_documents WHERE emp_id = ?")->execute([$emp_id]);
             $this->pdo->prepare("DELETE FROM leave_applications WHERE emp_id = ?")->execute([$emp_id]);
             $this->pdo->prepare("DELETE FROM overtime_applications WHERE emp_id = ?")->execute([$emp_id]);
             $this->pdo->prepare("DELETE FROM schedule_change_requests WHERE emp_id = ?")->execute([$emp_id]);
-            // $this->pdo->prepare("DELETE FROM employee_schedules WHERE employee_id = ?")->execute([$emp_id]); // This table doesn't seem to exist in the new schema, commenting out for now
-            // Assuming other related tables might exist, add more DELETE statements here
+            
+            if ($ac_no) {
+                $this->pdo->prepare("DELETE FROM users WHERE username = ?")->execute([$ac_no]);
+            }
 
             $stmt = $this->pdo->prepare("DELETE FROM employees WHERE emp_id = ?");
             $result = $stmt->execute([$emp_id]);
@@ -473,7 +480,7 @@ class Employee
             return $result;
         } catch (\PDOException $e) {
             $this->pdo->rollBack();
-            throw $e; // Re-throw the exception to be handled by the caller
+            throw $e;
         }
     }
 

@@ -69,12 +69,12 @@ require_once dirname(dirname(__DIR__)) . '/config_session.php';
             $messageType = "error";
         }
 
-        // Recycle Bin Data
+        // Inactive Employees Data
         try {
-            $recycleBinData = $this->employeeModel->getPaginatedEmployees('', '', 1, 999, false);
-            $recycleBinEmployees = $recycleBinData['employees'];
+            $inactiveEmployeesData = $this->employeeModel->getPaginatedEmployees('', '', 1, 999, false);
+            $inactiveEmployees = $inactiveEmployeesData['employees'];
         } catch (Exception $e) {
-            $recycleBinEmployees = [];
+            $inactiveEmployees = [];
         }
 
         // Notification Logic

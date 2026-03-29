@@ -22,7 +22,7 @@ require BASE_PATH . '/partials/layout_sidebar.php';
     <a href="?tab=onboarding" class="nav-item <?php echo $activeTab === 'onboarding' ? 'active' : ''; ?>" style="padding: 10px 5px; border-bottom: 2px solid <?php echo $activeTab === 'onboarding' ? 'var(--teal)' : 'transparent'; ?>; background: none;">Onboarding</a>
     <a href="?tab=bulk_upload" class="nav-item <?php echo $activeTab === 'bulk_upload' ? 'active' : ''; ?>" style="padding: 10px 5px; border-bottom: 2px solid <?php echo $activeTab === 'bulk_upload' ? 'var(--teal)' : 'transparent'; ?>; background: none;">Bulk Upload</a>
     <a href="?tab=recycle" class="nav-item <?php echo $activeTab === 'recycle' ? 'active' : ''; ?>" style="padding: 10px 5px; border-bottom: 2px solid <?php echo $activeTab === 'recycle' ? 'var(--red)' : 'transparent'; ?>; background: none; color: <?php echo $activeTab === 'recycle' ? 'var(--red)' : 'var(--ink-4)'; ?>;">
-        <i class="fa-solid fa-trash-can"></i> Recycle Bin
+        <i class="fa-solid fa-user-slash"></i> Inactive Employees
     </a>
 </div>
 
@@ -129,8 +129,8 @@ require BASE_PATH . '/partials/layout_sidebar.php';
         });
     }
 
-    function softDeleteEmployee(id) { if(confirm('Move to Recycle Bin?')) createPost(id, 'soft_delete'); }
-    function restoreEmployee(id) { if(confirm('Restore employee?')) createPost(id, 'restore'); }
+    function softDeleteEmployee(id) { if(confirm('Mark as Inactive?')) createPost(id, 'soft_delete'); }
+    function restoreEmployee(id) { if(confirm('Set this employee as Active?')) createPost(id, 'restore'); }
     function hardDeleteEmployee(id) { if(confirm('PERMANENTLY DELETE?')) createPost(id, 'hard_delete'); }
     function createPost(id, action) { const f = document.createElement('form'); f.method = 'POST'; f.action = ''; f.innerHTML = `<input type="hidden" name="action" value="${action}"><input type="hidden" name="emp_id" value="${id}">`; document.body.appendChild(f); f.submit(); }
 </script>

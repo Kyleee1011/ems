@@ -61,7 +61,7 @@
                                 <div class="flex-row" style="justify-content: flex-end; gap:4px;">
                                     <button onclick="viewEmployee(<?php echo $emp['emp_id']; ?>)" class="icon-btn" title="View"><i class="fa-solid fa-eye" style="font-size:11px;"></i></button>
                                     <button onclick="editEmployee(<?php echo $emp['emp_id']; ?>)" class="icon-btn" title="Edit"><i class="fa-solid fa-pen" style="font-size:11px;"></i></button>
-                                    <button onclick="softDeleteEmployee(<?php echo $emp['emp_id']; ?>)" class="icon-btn" style="color:var(--red);" title="Archive"><i class="fa-solid fa-trash-can" style="font-size:11px;"></i></button>
+                                    <button onclick="softDeleteEmployee(<?php echo $emp['emp_id']; ?>)" class="icon-btn" style="color:var(--red);" title="Mark as Inactive"><i class="fa-solid fa-user-slash" style="font-size:11px;"></i></button>
                                 </div>
                             </td>
                         </tr>
