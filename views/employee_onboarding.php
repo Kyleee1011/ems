@@ -60,6 +60,7 @@
                 </select>
             </div>
             <div class="form-group"><label class="form-label">Employment Status</label><select name="employment_status" class="input-field"><option value="Regular">Regular</option><option value="Probationary">Probationary</option><option value="Contractual">Contractual</option><option value="Intern">Intern</option></select></div>
+            <div class="form-group"><label class="form-label">Employment Type</label><select name="employment_type" class="input-field"><option value="Full-time">Full-time</option><option value="Part-time">Part-time</option></select></div>
             <div class="form-group"><label class="form-label">Work Location</label><input type="text" name="location_assignment" class="input-field"></div>
             <div class="form-group">
                 <label class="form-label">Supervisor</label>
@@ -72,6 +73,17 @@
             </div>
             <div class="form-group"><label class="form-label">Schedule Type</label><select name="work_schedule" class="input-field"><option value="Office Based">Office Based</option><option value="Operations">Operations</option></select></div>
             <div class="form-group"><label class="form-label">Date Hired</label><input type="date" name="date_hired" class="input-field"></div>
+            <div class="form-group"><label class="form-label">Date Regularized</label><input type="date" name="date_regularized" class="input-field"></div>
+        </div>
+
+        <div class="section-hd">
+            <span class="section-hd-label">Emergency Contact</span>
+            <div class="section-hd-line"></div>
+        </div>
+        <div class="grid-3" style="gap: 15px;">
+            <div class="form-group"><label class="form-label">Contact Name</label><input type="text" name="emergency_contact_name" class="input-field"></div>
+            <div class="form-group"><label class="form-label">Contact Number</label><input type="text" name="emergency_contact_number" class="input-field"></div>
+            <div class="form-group"><label class="form-label">Relationship</label><input type="text" name="emergency_contact_relationship" class="input-field"></div>
         </div>
 
         <!-- SECTION 3: PAYROLL -->
@@ -81,13 +93,15 @@
         </div>
         <div class="grid-3" style="grid-template-columns: repeat(4, 1fr); gap: 15px;">
             <div class="form-group"><label class="form-label">Basic Monthly Salary</label><input type="number" step="0.01" name="salary_rate" id="add_salary" oninput="calculateRates(this, 'add')" class="input-field" placeholder="0.00" required></div>
-            <div class="form-group"><label class="form-label">Daily Rate (Auto)</label><input type="number" step="0.01" id="add_daily" class="input-field" style="background:var(--bg-subtle); font-family:'DM Mono'; font-weight:600;" readonly></div>
-            <div class="form-group"><label class="form-label">Hourly Rate (Auto)</label><input type="number" step="0.01" id="add_hourly" class="input-field" style="background:var(--bg-subtle); font-family:'DM Mono'; font-weight:600;" readonly></div>
+            <div class="form-group"><label class="form-label">Daily Rate (Auto)</label><input type="number" step="0.01" name="daily_rate" id="add_daily" class="input-field" style="background:var(--bg-subtle); font-family:'DM Mono'; font-weight:600;" readonly></div>
+            <div class="form-group"><label class="form-label">Hourly Rate (Auto)</label><input type="number" step="0.01" name="hourly_rate" id="add_hourly" class="input-field" style="background:var(--bg-subtle); font-family:'DM Mono'; font-weight:600;" readonly></div>
+            <div class="form-group"><label class="form-label">Payroll Group</label><select name="payroll_group" class="input-field"><option value="Monthly">Monthly</option><option value="Semi-Monthly">Semi-Monthly</option></select></div>
             <div class="form-group">
                 <label class="form-label" style="color:var(--amber);">SIL Credits</label>
                 <input type="number" step="0.5" name="sil_credits" class="input-field" style="border-color:var(--amber-bdr); background:var(--amber-bg);" placeholder="0.0">
             </div>
             <div class="form-group"><label class="form-label">Bank Account</label><input type="text" name="bank_account_number" class="input-field"></div>
+            <div class="form-group"><label class="form-label">TIN Number</label><input type="text" name="tin_number" class="input-field"></div>
             <div class="form-group"><label class="form-label">SSS (XX-XXXXXXX-X)</label><input type="text" name="sss_number" class="input-field" maxlength="12" oninput="formatID(this, '2-7-1')"></div>
             <div class="form-group"><label class="form-label">PhilHealth (4-4-4)</label><input type="text" name="philhealth_number" class="input-field" maxlength="14" oninput="formatID(this, '4-4-4')"></div>
             <div class="form-group"><label class="form-label">Pag-IBIG (4-4-4)</label><input type="text" name="pagibig_number" class="input-field" maxlength="14" oninput="formatID(this, '4-4-4')"></div>

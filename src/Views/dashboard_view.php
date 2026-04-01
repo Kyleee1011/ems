@@ -506,13 +506,25 @@ require BASE_PATH . '/partials/layout_sidebar.php';
                         <input type="hidden" name="action" value="update_sss">
                         <div class="table-wrap">
                             <table>
-                                <thead><tr><th>Min Salary</th><th>Max Salary</th><th>EE Share</th></tr></thead>
+                                <thead>
+                                    <tr>
+                                        <th>Min Salary</th>
+                                        <th>Max Salary</th>
+                                        <th>EE Share</th>
+                                        <th>MPF</th>
+                                        <th>EE Total</th>
+                                        <th>ER Share</th>
+                                    </tr>
+                                </thead>
                                 <tbody>
                                     <?php foreach($sssData as $idx => $row): ?>
                                     <tr>
                                         <td><input type="number" step="0.01" name="sss[<?php echo $idx; ?>][min]" value="<?php echo $row['min_salary']; ?>" class="input-field" style="border:none; text-align:center;"></td>
                                         <td><input type="number" step="0.01" name="sss[<?php echo $idx; ?>][max]" value="<?php echo $row['max_salary']; ?>" class="input-field" style="border:none; text-align:center;"></td>
                                         <td><input type="number" step="0.01" name="sss[<?php echo $idx; ?>][ee]" value="<?php echo $row['ee_share']; ?>" class="input-field" style="border:none; text-align:center; font-weight:700; color:var(--teal);"></td>
+                                        <td><input type="number" step="0.01" name="sss[<?php echo $idx; ?>][mpf]" value="<?php echo $row['mpf'] ?? 0; ?>" class="input-field" style="border:none; text-align:center;"></td>
+                                        <td><input type="number" step="0.01" name="sss[<?php echo $idx; ?>][ee_total]" value="<?php echo $row['ee_total'] ?? 0; ?>" class="input-field" style="border:none; text-align:center;"></td>
+                                        <td><input type="number" step="0.01" name="sss[<?php echo $idx; ?>][er]" value="<?php echo $row['er_share'] ?? 0; ?>" class="input-field" style="border:none; text-align:center;"></td>
                                         <input type="hidden" name="sss[<?php echo $idx; ?>][id]" value="<?php echo $row['id']; ?>">
                                     </tr>
                                     <?php endforeach; ?>

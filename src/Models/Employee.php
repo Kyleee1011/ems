@@ -171,6 +171,16 @@ class Employee
 
             // Generate default password hash using AC No
             $defaultPasswordHash = password_hash($data['ac_no'], PASSWORD_DEFAULT);
+            
+            // Auto-calculate full_name
+            $full_name = trim($data['first_name'] . ' ' . ($data['middle_name'] ? $data['middle_name'] . ' ' : '') . $data['last_name']);
+            
+            // Auto-calculate rates if missing
+            if (empty($data['daily_rate']) || empty($data['hourly_rate'])) {
+                $rates = AppHelpers::calculateRatesFromMonthly($data['salary_rate'] ?? 0);
+                $data['daily_rate'] = $data['daily_rate'] ?: $rates['daily'];
+                $data['hourly_rate'] = $data['hourly_rate'] ?: $rates['hourly'];
+            }
 
             $sql = "INSERT INTO employees (
                 ac_no, last_name, first_name, middle_name, date_of_birth, gender,
@@ -192,9 +202,6 @@ class Employee
                 :approval_role, :sil_credits, 1, :signature_path, :profile_picture, :password_hash
             )";
             $stmt = $this->pdo->prepare($sql);
-            
-
-            
             
             $stmt->bindParam(':ac_no', $data['ac_no']);
             $stmt->bindParam(':last_name', $data['last_name']);
@@ -245,19 +252,17 @@ class Employee
             $lastId = $this->pdo->lastInsertId();
             
             // Log Salary History
-            if ($data['salary_rate'] > 0 && $current_user_id) {
+            if (($data['salary_rate'] ?? 0) > 0 && $current_user_id) {
                  $stmtHist = $this->pdo->prepare("INSERT INTO salary_history (emp_id, old_salary, new_salary, changed_by) VALUES (?, 0, ?, ?)");
                  $stmtHist->execute([$lastId, $data['salary_rate'], $current_user_id]);
             }
 
-            // OPTIONAL: Still Create User Account if needed for other systems, mimicking the employee creds
-            // But login.php uses employees table primarily
-            $fullname = $data['first_name'] . ' ' . $data['last_name'];
+            // OPTIONAL: Still Create User Account if needed for other systems
             $username = $data['ac_no'];
             
              if ($data['approval_role']) {
                   $stmtUser = $this->pdo->prepare("INSERT INTO users (username, password_hash, full_name, email, role, is_active) VALUES (?, ?, ?, ?, ?, 1)");
-                  $stmtUser->execute([$username, $defaultPasswordHash, $fullname, $data['email_address'], $data['approval_role']]);
+                  $stmtUser->execute([$username, $defaultPasswordHash, $full_name, $data['email_address'], $data['approval_role']]);
              }
 
             $this->pdo->commit();
@@ -269,7 +274,6 @@ class Employee
         }
     }
 
-    // Example: Update Employee method
     public function updateEmployee($emp_id, $data, $signaturePath = null, $profilePicPath = null, $current_user_id = null)
     {
         // First, get current salary for history
@@ -278,11 +282,21 @@ class Employee
         $currentData = $stmtCheck->fetch(PDO::FETCH_ASSOC);
         
         $oldSalary = $currentData ? (float)$currentData['salary_rate'] : 0.0;
-        $newSalary = (float)$data['salary_rate'];
+        $newSalary = (float)($data['salary_rate'] ?? 0);
 
         if (abs($oldSalary - $newSalary) > 0.01 && $current_user_id) {
             $stmtHist = $this->pdo->prepare("INSERT INTO salary_history (emp_id, old_salary, new_salary, changed_by) VALUES (:eid, :old, :new, :uid)");
             $stmtHist->execute([':eid' => $emp_id, ':old' => $oldSalary, ':new' => $newSalary, ':uid' => $current_user_id]);
+        }
+        
+        // Auto-calculate full_name
+        $full_name = trim($data['first_name'] . ' ' . ($data['middle_name'] ? $data['middle_name'] . ' ' : '') . $data['last_name']);
+
+        // Auto-calculate rates if missing
+        if (empty($data['daily_rate']) || empty($data['hourly_rate'])) {
+            $rates = AppHelpers::calculateRatesFromMonthly($data['salary_rate'] ?? 0);
+            $data['daily_rate'] = $data['daily_rate'] ?: $rates['daily'];
+            $data['hourly_rate'] = $data['hourly_rate'] ?: $rates['hourly'];
         }
 
         $signatureSQL = "";

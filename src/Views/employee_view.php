@@ -76,33 +76,81 @@ require BASE_PATH . '/partials/layout_sidebar.php';
         if(activeBtn) activeBtn.className = "nav-item active";
     }
 
-    function closeModal() { document.getElementById('editModal').classList.add('hidden'); document.getElementById('modalBackdrop').classList.add('hidden'); }
-    function closeViewModal() { document.getElementById('viewModal').classList.add('hidden'); document.getElementById('modalBackdrop').classList.add('hidden'); }
+    function closeModal() { 
+        document.getElementById('editModal').style.display = 'none'; 
+        document.getElementById('modalBackdrop').style.display = 'none'; 
+    }
+    
+    function closeViewModal() { 
+        document.getElementById('viewModal').style.display = 'none'; 
+        document.getElementById('modalBackdrop').style.display = 'none'; 
+    }
 
     function getEmployeeData(empId, callback) {
         fetch('<?php echo baseUrl('employee?action=get_employee_json&emp_id='); ?>' + empId).then(res => res.json()).then(data => { if (data.success) callback(data); else alert('Error: ' + data.message); }).catch(error => alert('Error fetching data.'));
     }
 
+    function calculateRates(input, prefix) {
+        const monthly = parseFloat(input.value) || 0;
+        const daily = (monthly / (313/12)).toFixed(2);
+        const hourly = (daily / 8).toFixed(2);
+        const dEl = document.getElementById(prefix + '_daily');
+        const hEl = document.getElementById(prefix + '_hourly');
+        if(dEl) dEl.value = daily;
+        if(hEl) hEl.value = hourly;
+    }
+
     function editEmployee(empId) {
+        document.getElementById('editModal').style.display = 'flex';
+        document.getElementById('modalBackdrop').style.display = 'block';
         getEmployeeData(empId, (data) => {
             const emp = data.employee;
+            if (!emp) return;
             const setVal = (id, val) => { const el = document.getElementById(id); if(el) el.value = (val === null || val === undefined) ? '' : val; };
-            setVal('edit_emp_id', emp.emp_id); setVal('edit_ac_no', emp.ac_no); setVal('edit_first_name', emp.first_name); setVal('edit_last_name', emp.last_name); setVal('edit_middle_name', emp.middle_name);
-            setVal('edit_date_of_birth', emp.date_of_birth); setVal('edit_gender', emp.gender); setVal('edit_civil_status', emp.civil_status); setVal('edit_nationality', emp.nationality);
-            setVal('edit_address', emp.address); setVal('edit_contact_number', emp.contact_number); setVal('edit_email_address', emp.email_address); setVal('edit_dept_id', emp.dept_id);
-            setVal('edit_job_title', emp.job_title); setVal('edit_job_level', emp.job_level); setVal('edit_salary_rate', emp.salary_rate); setVal('edit_employment_status', emp.employment_status);
-            setVal('edit_employment_type', emp.employment_type); setVal('edit_location_assignment', emp.location_assignment); setVal('edit_work_schedule', emp.work_schedule);
-            setVal('edit_date_hired', emp.date_hired); setVal('edit_date_deployed', emp.date_deployed); setVal('edit_contract_start_date', emp.contract_start_date); setVal('edit_contract_end_date', emp.contract_end_date);
-            setVal('edit_approval_role', emp.approval_role); setVal('edit_sil_credits', emp.sil_credits);
             
-            document.getElementById('editModal').classList.remove('hidden');
-            document.getElementById('modalBackdrop').classList.remove('hidden');
+            // Identity
+            setVal('edit_emp_id', emp.emp_id); setVal('edit_ac_no', emp.ac_no); 
+            setVal('edit_first_name', emp.first_name); setVal('edit_last_name', emp.last_name); setVal('edit_middle_name', emp.middle_name);
+            setVal('edit_date_of_birth', emp.date_of_birth); setVal('edit_gender', emp.gender); 
+            setVal('edit_civil_status', emp.civil_status); setVal('edit_nationality', emp.nationality);
+            
+            // Contact
+            setVal('edit_address', emp.address); setVal('edit_contact_number', emp.contact_number); setVal('edit_email_address', emp.email_address);
+            
+            // Emergency
+            setVal('edit_emergency_contact_name', emp.emergency_contact_name);
+            setVal('edit_emergency_contact_number', emp.emergency_contact_number);
+            setVal('edit_emergency_contact_relationship', emp.emergency_contact_relationship);
+
+            // Job
+            setVal('edit_dept_id', emp.dept_id); setVal('edit_job_title', emp.job_title); setVal('edit_job_level', emp.job_level); 
+            setVal('edit_employment_status', emp.employment_status); setVal('edit_employment_type', emp.employment_type);
+            setVal('edit_location_assignment', emp.location_assignment); setVal('edit_work_schedule', emp.work_schedule);
+            setVal('edit_date_hired', emp.date_hired); setVal('edit_approval_role', emp.approval_role); 
+            
+            // Payroll
+            setVal('edit_salary_rate', emp.salary_rate); 
+            setVal('edit_sil_credits', emp.sil_credits);
+            setVal('edit_payroll_group', emp.payroll_group);
+            setVal('edit_bank_account_number', emp.bank_account_number);
+            setVal('edit_tin_number', emp.tin_number);
+            setVal('edit_sss_number', emp.sss_number);
+            setVal('edit_philhealth_number', emp.philhealth_number);
+            setVal('edit_pagibig_number', emp.pagibig_number);
+            
+            // Trigger calculation for edit modal
+            const salaryInput = document.getElementById('edit_salary_rate');
+            if(salaryInput) calculateRates(salaryInput, 'edit');
         });
     }
 
     function viewEmployee(empId) {
+        document.getElementById('viewModal').style.display = 'flex';
+        document.getElementById('modalBackdrop').style.display = 'block';
+        if (typeof switchViewTab === 'function') switchViewTab('profile');
         getEmployeeData(empId, (data) => {
             const emp = data.employee;
+            if (!emp) return;
             const val = (v) => v ? v : '<span class="text-slate-400 italic">N/A</span>';
             let avatarHtml = emp.profile_picture ? `<img src="${emp.profile_picture}" class="avatar" style="width:80px; height:80px;">` : `<div class="avatar" style="width:80px; height:80px; font-size:30px;">${(emp.first_name?.[0]||'')}${(emp.last_name?.[0]||'')}</div>`;
             
@@ -124,8 +172,6 @@ require BASE_PATH . '/partials/layout_sidebar.php';
             `;
             const docIdEl = document.getElementById('doc_emp_id'); if(docIdEl) docIdEl.value = emp.emp_id;
             const docAcEl = document.getElementById('doc_ac_no'); if(docAcEl) docAcEl.value = emp.ac_no;
-            document.getElementById('viewModal').classList.remove('hidden');
-            document.getElementById('modalBackdrop').classList.remove('hidden');
         });
     }
 

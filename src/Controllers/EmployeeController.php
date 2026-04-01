@@ -121,8 +121,12 @@ require_once dirname(dirname(__DIR__)) . '/config_session.php';
         }
         if ($action == 'get_employee_json' && isset($_GET['emp_id'])) {
             ob_end_clean(); header('Content-Type: application/json');
-            try { echo json_encode(['success'=>true] + $this->employeeModel->getEmployeeFullDetails($_GET['emp_id'])); } 
-            catch (Exception $e) { echo json_encode(['success'=>false, 'message'=>$e->getMessage()]); }
+            try { 
+                $details = $this->employeeModel->getEmployeeFullDetails($_GET['emp_id']);
+                if (!$details) throw new Exception("Employee not found.");
+                echo json_encode(array_merge(['success' => true], $details)); 
+            } 
+            catch (Exception $e) { echo json_encode(['success' => false, 'message' => $e->getMessage()]); }
             exit();
         }
         if ($action == 'search_suggestions' && isset($_GET['q'])) {
@@ -149,13 +153,55 @@ require_once dirname(dirname(__DIR__)) . '/config_session.php';
             $emp_id = $_POST['emp_id'] ?? null;
             $s = (isset($_FILES['signature_file']) && $_FILES['signature_file']['error']==0) ? FileUploadService::handleFileUpload($_FILES['signature_file'], $ac_no, 'signatures') : null;
             $p = (isset($_FILES['profile_photo']) && $_FILES['profile_photo']['error']==0) ? FileUploadService::handleFileUpload($_FILES['profile_photo'], $ac_no, 'profile_pictures', true) : null;
+            
+            // Safe extraction of POST data with defaults
+            $getPost = function($key, $default = null) {
+                return (isset($_POST[$key]) && $_POST[$key] !== '') ? $_POST[$key] : $default;
+            };
+
             $d = [
-                'ac_no'=>$ac_no, 'last_name'=>$_POST['last_name'], 'first_name'=>$_POST['first_name'], 'middle_name'=>$_POST['middle_name'], 'date_of_birth'=>AppHelpers::cleanDate($_POST['date_of_birth']), 'gender'=>$_POST['gender'], 'address'=>$_POST['address'], 'contact_number'=>$_POST['contact_number'], 'email_address'=>$_POST['email_address'], 'civil_status'=>$_POST['civil_status'], 'nationality'=>$_POST['nationality'],
-                'emergency_contact_name'=>$_POST['emergency_contact_name'], 'emergency_contact_number'=>$_POST['emergency_contact_number'], 'emergency_contact_relationship'=>$_POST['emergency_contact_relationship'], 'dept_id'=>AppHelpers::cleanNum($_POST['dept_id']), 'job_title'=>$_POST['job_title'], 'job_level'=>$_POST['job_level']??'Rank and File', 'employment_status'=>$_POST['employment_status'], 'location_assignment'=>$_POST['location_assignment'], 'supervisor_id'=>AppHelpers::cleanNum($_POST['supervisor_id']),
-                'employment_type'=>$_POST['employment_type'], 'work_schedule'=>$_POST['work_schedule'], 'salary_rate'=>AppHelpers::cleanNum($_POST['salary_rate']), 'daily_rate'=>AppHelpers::cleanNum($_POST['daily_rate']), 'hourly_rate'=>AppHelpers::cleanNum($_POST['hourly_rate']), 'payroll_group'=>$_POST['payroll_group'], 'tin_number'=>$_POST['tin_number'], 'sss_number'=>$_POST['sss_number'], 'philhealth_number'=>$_POST['philhealth_number'], 'pagibig_number'=>$_POST['pagibig_number'], 'bank_account_number'=>$_POST['bank_account_number'],
-                'date_hired'=>AppHelpers::cleanDate($_POST['date_hired']), 'date_deployed'=>AppHelpers::cleanDate($_POST['date_deployed']), 'contract_start_date'=>AppHelpers::cleanDate($_POST['contract_start_date']), 'contract_end_date'=>AppHelpers::cleanDate($_POST['contract_end_date']), 'employee_status'=>'Active', 'approval_role'=>$_POST['approval_role'], 'sil_credits'=>AppHelpers::cleanNum($_POST['sil_credits']), 'date_regularized'=>AppHelpers::cleanDate($_POST['date_regularized']??null),
-                'work_days_mode'=>$_POST['work_days_mode'] ?? '6'
+                'ac_no' => $ac_no,
+                'last_name' => $getPost('last_name'),
+                'first_name' => $getPost('first_name'),
+                'middle_name' => $getPost('middle_name'),
+                'date_of_birth' => AppHelpers::cleanDate($getPost('date_of_birth')),
+                'gender' => $getPost('gender'),
+                'address' => $getPost('address'),
+                'contact_number' => $getPost('contact_number'),
+                'email_address' => $getPost('email_address'),
+                'civil_status' => $getPost('civil_status'),
+                'nationality' => $getPost('nationality'),
+                'emergency_contact_name' => $getPost('emergency_contact_name'),
+                'emergency_contact_number' => $getPost('emergency_contact_number'),
+                'emergency_contact_relationship' => $getPost('emergency_contact_relationship'),
+                'dept_id' => AppHelpers::cleanNum($getPost('dept_id')),
+                'job_title' => $getPost('job_title'),
+                'job_level' => $getPost('job_level', 'Rank and File'),
+                'employment_status' => $getPost('employment_status'),
+                'location_assignment' => $getPost('location_assignment'),
+                'supervisor_id' => AppHelpers::cleanNum($getPost('supervisor_id')),
+                'employment_type' => $getPost('employment_type'),
+                'work_schedule' => $getPost('work_schedule'),
+                'salary_rate' => AppHelpers::cleanNum($getPost('salary_rate')),
+                'daily_rate' => AppHelpers::cleanNum($getPost('daily_rate')),
+                'hourly_rate' => AppHelpers::cleanNum($getPost('hourly_rate')),
+                'payroll_group' => $getPost('payroll_group'),
+                'tin_number' => $getPost('tin_number'),
+                'sss_number' => $getPost('sss_number'),
+                'philhealth_number' => $getPost('philhealth_number'),
+                'pagibig_number' => $getPost('pagibig_number'),
+                'bank_account_number' => $getPost('bank_account_number'),
+                'date_hired' => AppHelpers::cleanDate($getPost('date_hired')),
+                'date_deployed' => AppHelpers::cleanDate($getPost('date_deployed')),
+                'contract_start_date' => AppHelpers::cleanDate($getPost('contract_start_date')),
+                'contract_end_date' => AppHelpers::cleanDate($getPost('contract_end_date')),
+                'employee_status' => 'Active',
+                'approval_role' => $getPost('approval_role'),
+                'sil_credits' => AppHelpers::cleanNum($getPost('sil_credits')),
+                'date_regularized' => AppHelpers::cleanDate($getPost('date_regularized')),
+                'work_days_mode' => $getPost('work_days_mode', '6')
             ];
+
             if($action=='add_employee') $this->employeeModel->addEmployee($d, $s, $p, $this->currentUser);
             else $this->employeeModel->updateEmployee($emp_id, $d, $s, $p, $this->currentUser);
             $message = "Saved successfully!"; $messageType = "success";

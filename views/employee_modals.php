@@ -34,6 +34,19 @@
                 <div class="form-group"><label class="form-label">Gender</label><select name="gender" id="edit_gender" class="input-field"><option value="Male">Male</option><option value="Female">Female</option></select></div>
                 <div class="form-group"><label class="form-label">Civil Status</label><select name="civil_status" id="edit_civil_status" class="input-field"><option value="Single">Single</option><option value="Married">Married</option><option value="Widowed">Widowed</option></select></div>
                 <div class="form-group"><label class="form-label">Nationality</label><input type="text" name="nationality" id="edit_nationality" class="input-field"></div>
+                <div class="form-group"><label class="form-label">Email Address</label><input type="email" name="email_address" id="edit_email_address" class="input-field"></div>
+                <div class="form-group"><label class="form-label">Contact Number</label><input type="text" name="contact_number" id="edit_contact_number" class="input-field"></div>
+                <div class="form-group" style="grid-column: span 2;"><label class="form-label">Home Address</label><input type="text" name="address" id="edit_address" class="input-field"></div>
+            </div>
+
+            <div class="section-hd">
+                <span class="section-hd-label">Emergency Contact</span>
+                <div class="section-hd-line"></div>
+            </div>
+            <div class="grid-3" style="gap: 15px;">
+                <div class="form-group"><label class="form-label">Contact Name</label><input type="text" name="emergency_contact_name" id="edit_emergency_contact_name" class="input-field"></div>
+                <div class="form-group"><label class="form-label">Contact Number</label><input type="text" name="emergency_contact_number" id="edit_emergency_contact_number" class="input-field"></div>
+                <div class="form-group"><label class="form-label">Relationship</label><input type="text" name="emergency_contact_relationship" id="edit_emergency_contact_relationship" class="input-field"></div>
             </div>
 
             <div class="section-hd">
@@ -47,23 +60,50 @@
                     <label class="form-label">Job Level</label>
                     <select name="job_level" id="edit_job_level" class="input-field"><option value="Rank and File">Rank and File</option><option value="Supervisor">Supervisor</option><option value="Manager">Manager</option></select>
                 </div>
+                <div class="form-group"><label class="form-label">Status</label><select name="employment_status" id="edit_employment_status" class="input-field"><option value="Regular">Regular</option><option value="Probationary">Probationary</option><option value="Contractual">Contractual</option><option value="Intern">Intern</option></select></div>
+                <div class="form-group"><label class="form-label">Employment Type</label><select name="employment_type" id="edit_employment_type" class="input-field"><option value="Full-time">Full-time</option><option value="Part-time">Part-time</option></select></div>
+                <div class="form-group"><label class="form-label">Work Schedule</label><input type="text" name="work_schedule" id="edit_work_schedule" class="input-field"></div>
+                <div class="form-group"><label class="form-label">Location</label><input type="text" name="location_assignment" id="edit_location_assignment" class="input-field"></div>
+                <div class="form-group"><label class="form-label">Date Hired</label><input type="date" name="date_hired" id="edit_date_hired" class="input-field"></div>
                 <div class="form-group" style="background:var(--teal-bg); padding:10px; border-radius:8px; border:1px solid var(--teal-border);">
                     <label class="form-label" style="color:var(--teal-deep);">System Role</label>
                     <select name="approval_role" id="edit_approval_role" class="input-field"><option value="Employee">Employee</option><option value="DeptHead">Dept Head</option><option value="HR">HR Admin</option><option value="CEO">CEO</option></select>
                 </div>
-                <div class="form-group"><label class="form-label">Status</label><select name="employment_status" id="edit_employment_status" class="input-field"><option value="Regular">Regular</option><option value="Probationary">Probationary</option><option value="Contractual">Contractual</option><option value="Intern">Intern</option></select></div>
-                <div class="form-group"><label class="form-label">Work Location</label><input type="text" name="location_assignment" id="edit_location_assignment" class="input-field"></div>
             </div>
 
             <div class="section-hd">
-                <span class="section-hd-label">Compensation</span>
+                <span class="section-hd-label">Compensation & Payroll</span>
                 <div class="section-hd-line"></div>
             </div>
             <div class="grid-3" style="grid-template-columns: repeat(4, 1fr); gap: 15px;">
                 <div class="form-group"><label class="form-label">Monthly Salary</label><input type="number" step="0.01" name="salary_rate" id="edit_salary_rate" oninput="calculateRates(this, 'edit')" class="input-field"></div>
-                <div class="form-group"><label class="form-label">Daily (Auto)</label><input type="number" step="0.01" id="edit_daily" class="input-field" style="background:var(--bg-subtle);" readonly></div>
-                <div class="form-group"><label class="form-label">Hourly (Auto)</label><input type="number" step="0.01" id="edit_hourly" class="input-field" style="background:var(--bg-subtle);" readonly></div>
+                <div class="form-group"><label class="form-label">Daily (Auto)</label><input type="number" step="0.01" name="daily_rate" id="edit_daily" class="input-field" style="background:var(--bg-subtle);" readonly></div>
+                <div class="form-group"><label class="form-label">Hourly (Auto)</label><input type="number" step="0.01" name="hourly_rate" id="edit_hourly" class="input-field" style="background:var(--bg-subtle);" readonly></div>
                 <div class="form-group"><label class="form-label" style="color:var(--amber);">SIL Credits</label><input type="number" step="0.5" name="sil_credits" id="edit_sil_credits" class="input-field" style="border-color:var(--amber-bdr); background:var(--amber-bg);"></div>
+                
+                <div class="form-group"><label class="form-label">Payroll Group</label><select name="payroll_group" id="edit_payroll_group" class="input-field"><option value="Monthly">Monthly</option><option value="Semi-Monthly">Semi-Monthly</option></select></div>
+                <div class="form-group"><label class="form-label">Bank Account</label><input type="text" name="bank_account_number" id="edit_bank_account_number" class="input-field"></div>
+                <div class="form-group"><label class="form-label">TIN Number</label><input type="text" name="tin_number" id="edit_tin_number" class="input-field"></div>
+                <div class="form-group"><label class="form-label">SSS Number</label><input type="text" name="sss_number" id="edit_sss_number" class="input-field"></div>
+                <div class="form-group"><label class="form-label">PhilHealth</label><input type="text" name="philhealth_number" id="edit_philhealth_number" class="input-field"></div>
+                <div class="form-group"><label class="form-label">Pag-IBIG</label><input type="text" name="pagibig_number" id="edit_pagibig_number" class="input-field"></div>
+            </div>
+
+            <div class="section-hd">
+                <span class="section-hd-label">Attachments</span>
+                <div class="section-hd-line"></div>
+            </div>
+            <div class="grid-2" style="gap: 15px;">
+                <div class="form-group">
+                    <label class="form-label">Profile Photo</label>
+                    <input type="file" name="profile_photo" accept="image/*" class="input-field">
+                    <small style="color:var(--ink-4); font-size:10px;">Leave blank to keep current photo.</small>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">E-Signature</label>
+                    <input type="file" name="signature_file" accept="image/*" class="input-field">
+                    <small style="color:var(--ink-4); font-size:10px;">Upload a transparent PNG signature.</small>
+                </div>
             </div>
         </div>
         <div class="modal-footer">
@@ -150,21 +190,5 @@
     function closeViewModal() { 
         document.getElementById('viewModal').style.display = 'none'; 
         document.getElementById('modalBackdrop').style.display = 'none'; 
-    }
-
-    // Original functional scripts stay the same, just showing the modals
-    const originalEditEmployee = editEmployee;
-    editEmployee = function(id) {
-        document.getElementById('editModal').style.display = 'flex';
-        document.getElementById('modalBackdrop').style.display = 'block';
-        originalEditEmployee(id);
-    }
-
-    const originalViewEmployee = viewEmployee;
-    viewEmployee = function(id) {
-        document.getElementById('viewModal').style.display = 'flex';
-        document.getElementById('modalBackdrop').style.display = 'block';
-        switchViewTab('profile');
-        originalViewEmployee(id);
     }
 </script>

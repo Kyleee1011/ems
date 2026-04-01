@@ -13,9 +13,17 @@ class PayrollConfigModel
     }
 
     public function updateSssTable($sssData) {
-        $stmt = $this->pdo->prepare("UPDATE payroll_sss_table SET min_salary=?, max_salary=?, ee_share=? WHERE id=?");
+        $stmt = $this->pdo->prepare("UPDATE payroll_sss_table SET min_salary=?, max_salary=?, ee_share=?, mpf=?, ee_total=?, er_share=? WHERE id=?");
         foreach ($sssData as $d) {
-            $stmt->execute([$d['min'], $d['max'], $d['ee'], $d['id']]);
+            $stmt->execute([
+                $d['min'], 
+                $d['max'], 
+                $d['ee'], 
+                $d['mpf'] ?? 0, 
+                $d['ee_total'] ?? 0, 
+                $d['er'] ?? 0, 
+                $d['id']
+            ]);
         }
     }
 

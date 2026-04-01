@@ -68,6 +68,7 @@ $tardinessTotal = ($breakdown['deduct_absent'] ?? 0) +
 $totalIncome = $earningsSubtotal + $mealAllowance + $otherAllowances + ($breakdown['tax_refund'] ?? 0) - $tardinessTotal;
 
 $govTotal = ($gov_deductions['sss'] ?? 0) + 
+            ($gov_deductions['mpf'] ?? 0) + 
             ($gov_deductions['philhealth'] ?? 0) + 
             ($gov_deductions['pagibig'] ?? 0) + 
             ($gov_deductions['tax'] ?? 0);
@@ -308,6 +309,12 @@ $totalDeductionsRequested = $govTotal + $loanTotal;
                             <td class="label" colspan="2">SSS Contribution</td>
                             <td class="val"><?php echo fmt($gov_deductions['sss'] ?? 0); ?></td>
                         </tr>
+                        <?php if(($gov_deductions['mpf'] ?? 0) > 0): ?>
+                        <tr>
+                            <td class="label" colspan="2">SSS MPF</td>
+                            <td class="val"><?php echo fmt($gov_deductions['mpf'] ?? 0); ?></td>
+                        </tr>
+                        <?php endif; ?>
                         <tr>
                             <td class="label" colspan="2">PhilHealth (PHIC)</td>
                             <td class="val"><?php echo fmt($gov_deductions['philhealth'] ?? 0); ?></td>

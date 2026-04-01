@@ -191,16 +191,19 @@ class Payslip
     
     public function calculateGovernmentDeductions(float $monthlySalary, float $grossPay, string $cutoffPeriodType = 'sss', float $monthlyAllowances = 0): array
     {
-        $govDeductions = ['sss' => 0, 'philhealth' => 0, 'pagibig' => 0, 'tax' => 0];
+        $govDeductions = ['sss' => 0, 'mpf' => 0, 'philhealth' => 0, 'pagibig' => 0, 'tax' => 0];
 
-        $fullSss = $this->sssCalculator->calculate($monthlySalary);
+        $sssResult = $this->sssCalculator->calculate($monthlySalary);
+        $fullSss = $sssResult['ee_share'];
+        $fullMpf = $sssResult['mpf'];
         $fullPhilHealth = $this->philHealthCalculator->calculate($monthlySalary);
         $fullPagIbig = $this->pagIbigCalculator->calculate($monthlySalary);
 
         $thisCutoffDeductions = 0;
         if ($cutoffPeriodType === 'sss') {
             $govDeductions['sss'] = $fullSss;
-            $thisCutoffDeductions = $fullSss;
+            $govDeductions['mpf'] = $fullMpf;
+            $thisCutoffDeductions = $fullSss + $fullMpf;
         } else {
             $govDeductions['philhealth'] = $fullPhilHealth;
             $govDeductions['pagibig'] = $fullPagIbig;

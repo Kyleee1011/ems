@@ -14,27 +14,27 @@ class DashboardModel
 
     // Methods for fetching stats cards data
     public function getTotalEmployees() {
-        return $this->pdo->query("SELECT COUNT(*) FROM employees WHERE employee_status = 'Active'")->fetchColumn();
+        return $this->pdo->query("SELECT COUNT(*) FROM employees WHERE employee_status = 'Active' AND salary_rate > 0")->fetchColumn();
     }
 
     public function getNewHires() {
-        return $this->pdo->query("SELECT COUNT(*) FROM employees WHERE employee_status = 'Active' AND MONTH(date_hired) = MONTH(CURRENT_DATE()) AND YEAR(date_hired) = YEAR(CURRENT_DATE())")->fetchColumn();
+        return $this->pdo->query("SELECT COUNT(*) FROM employees WHERE employee_status = 'Active' AND salary_rate > 0 AND MONTH(date_hired) = MONTH(CURRENT_DATE()) AND YEAR(date_hired) = YEAR(CURRENT_DATE())")->fetchColumn();
     }
 
     public function getAvgSalary() {
-        return $this->pdo->query("SELECT AVG(salary_rate) FROM employees WHERE salary_type = 'Monthly' AND salary_rate > 0")->fetchColumn();
+        return $this->pdo->query("SELECT AVG(salary_rate) FROM employees WHERE employee_status = 'Active' AND salary_rate > 0 AND (salary_type = 'Monthly' OR salary_type IS NULL OR salary_type = '')")->fetchColumn();
     }
 
     public function getMaleEmployeeCount() {
-        return $this->pdo->query("SELECT COUNT(*) FROM employees WHERE employee_status = 'Active' AND gender = 'Male'")->fetchColumn();
+        return $this->pdo->query("SELECT COUNT(*) FROM employees WHERE employee_status = 'Active' AND salary_rate > 0 AND gender = 'Male'")->fetchColumn();
     }
 
     public function getFemaleEmployeeCount() {
-        return $this->pdo->query("SELECT COUNT(*) FROM employees WHERE employee_status = 'Active' AND gender = 'Female'")->fetchColumn();
+        return $this->pdo->query("SELECT COUNT(*) FROM employees WHERE employee_status = 'Active' AND salary_rate > 0 AND gender = 'Female'")->fetchColumn();
     }
 
     public function getUnassignedGenderCount() {
-        return $this->pdo->query("SELECT COUNT(*) FROM employees WHERE employee_status = 'Active' AND (gender IS NULL OR gender = '')")->fetchColumn();
+        return $this->pdo->query("SELECT COUNT(*) FROM employees WHERE employee_status = 'Active' AND salary_rate > 0 AND (gender IS NULL OR gender = '')")->fetchColumn();
     }
 
     public function getPendingLeavesCount() {
@@ -43,11 +43,11 @@ class DashboardModel
 
 
     public function getDepartmentStats() {
-        return $this->pdo->query("SELECT d.dept_name, COUNT(e.emp_id) as count FROM employees e JOIN departments d ON e.dept_id = d.dept_id WHERE e.employee_status = 'Active' GROUP BY d.dept_name")->fetchAll(PDO::FETCH_ASSOC);
+        return $this->pdo->query("SELECT d.dept_name, COUNT(e.emp_id) as count FROM employees e JOIN departments d ON e.dept_id = d.dept_id WHERE e.employee_status = 'Active' AND e.salary_rate > 0 GROUP BY d.dept_name")->fetchAll(PDO::FETCH_ASSOC);
     }
 
     public function getStatusStats() {
-        return $this->pdo->query("SELECT employment_status, COUNT(*) as count FROM employees WHERE employee_status = 'Active' GROUP BY employment_status")->fetchAll(PDO::FETCH_ASSOC);
+        return $this->pdo->query("SELECT employment_status, COUNT(*) as count FROM employees WHERE employee_status = 'Active' AND salary_rate > 0 GROUP BY employment_status")->fetchAll(PDO::FETCH_ASSOC);
     }
 
     public function getPendingLeaveList() {
@@ -83,8 +83,8 @@ class DashboardModel
     }
 
     public function getManpowerStats() {
-        // Fetch all active employees with their salary rate
-        $emps = $this->pdo->query("SELECT salary_rate, salary_type FROM employees WHERE employee_status = 'Active'")->fetchAll(PDO::FETCH_ASSOC);
+        // Fetch all active employees with a salary rate > 0
+        $emps = $this->pdo->query("SELECT salary_rate, salary_type FROM employees WHERE employee_status = 'Active' AND salary_rate > 0")->fetchAll(PDO::FETCH_ASSOC);
         
         $totalSalary = 0;
         $totalERSss = 0;
@@ -92,9 +92,9 @@ class DashboardModel
         $totalERPagIbig = 0;
         
         // Fetch contribution tables for lookup
-        $sssTable = $this->pdo->query("SELECT min_salary, max_salary, ee_share FROM payroll_sss_table ORDER BY min_salary ASC")->fetchAll(PDO::FETCH_ASSOC);
+        $sssTable = $this->pdo->query("SELECT min_salary, max_salary, er_share FROM payroll_sss_table ORDER BY min_salary ASC")->fetchAll(PDO::FETCH_ASSOC);
         
-        // PhilHealth: 5% total (2.5% EE, 2.5% ER) - following PhilHealthCalculator.php logic
+        // PhilHealth: 5% total (2.5% EE, 2.5% ER)
         $phConfig = $this->pdo->query("SELECT rate, min_salary, max_salary FROM payroll_philhealth_table LIMIT 1")->fetch(PDO::FETCH_ASSOC);
         
         // Pag-IBIG: Fixed amount (usually 200 EE, 200 ER)
@@ -102,34 +102,27 @@ class DashboardModel
         
         foreach ($emps as $e) {
             $salary = (float)$e['salary_rate'];
-            if ($e['salary_type'] === 'Monthly') {
-                $totalSalary += $salary;
-            } elseif ($e['salary_type'] === 'Daily') {
-                $salary = $salary * 26; // Estimation for monthly basis
-                $totalSalary += $salary;
-            } elseif ($e['salary_type'] === 'Hourly') {
-                $salary = $salary * 8 * 26; // Estimation for monthly basis
-                $totalSalary += $salary;
-            }
+            // Since we're calculating MANPOWER EXPENSE PER MONTH, we use the salary_rate directly
+            $totalSalary += $salary;
             
-            // SSS ER (Estimation: EE * 2.11 based on PH 2024 standards: ER 9.5%, EE 4.5%)
-            $eeSss = 0;
+            // SSS ER (Using the er_share from the table)
+            $erSss = 0;
             foreach ($sssTable as $bracket) {
                 if ($salary >= (float)$bracket['min_salary'] && $salary <= (float)$bracket['max_salary']) {
-                    $eeSss = (float)$bracket['ee_share'];
+                    $erSss = (float)($bracket['er_share'] ?? 0);
                     break;
                 }
             }
-            $totalERSss += $eeSss * 2.11; // ER Share (approx 9.5%)
+            $totalERSss += $erSss; 
             
-            // PhilHealth ER (50% of total rate, matching PhilHealthCalculator.php)
+            // PhilHealth ER (50% of total rate)
             if ($phConfig) {
                 $compSalary = max((float)$phConfig['min_salary'], min($salary, (float)$phConfig['max_salary']));
                 $totalPH = $compSalary * (float)$phConfig['rate'];
-                $totalERPhilHealth += $totalPH / 2;
+                $totalERPhilHealth += ($totalPH / 2);
             }
             
-            // Pag-IBIG ER (Match EE share)
+            // Pag-IBIG ER (Match the fixed amount)
             $totalERPagIbig += $piFixed;
         }
         
