@@ -165,8 +165,16 @@ class DashboardController
         $highestLateDept = $topLateDept ? ['dept_name' => $topLateDept, 'late_count' => $lateByDept[$topLateDept]] : null;
 
         // D. Employees on Leave (Current Cutoff)
-        $sqlLeaves = "SELECT e.first_name, e.last_name, d.dept_name, l.leave_type, l.start_date, l.end_date, l.status FROM leave_applications l JOIN employees e ON l.emp_id = e.emp_id LEFT JOIN departments d ON e.dept_id = d.dept_id WHERE l.status = 'Approved' AND ((l.start_date BETWEEN '$cStart' AND '$cEnd') OR (l.end_date BETWEEN '$cStart' AND '$cEnd')) ORDER BY l.start_date DESC";
-        $employeesOnLeave = $this->pdo->query($sqlLeaves)->fetchAll(PDO::FETCH_ASSOC);
+        $sqlLeaves = "SELECT e.first_name, e.last_name, d.dept_name, l.leave_type, l.start_date, l.end_date, l.status 
+                      FROM leave_applications l 
+                      JOIN employees e ON l.emp_id = e.emp_id 
+                      LEFT JOIN departments d ON e.dept_id = d.dept_id 
+                      WHERE l.status = 'Approved' 
+                      AND ((l.start_date BETWEEN ? AND ?) OR (l.end_date BETWEEN ? AND ?)) 
+                      ORDER BY l.start_date DESC";
+        $stmtLeaves = $this->pdo->prepare($sqlLeaves);
+        $stmtLeaves->execute([$cStart, $cEnd, $cStart, $cEnd]);
+        $employeesOnLeave = $stmtLeaves->fetchAll(PDO::FETCH_ASSOC);
 
 
         $activeTab = $_GET['tab'] ?? 'dashboard';
@@ -453,8 +461,16 @@ class DashboardController
         $highestLateDept = $topLateDept ? ['dept_name' => $topLateDept, 'late_count' => $lateByDept[$topLateDept]] : null;
 
         // D. Leaves
-        $sqlLeaves = "SELECT e.first_name, e.last_name, d.dept_name, l.leave_type, l.start_date, l.end_date, l.status FROM leave_applications l JOIN employees e ON l.emp_id = e.emp_id LEFT JOIN departments d ON e.dept_id = d.dept_id WHERE l.status = 'Approved' AND ((l.start_date BETWEEN '$cStart' AND '$cEnd') OR (l.end_date BETWEEN '$cStart' AND '$cEnd')) ORDER BY l.start_date DESC";
-        $employeesOnLeave = $this->pdo->query($sqlLeaves)->fetchAll(PDO::FETCH_ASSOC);
+        $sqlLeaves = "SELECT e.first_name, e.last_name, d.dept_name, l.leave_type, l.start_date, l.end_date, l.status 
+                      FROM leave_applications l 
+                      JOIN employees e ON l.emp_id = e.emp_id 
+                      LEFT JOIN departments d ON e.dept_id = d.dept_id 
+                      WHERE l.status = 'Approved' 
+                      AND ((l.start_date BETWEEN ? AND ?) OR (l.end_date BETWEEN ? AND ?)) 
+                      ORDER BY l.start_date DESC";
+        $stmtLeaves = $this->pdo->prepare($sqlLeaves);
+        $stmtLeaves->execute([$cStart, $cEnd, $cStart, $cEnd]);
+        $employeesOnLeave = $stmtLeaves->fetchAll(PDO::FETCH_ASSOC);
 
         $this->render('ceodashboard_view', compact(
             'counts', 'totalPending', 'activeTab', 'totalEmp', 'manpowerStats', 'deptLabels', 
