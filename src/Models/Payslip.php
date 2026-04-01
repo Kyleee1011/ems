@@ -71,26 +71,37 @@ class Payslip
 
     public function processLoanDeductions($endDate, $cutoffStartDate)
     {
-        $stmtLoans = $this->pdo->prepare("SELECT loan_id, per_cutoff_deduction, remaining_balance FROM employee_loans WHERE status = 'Active' AND remaining_balance > 0 AND start_date <= ?");
-        $stmtLoans->execute([$cutoffStartDate]);
-        $activeLoans = $stmtLoans->fetchAll(PDO::FETCH_ASSOC);
+        try {
+            $this->pdo->beginTransaction();
 
-        foreach ($activeLoans as $loan) {
-            $chk = $this->pdo->prepare("SELECT payment_id FROM loan_payments WHERE loan_id = ? AND payment_date = ?");
-            $chk->execute([$loan['loan_id'], $endDate]);
-            if($chk->fetch()) continue;
+            $stmtLoans = $this->pdo->prepare("SELECT loan_id, per_cutoff_deduction, remaining_balance FROM employee_loans WHERE status = 'Active' AND remaining_balance > 0 AND start_date <= ?");
+            $stmtLoans->execute([$cutoffStartDate]);
+            $activeLoans = $stmtLoans->fetchAll(PDO::FETCH_ASSOC);
 
-            $amount = min($loan['per_cutoff_deduction'], $loan['remaining_balance']);
-            
-            if ($amount > 0) {
-                $insPay = $this->pdo->prepare("INSERT INTO loan_payments (loan_id, amount_paid, payment_date, notes) VALUES (?, ?, ?, 'Payroll Deduction')");
-                $insPay->execute([$loan['loan_id'], $amount, $endDate]);
+            foreach ($activeLoans as $loan) {
+                $chk = $this->pdo->prepare("SELECT payment_id FROM loan_payments WHERE loan_id = ? AND payment_date = ?");
+                $chk->execute([$loan['loan_id'], $endDate]);
+                if($chk->fetch()) continue;
 
-                $newBal = $loan['remaining_balance'] - $amount;
-                $status = ($newBal <= 0) ? 'Paid' : 'Active';
-                $updLoan = $this->pdo->prepare("UPDATE employee_loans SET remaining_balance = ?, status = ? WHERE loan_id = ?");
-                $updLoan->execute([$newBal, $status, $loan['loan_id']]);
+                $amount = min($loan['per_cutoff_deduction'], $loan['remaining_balance']);
+                
+                if ($amount > 0) {
+                    $insPay = $this->pdo->prepare("INSERT INTO loan_payments (loan_id, amount_paid, payment_date, notes) VALUES (?, ?, ?, 'Payroll Deduction')");
+                    $insPay->execute([$loan['loan_id'], $amount, $endDate]);
+
+                    $newBal = $loan['remaining_balance'] - $amount;
+                    $status = ($newBal <= 0) ? 'Paid' : 'Active';
+                    $updLoan = $this->pdo->prepare("UPDATE employee_loans SET remaining_balance = ?, status = ? WHERE loan_id = ?");
+                    $updLoan->execute([$newBal, $status, $loan['loan_id']]);
+                }
             }
+
+            $this->pdo->commit();
+        } catch (\Exception $e) {
+            if ($this->pdo->inTransaction()) {
+                $this->pdo->rollBack();
+            }
+            throw $e;
         }
     }
 

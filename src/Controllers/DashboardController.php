@@ -236,11 +236,22 @@ class DashboardController
                             $new_status = 'Rejected';
                         }
                         
-                        $this->scheduleBatchModel->updateBatchStatus($batch_id, $new_status, $current_fullname, $user_role);
-                        
-                        if ($new_status === 'Approved') {
-                            // If CEO approved, finalize the schedule
-                            $this->scheduleBatchModel->insertFinalizedSchedule($batch_id);
+                        try {
+                            $this->pdo->beginTransaction();
+                            
+                            $this->scheduleBatchModel->updateBatchStatus($batch_id, $new_status, $current_fullname, $user_role);
+                            
+                            if ($new_status === 'Approved') {
+                                // If CEO approved, finalize the schedule
+                                $this->scheduleBatchModel->insertFinalizedSchedule($batch_id);
+                            }
+
+                            $this->pdo->commit();
+                        } catch (\Exception $e) {
+                            if ($this->pdo->inTransaction()) {
+                                $this->pdo->rollBack();
+                            }
+                            throw $e;
                         }
 
                         $redirect = $is_hr ? 'dashboard' : 'ceodashboard';
@@ -306,9 +317,18 @@ class DashboardController
                         $holiday_type = trim($_POST['holiday_type'] ?? 'REGULAR');
                         
                         if (!empty($holiday_name) && !empty($holiday_date)) {
-                            // Pointing to scheduler_holidays table
-                            $stmt = $this->pdo->prepare("INSERT INTO scheduler_holidays (holiday_date, holiday_type, holiday_name) VALUES (?, ?, ?)");
-                            $stmt->execute([$holiday_date, $holiday_type, $holiday_name]);
+                            try {
+                                $this->pdo->beginTransaction();
+                                // Pointing to scheduler_holidays table
+                                $stmt = $this->pdo->prepare("INSERT INTO scheduler_holidays (holiday_date, holiday_type, holiday_name) VALUES (?, ?, ?)");
+                                $stmt->execute([$holiday_date, $holiday_type, $holiday_name]);
+                                $this->pdo->commit();
+                            } catch (\Exception $e) {
+                                if ($this->pdo->inTransaction()) {
+                                    $this->pdo->rollBack();
+                                }
+                                throw $e;
+                            }
                         }
                         header("Location: " . baseUrl('dashboard?tab=payroll&sub=holidays&success=1')); exit;
                     
