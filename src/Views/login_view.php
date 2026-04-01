@@ -79,6 +79,51 @@
             color: var(--green);
             border: 1px solid var(--green-bdr);
         }
+        
+        /* Floating Label Effect */
+        .login-input-field {
+            position: relative;
+            border-bottom: 2px solid var(--border);
+            margin: 20px 0;
+            transition: border-color 0.2s;
+        }
+
+        .login-input-field:focus-within {
+            border-bottom-color: var(--teal);
+        }
+
+        .login-input-field label {
+            position: absolute;
+            top: 50%;
+            left: 0;
+            transform: translateY(-50%);
+            color: var(--ink-3);
+            font-size: 14px;
+            pointer-events: none;
+            transition: 0.15s ease;
+        }
+
+        .login-input-field input {
+            width: 100%;
+            height: 40px;
+            background: transparent;
+            border: none;
+            outline: none;
+            font-size: 15px;
+            color: var(--ink-1);
+            padding: 0;
+        }
+
+        .login-input-field input:focus ~ label,
+        .login-input-field input:valid ~ label {
+            font-size: 11px;
+            top: 0;
+            transform: translateY(-120%);
+            color: var(--teal);
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
     </style>
 </head>
 <body>
@@ -102,20 +147,18 @@
             <?php endif; ?>
 
             <form action="<?php echo baseUrl('login'); ?>" method="POST">
-                <div class="form-group">
-                    <label class="form-label">AC Number</label>
-                    <input type="text" name="ac_no" class="input-field" placeholder="00000" required autofocus>
+                <div class="login-input-field" style="margin-top: 30px;">
+                    <input type="text" name="ac_no" required autofocus autocomplete="off">
+                    <label>AC Number</label>
                 </div>
                 
-                <div class="form-group">
-                    <div class="flex-between mb-10">
-                        <label class="form-label" style="margin-bottom: 0;">Password</label>
-                        <a href="#" style="font-size: 11px; color: var(--teal); text-decoration: none; font-weight: 600;">Forgot?</a>
-                    </div>
-                    <input type="password" name="password" class="input-field" placeholder="••••••••" required>
+                <div class="login-input-field" style="margin-top: 35px;">
+                    <input type="password" name="password" required>
+                    <label>Password</label>
+                    <a href="#" style="position: absolute; right: 0; top: -15px; font-size: 11px; color: var(--teal); text-decoration: none; font-weight: 600;">Forgot?</a>
                 </div>
 
-                <button type="submit" class="btn-primary" style="width: 100%; height: 42px; justify-content: center; font-size: 14px; margin-top: 10px;">
+                <button type="submit" class="btn-primary" style="width: 100%; height: 42px; justify-content: center; font-size: 14px; margin-top: 20px;">
                     Sign In
                     <i class="fa-solid fa-arrow-right" style="font-size: 12px; margin-left: 5px;"></i>
                 </button>

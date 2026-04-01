@@ -29,13 +29,6 @@ $uri = $_SERVER['REQUEST_URI'];
             <span><?php echo $is_ceo ? 'CEO Dashboard' : 'HR Dashboard'; ?></span>
         </a>
         <?php endif; ?>
-
-        <?php if ($is_hr): ?>
-        <a href="<?php echo baseUrl('analytics'); ?>" class="nav-item <?php echo (strpos($uri, '/analytics') !== false) ? 'active' : ''; ?>" title="Analytics">
-            <div class="nav-ico"><i class="fa-solid fa-gauge-high"></i></div>
-            <span>Analytics</span>
-        </a>
-        <?php endif; ?>
     </div>
 
     <div class="nav-group">

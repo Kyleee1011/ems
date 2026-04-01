@@ -33,8 +33,6 @@ require BASE_PATH . '/partials/layout_sidebar.php';
         Approvals 
         <?php if($totalPending > 0): ?><span class="tag tag-red" style="margin-left: 5px;"><?php echo $totalPending; ?></span><?php endif; ?>
     </a>
-    <a href="?tab=global_schedule" class="nav-item <?php echo $activeTab === 'global_schedule' ? 'active' : ''; ?>" style="padding: 10px 5px; border-bottom: 2px solid <?php echo $activeTab === 'global_schedule' ? 'var(--teal)' : 'transparent'; ?>; background: none;">Global Schedule</a>
-    <a href="?tab=attendance" class="nav-item <?php echo $activeTab === 'attendance' ? 'active' : ''; ?>" style="padding: 10px 5px; border-bottom: 2px solid <?php echo $activeTab === 'attendance' ? 'var(--teal)' : 'transparent'; ?>; background: none;">Attendance Logs</a>
     <a href="?tab=payroll" class="nav-item <?php echo $activeTab === 'payroll' ? 'active' : ''; ?>" style="padding: 10px 5px; border-bottom: 2px solid <?php echo $activeTab === 'payroll' ? 'var(--teal)' : 'transparent'; ?>; background: none;">Payroll Config</a>
 </div>
 
@@ -361,107 +359,6 @@ require BASE_PATH . '/partials/layout_sidebar.php';
             window.location.href = '<?php echo baseUrl('schedule'); ?>?dept_id=' + deptId + '&range=' + encodeURIComponent(range);
         }
     </script>
-
-<?php elseif ($activeTab === 'global_schedule'): ?>
-    <div class="card">
-        <div class="card-head">
-            <div class="card-title"><i class="fa-solid fa-calendar-week"></i> Schedule Matrix</div>
-            <div class="flex-row">
-                <select id="viewer_dept" class="input-field" style="width: 160px; height: 32px; font-size: 11px;">
-                    <?php foreach($depts as $d): ?><option value="<?php echo $d['dept_id']; ?>"><?php echo htmlspecialchars($d['dept_name']); ?></option><?php endforeach; ?>
-                </select>
-                <select id="viewer_range" class="input-field" style="width: 180px; height: 32px; font-size: 11px;">
-                    <?php foreach($cutoff_options as $opt): ?><option value="<?php echo $opt['value']; ?>" <?php echo $opt['value']==$default_cutoff?'selected':''; ?>><?php echo $opt['label']; ?></option><?php endforeach; ?>
-                </select>
-                <button onclick="loadGlobalGrid()" class="btn-primary" style="height: 32px; padding: 0 15px;">Load</button>
-            </div>
-        </div>
-        <div class="card-body" style="padding: 0; overflow-x: auto;">
-            <div id="grid_container">
-                <p style="text-align: center; color: var(--ink-4); padding: 50px;">Select filters to view the schedule grid.</p>
-            </div>
-        </div>
-    </div>
-
-    <script>
-        function loadGlobalGrid() {
-            let d = $('#viewer_dept').val(); let r = $('#viewer_range').val();
-            $('#grid_container').html('<p style="text-align: center; color: var(--ink-4); padding: 50px;"><i class="fa-solid fa-spinner fa-spin"></i> Fetching data...</p>');
-            
-            $.post('<?php echo baseUrl('schedule/api'); ?>', { action: 'get_schedules', dept_id: d, range: r }, function(res){
-                if(!res.success) { $('#grid_container').html('<p style="text-align:center; padding:30px; color:var(--red);">Error loading grid.</p>'); return; }
-                
-                let dates = []; let startStr = r.split('|')[0]; let start = new Date(startStr); let end = new Date(r.split('|')[1]); let curr = new Date(start);
-                while (curr <= end) { dates.push(new Date(curr)); curr.setDate(curr.getDate() + 1); }
-                
-                let html = '<div class="table-wrap" style="border:none; border-radius:0;"><table><thead><tr><th style="min-width:180px; sticky:left;">Employee</th>';
-                dates.forEach(dt => { html += `<th style="text-align:center; font-size:9px;">${dt.toISOString().substring(5, 10)}</th>`; });
-                html += '</tr></thead><tbody>';
-
-                $.post('<?php echo baseUrl('schedule/api'); ?>', { action: 'get_employees_by_dept', dept_id: d }, function(empRes){
-                    empRes.employees.forEach(emp => {
-                        html += `<tr><td style="font-weight:600; font-size:11px;">${emp.name}</td>`;
-                        dates.forEach(dt => {
-                            let dateStr = dt.toISOString().split('T')[0];
-                            let cell = res.schedules[emp.id] && res.schedules[emp.id][dateStr] ? res.schedules[emp.id][dateStr] : {code:'-', time:'-'};
-                            let style = cell.code === 'OFF' ? 'color:var(--teal); font-weight:700;' : 'color:var(--ink-4);';
-                            html += `<td style="text-align:center; font-size:9px; ${style}">${cell.time}</td>`; 
-                        });
-                        html += '</tr>';
-                    });
-                    html += '</tbody></table></div>';
-                    $('#grid_container').html(html);
-                }, 'json');
-            }, 'json');
-        }
-    </script>
-
-<?php elseif ($activeTab === 'attendance'): ?>
-    <div class="card">
-        <div class="card-head">
-            <div class="card-title"><i class="fa-solid fa-list-check"></i> Raw Attendance Logs</div>
-            <form method="GET" class="flex-row">
-                <input type="hidden" name="tab" value="attendance">
-                <input type="date" name="att_start" value="<?php echo $_GET['att_start'] ?? date('Y-m-d'); ?>" class="input-field" style="width: 130px; height: 32px;">
-                <input type="date" name="att_end" value="<?php echo $_GET['att_end'] ?? date('Y-m-d'); ?>" class="input-field" style="width: 130px; height: 32px;">
-                <button class="btn-primary" style="height: 32px; padding: 0 15px;">Filter</button>
-            </form>
-        </div>
-        <div class="card-body" style="padding: 0;">
-            <div class="table-wrap" style="border: none; border-radius: 0;">
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Employee</th>
-                            <th>Date & Time</th>
-                            <th style="text-align: center;">Type</th>
-                            <th>AC No</th>
-                            <th>Department</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <?php if(!empty($attendanceLogs)): foreach($attendanceLogs as $log): 
-                            $isCheckIn = in_array(strtoupper($log['check_type'] ?? ''), ['I', '0', 'CHECK-IN', 'IN']);
-                        ?>
-                        <tr>
-                            <td style="font-weight: 600;"><?php echo htmlspecialchars($log['last_name'] . ', ' . $log['first_name']); ?></td>
-                            <td style="font-family: 'DM Mono'; font-size: 11px;"><?php echo date('M d, Y h:i A', strtotime($log['check_time'])); ?></td>
-                            <td style="text-align: center;">
-                                <span class="tag <?php echo $isCheckIn ? 'tag-teal' : 'tag-amber'; ?>" style="font-size: 8px;">
-                                    <?php echo $isCheckIn ? 'CHECK-IN' : 'CHECK-OUT'; ?>
-                                </span>
-                            </td>
-                            <td style="font-size: 11px; color: var(--ink-4);"><?php echo htmlspecialchars($log['ac_no']); ?></td>
-                            <td style="font-size: 11px; color: var(--ink-4);"><?php echo htmlspecialchars($log['dept_name'] ?? '-'); ?></td>
-                        </tr>
-                        <?php endforeach; else: ?>
-                        <tr><td colspan="5" style="text-align: center; padding: 40px; color: var(--ink-4);">No logs found for selected period.</td></tr>
-                        <?php endif; ?>
-                    </tbody>
-                </table>
-            </div>
-        </div>
-    </div>
 
 <?php elseif ($activeTab === 'payroll'): ?>
     <div class="grid-2" style="grid-template-columns: 240px 1fr; gap: 20px; align-items: start;">
