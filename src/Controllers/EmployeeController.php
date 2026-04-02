@@ -37,6 +37,11 @@ require_once dirname(dirname(__DIR__)) . '/config_session.php';
         
         if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action'])) {
             try {
+                // CSRF Check
+                if (!\App\Utils\AppHelpers::validateCsrfToken($_POST['csrf_token'] ?? null)) {
+                    throw new Exception("Invalid CSRF token. Please refresh the page.");
+                }
+
                 $this->handlePostActions($_POST['action'], $message, $messageType);
             } catch (Exception $e) {
                 $message = "Error: " . $e->getMessage();

@@ -106,6 +106,7 @@ require BASE_PATH . '/partials/layout_sidebar.php';
         <button onclick="closeModal()" class="icon-btn" style="border:none; background:none;"><i class="fa-solid fa-times"></i></button>
     </div>
     <form method="POST" action="">
+        <?= csrfField() ?>
         <div class="modal-body" style="padding:20px;">
             <input type="hidden" name="action" value="add_loan">
             <?php if ($is_hr || $is_ceo): ?>
@@ -146,6 +147,7 @@ require BASE_PATH . '/partials/layout_sidebar.php';
         <button onclick="closeReview()" class="icon-btn" style="border:none; background:none;"><i class="fa-solid fa-times"></i></button>
     </div>
     <form method="POST" action="">
+        <?= csrfField() ?>
         <div class="modal-body">
             <input type="hidden" name="action" value="revise_loan"><input type="hidden" name="loan_id" id="rev_loan_id">
             <div class="form-group"><label class="form-label">Principal Amount</label><input type="number" step="0.01" name="principal_amount" id="rev_principal" class="input-field" required></div>
@@ -231,13 +233,13 @@ function renderUnifiedLoanTable($loans, $role, $isPendingView) {
                             <?php if ($isPendingView): ?>
                                 <?php if ($role == 'HR' && $l['status'] == 'Pending HR'): ?>
                                     <button onclick="openReview(<?php echo $l['loan_id']; ?>, <?php echo $l['principal_amount']; ?>, <?php echo $l['interest_rate']; ?>, <?php echo $l['months_to_pay']; ?>, '<?php echo $l['deduction_frequency']; ?>')" class="icon-btn"><i class="fa-solid fa-pen"></i></button>
-                                    <form method="POST" style="display:inline;"><input type="hidden" name="action" value="status_update_hr"><input type="hidden" name="loan_id" value="<?php echo $l['loan_id']; ?>"><button name="status" value="Approved" class="icon-btn ico-green"><i class="fa-solid fa-check"></i></button></form>
+                                    <form method="POST" style="display:inline;"><?= csrfField() ?><input type="hidden" name="action" value="status_update_hr"><input type="hidden" name="loan_id" value="<?php echo $l['loan_id']; ?>"><button name="status" value="Approved" class="icon-btn ico-green"><i class="fa-solid fa-check"></i></button></form>
                                 <?php elseif ($role == 'CEO' && $l['status'] == 'Pending CEO'): ?>
-                                    <form method="POST" style="display:inline;"><input type="hidden" name="action" value="status_update_ceo"><input type="hidden" name="loan_id" value="<?php echo $l['loan_id']; ?>"><button name="status" value="Approved" class="btn-primary" style="font-size:10px; height:26px; padding:0 10px;">Final Approve</button></form>
+                                    <form method="POST" style="display:inline;"><?= csrfField() ?><input type="hidden" name="action" value="status_update_ceo"><input type="hidden" name="loan_id" value="<?php echo $l['loan_id']; ?>"><button name="status" value="Approved" class="btn-primary" style="font-size:10px; height:26px; padding:0 10px;">Final Approve</button></form>
                                 <?php endif; ?>
                             <?php else: ?>
                                 <?php if (($role == 'HR' || $role == 'CEO') && $l['status'] == 'Active'): ?>
-                                    <form method="POST"><input type="hidden" name="action" value="update_status"><input type="hidden" name="loan_id" value="<?php echo $l['loan_id']; ?>"><select name="new_status" onchange="this.form.submit()" class="input-field" style="width:80px; height:24px; font-size:9px;"><option value="">Action</option><option value="Hold">Hold</option><option value="Paid">Force Paid</option></select></form>
+                                    <form method="POST"><?= csrfField() ?><input type="hidden" name="action" value="update_status"><input type="hidden" name="loan_id" value="<?php echo $l['loan_id']; ?>"><select name="new_status" onchange="this.form.submit()" class="input-field" style="width:80px; height:24px; font-size:9px;"><option value="">Action</option><option value="Hold">Hold</option><option value="Paid">Force Paid</option></select></form>
                                 <?php else: ?>
                                     <span style="font-size:10px; color:var(--ink-4);">-</span>
                                 <?php endif; ?>

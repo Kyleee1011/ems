@@ -207,6 +207,12 @@ class DashboardController
 
     public function handlePost()
     {
+        // CSRF Check
+        if (!\App\Utils\AppHelpers::validateCsrfToken($_POST['csrf_token'] ?? null)) {
+            header("Location: " . baseUrl('dashboard?error=csrf'));
+            exit;
+        }
+
         // User Context
         $current_user_id = $_SESSION['user_id'] ?? 1; 
         $current_fullname = $_SESSION['full_name'] ?? 'System Admin';

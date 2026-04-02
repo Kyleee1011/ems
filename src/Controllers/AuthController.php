@@ -40,6 +40,12 @@ require_once dirname(dirname(__DIR__)) . '/config_session.php';
     public function login()
     {
 require_once dirname(dirname(__DIR__)) . '/config_session.php';
+
+        // CSRF Check
+        if (!\App\Utils\AppHelpers::validateCsrfToken($_POST['csrf_token'] ?? null)) {
+            $this->render('login_view', ['error' => 'Invalid CSRF token. Please refresh the page.', 'success' => '']);
+            return;
+        }
         
         $error = '';
         $ac_no = trim($_POST['ac_no']);

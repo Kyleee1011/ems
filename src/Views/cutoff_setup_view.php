@@ -38,6 +38,7 @@ require BASE_PATH . '/partials/layout_sidebar.php';
         <div class="card">
             <div class="card-head"><div class="card-title">Update Policy Configuration</div></div>
             <form id="configForm" class="card-body">
+                <?= csrfField() ?>
                 <div class="section-hd"><span class="section-hd-label">Period Segmentation</span><div class="section-hd-line"></div></div>
                 <div class="grid-2 mb-20">
                     <div class="form-group"><label class="form-label">Cutoff 1 Start (Day)</label><input type="number" name="cutoff_1_start" value="<?php echo $currentConfig['cutoff_1_start']; ?>" min="1" max="31" class="input-field"></div>

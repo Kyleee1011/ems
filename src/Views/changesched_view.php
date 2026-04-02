@@ -45,6 +45,13 @@
             </div>
         <?php endif; ?>
 
+        <?php if(isset($_GET['error']) && $_GET['error'] === 'csrf'): ?>
+            <div class="mb-6 px-4 py-3 rounded-lg shadow-sm border-l-4 bg-white border-red-500 text-red-700 flex items-center gap-3 animate-fade-in relative">
+                <i class="fa-solid fa-circle-exclamation"></i>
+                <p class="font-medium text-sm">Invalid security token. The form has expired, please try again.</p>
+            </div>
+        <?php endif; ?>
+
         <div class="mb-6 flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div>
                 <a href="<?php echo baseUrl('home'); ?>" class="flex items-center gap-2 text-gray-500 hover:text-gray-900 transition-colors font-medium text-sm">
@@ -61,6 +68,7 @@
                     <div class="stat-card p-6">
                         <h3 class="font-bold text-gray-900 mb-6 text-lg">Request Schedule Change</h3>
                         <form method="POST" id="form-changesched">
+                            <?= csrfField() ?>
                             <input type="hidden" name="action" value="apply_change_sched">
                             <div class="mb-4">
                                 <label class="label-text">Date of Shift</label>

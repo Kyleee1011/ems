@@ -7,6 +7,7 @@
                         <a href="?action=download_template" class="px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-lg text-sm font-bold hover:bg-gray-50 flex items-center gap-2"><i class="fa-solid fa-download"></i> Download Template</a>
                     </div>
                     <form method="POST" action="" enctype="multipart/form-data" class="bg-gray-50 border border-dashed border-gray-300 rounded-xl p-8 hover:border-primary-500 transition-colors cursor-pointer relative">
+                        <?= csrfField() ?>
                         <input type="hidden" name="action" value="bulk_upload">
                         <input type="file" name="csv_file" accept=".csv" required class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10">
                         <p class="text-sm font-bold text-gray-600">Click or drag CSV file here</p>

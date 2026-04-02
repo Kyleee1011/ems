@@ -45,6 +45,7 @@ require BASE_PATH . '/partials/layout_sidebar.php';
         <div class="card-head"><div class="card-title">New OT Application</div></div>
         <div class="card-body">
             <form method="POST" id="form-ot">
+                <?= csrfField() ?>
                 <input type="hidden" name="action" value="apply_ot">
                 
                 <div class="form-group">
@@ -141,6 +142,7 @@ require BASE_PATH . '/partials/layout_sidebar.php';
                         <td style="font-size: 11px; color: var(--ink-3); max-width: 200px;"><?php echo htmlspecialchars($ot['reason']); ?></td>
                         <td style="text-align: right;">
                             <form method="POST" style="display: inline-flex; gap: 5px;">
+                                <?= csrfField() ?>
                                 <input type="hidden" name="action" value="update_ot_status"><input type="hidden" name="ot_id" value="<?php echo $ot['ot_id']; ?>">
                                 <button name="status" value="Approved" onclick="return confirm('Approve?')" class="icon-btn ico-green"><i class="fa-solid fa-check"></i></button>
                                 <button name="status" value="Rejected" onclick="return confirm('Reject?')" class="icon-btn ico-red"><i class="fa-solid fa-times"></i></button>

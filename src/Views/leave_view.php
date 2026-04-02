@@ -47,6 +47,7 @@ require BASE_PATH . '/partials/layout_sidebar.php';
             <div class="card-head"><div class="card-title">New Application</div></div>
             <div class="card-body">
                 <form method="POST">
+                    <?= csrfField() ?>
                     <input type="hidden" name="action" value="apply_leave">
                     <div class="form-group">
                         <label class="form-label">Leave Type</label>
@@ -157,6 +158,7 @@ require BASE_PATH . '/partials/layout_sidebar.php';
                             <td style="font-size: 11px; color: var(--ink-3); max-width: 200px;"><?php echo htmlspecialchars($l['reason']); ?></td>
                             <td style="text-align: right;">
                                 <form method="POST" style="display: inline-flex; gap: 5px;">
+                                    <?= csrfField() ?>
                                     <input type="hidden" name="action" value="update_leave_status"><input type="hidden" name="leave_id" value="<?php echo $l['leave_id']; ?>">
                                     <button name="status" value="Approved" class="icon-btn ico-green" onclick="return confirm('Approve?')" style="width: 30px; height: 30px;"><i class="fa-solid fa-check"></i></button>
                                     <button name="status" value="Rejected" class="icon-btn ico-red" onclick="return confirm('Reject?')" style="width: 30px; height: 30px;"><i class="fa-solid fa-times"></i></button>

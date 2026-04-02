@@ -6,6 +6,12 @@ require BASE_PATH . '/partials/layout_sidebar.php';
 ?>
 
 <div class="page-header">
+    <?php if(isset($_GET['error']) && $_GET['error'] === 'csrf'): ?>
+        <div style="grid-column: 1 / -1; background: var(--red-bg); color: var(--red); padding: 12px 20px; border-radius: 8px; border: 1px solid var(--red-bdr); margin-bottom: 20px; font-size: 13px; font-weight: 600; display: flex; align-items: center; gap: 10px;">
+            <i class="fa-solid fa-circle-exclamation"></i>
+            Invalid security token. The form has expired, please try again.
+        </div>
+    <?php endif; ?>
     <div>
         <h1 class="page-title">Executive Dashboard</h1>
         <p class="page-sub">Azzurro HR Business Overview</p>
@@ -210,6 +216,7 @@ require BASE_PATH . '/partials/layout_sidebar.php';
                                     <td style="font-family: 'DM Mono'; font-weight: 700;"><?php echo $row['ot_hours']; ?>h</td>
                                     <td style="text-align: right;">
                                         <form method="POST" style="display: inline-flex; gap: 4px;">
+                                            <?= csrfField() ?>
                                             <input type="hidden" name="action" value="process_ot"><input type="hidden" name="ot_id" value="<?php echo $row['ot_id']; ?>">
                                             <button name="decision" value="approve" class="icon-btn ico-green" style="width: 26px; height: 26px;"><i class="fa-solid fa-check"></i></button>
                                             <button name="decision" value="reject" class="icon-btn ico-red" style="width: 26px; height: 26px;"><i class="fa-solid fa-times"></i></button>
@@ -221,6 +228,7 @@ require BASE_PATH . '/partials/layout_sidebar.php';
                                     <td style="font-size: 10px;"><?php echo date('M d', strtotime($row['start_date'])); ?> - <?php echo date('M d', strtotime($row['end_date'])); ?></td>
                                     <td style="text-align: right;">
                                         <form method="POST" style="display: inline-flex; gap: 4px;">
+                                            <?= csrfField() ?>
                                             <input type="hidden" name="action" value="process_leave"><input type="hidden" name="leave_id" value="<?php echo $row['leave_id']; ?>">
                                             <button name="decision" value="approve" class="icon-btn ico-green" style="width: 26px; height: 26px;"><i class="fa-solid fa-check"></i></button>
                                             <button name="decision" value="reject" class="icon-btn ico-red" style="width: 26px; height: 26px;"><i class="fa-solid fa-times"></i></button>

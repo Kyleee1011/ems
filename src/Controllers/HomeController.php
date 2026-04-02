@@ -18,6 +18,13 @@ class HomeController
     public function createPost()
     {
 require_once dirname(dirname(__DIR__)) . '/config_session.php';
+        
+        // CSRF Check
+        if (!\App\Utils\AppHelpers::validateCsrfToken($_POST['csrf_token'] ?? null)) {
+            header("Location: " . baseUrl('home?error=csrf'));
+            exit;
+        }
+
         $userId = $_SESSION['user_id'] ?? 0;
         
         if (isset($_POST['content']) || isset($_FILES['post_image'])) {
@@ -48,6 +55,13 @@ require_once dirname(dirname(__DIR__)) . '/config_session.php';
     public function likePost()
     {
 require_once dirname(dirname(__DIR__)) . '/config_session.php';
+
+        // CSRF Check
+        if (!\App\Utils\AppHelpers::validateCsrfToken($_POST['csrf_token'] ?? null)) {
+            header("Location: " . baseUrl('home?error=csrf'));
+            exit;
+        }
+
         $userId = $_SESSION['user_id'] ?? 0;
         $postId = $_POST['post_id'] ?? 0;
 
@@ -73,6 +87,12 @@ require_once dirname(dirname(__DIR__)) . '/config_session.php';
     {
 require_once dirname(dirname(__DIR__)) . '/config_session.php';
         
+        // CSRF Check
+        if (!\App\Utils\AppHelpers::validateCsrfToken($_POST['csrf_token'] ?? null)) {
+            header("Location: " . baseUrl('home?error=csrf'));
+            exit;
+        }
+
         // Check if user is HR
         $current_role = $_SESSION['role'] ?? 'Employee';
         $is_hr = ($current_role === 'HR' || $current_role === 'Human Resources');

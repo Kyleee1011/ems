@@ -6,6 +6,12 @@ require BASE_PATH . '/partials/layout_sidebar.php';
 ?>
 
 <div class="page-header">
+    <?php if(isset($_GET['error']) && $_GET['error'] === 'csrf'): ?>
+        <div style="grid-column: 1 / -1; background: var(--red-bg); color: var(--red); padding: 12px 20px; border-radius: 8px; border: 1px solid var(--red-bdr); margin-bottom: 20px; font-size: 13px; font-weight: 600; display: flex; align-items: center; gap: 10px;">
+            <i class="fa-solid fa-circle-exclamation"></i>
+            Invalid security token. The form has expired, please try again.
+        </div>
+    <?php endif; ?>
     <div>
         <h1 class="page-title">HR Dashboard</h1>
         <p class="page-sub">Centralized workforce management and analytics</p>
@@ -263,6 +269,7 @@ require BASE_PATH . '/partials/layout_sidebar.php';
                                     <td style="font-size: 11px;"><?php echo date('M d', strtotime($l['start_date'])); ?></td>
                                     <td style="text-align: right;">
                                         <form method="POST" style="display: inline-flex; gap: 4px;">
+                                            <?= csrfField() ?>
                                             <input type="hidden" name="action" value="process_leave"><input type="hidden" name="leave_id" value="<?php echo $l['leave_id']; ?>">
                                             <button name="decision" value="approve" class="icon-btn ico-green" style="width: 26px; height: 26px;"><i class="fa-solid fa-check"></i></button>
                                             <button name="decision" value="reject" class="icon-btn ico-red" style="width: 26px; height: 26px;"><i class="fa-solid fa-times"></i></button>
@@ -297,6 +304,7 @@ require BASE_PATH . '/partials/layout_sidebar.php';
                                     <td style="font-size: 11px;"><?php echo date('M d', strtotime($ot['ot_date'])); ?></td>
                                     <td style="text-align: right;">
                                         <form method="POST" style="display: inline-flex; gap: 4px;">
+                                            <?= csrfField() ?>
                                             <input type="hidden" name="action" value="process_ot"><input type="hidden" name="ot_id" value="<?php echo $ot['ot_id']; ?>">
                                             <button name="decision" value="approve" class="icon-btn ico-green" style="width: 26px; height: 26px;"><i class="fa-solid fa-check"></i></button>
                                             <button name="decision" value="reject" class="icon-btn ico-red" style="width: 26px; height: 26px;"><i class="fa-solid fa-times"></i></button>
@@ -400,6 +408,7 @@ require BASE_PATH . '/partials/layout_sidebar.php';
                 <!-- Each sub-tab content goes here, simplified for brevity but maintaining structure -->
                 <?php if($activePaySub === 'sss'): ?>
                     <form method="POST">
+                                            <?= csrfField() ?>
                         <input type="hidden" name="action" value="update_sss">
                         <div class="table-wrap">
                             <table>
@@ -436,6 +445,7 @@ require BASE_PATH . '/partials/layout_sidebar.php';
                         <div>
                             <h4 class="form-label">Add Holiday</h4>
                             <form method="POST" class="space-y-10">
+                                <?= csrfField() ?>
                                 <input type="hidden" name="action" value="add_holiday">
                                 <div><label class="form-label">Name</label><input type="text" name="holiday_name" class="input-field" required></div>
                                 <div><label class="form-label">Date</label><input type="date" name="holiday_date" class="input-field" required></div>
@@ -454,6 +464,7 @@ require BASE_PATH . '/partials/layout_sidebar.php';
                                         <td><span class="tag <?php echo $hol['holiday_type']==='REGULAR'?'tag-red':'tag-amber'; ?>"><?php echo $hol['holiday_type']; ?></span></td>
                                         <td>
                                             <form method="POST" onsubmit="return confirm('Delete?');">
+                                                <?= csrfField() ?>
                                                 <input type="hidden" name="action" value="delete_holiday"><input type="hidden" name="holiday_id" value="<?php echo $hol['id']; ?>">
                                                 <button class="icon-btn" style="border:none; background:none; color:var(--red);"><i class="fa-solid fa-trash-can"></i></button>
                                             </form>

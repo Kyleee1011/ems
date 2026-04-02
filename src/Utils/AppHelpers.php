@@ -82,11 +82,41 @@ class AppHelpers
 
         return ($iterations > 1) ? array_reverse($cutoffs) : $cutoffs;
     }
-
-    public static function normalizeDate($input) {
-        if ($input instanceof DateTime) return $input->format('Y-m-d');
-        if (is_numeric($input)) return date('Y-m-d', $input);
-        return date('Y-m-d', strtotime($input));
-    }
-    // Add other generic helper functions here
+public static function normalize
+Date($input)
+{
+    if ($input instanceof DateTime) return $input->format('Y-m-d');
+    if (is_numeric($input)) return date('Y-m-d', $input);
+    return date('Y-m-d', strtotime($input));
 }
+
+/**
+ * Generate a CSRF token and store it in the session.
+ * @return string
+ */
+public static function generateCsrfToken() {
+    if (session_status() === PHP_SESSION_NONE) {
+        session_start();
+    }
+    if (empty($_SESSION['csrf_token'])) {
+        $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
+    }
+    return $_SESSION['csrf_token'];
+}
+
+/**
+ * Validate a CSRF token.
+ * @param string|null $token
+ * @return bool
+ */
+public static function validateCsrfToken($token) {
+    if (session_status() === PHP_SESSION_NONE) {
+        session_start();
+    }
+    if (!isset($_SESSION['csrf_token']) || empty($token)) {
+        return false;
+    }
+    return hash_equals($_SESSION['csrf_token'], $token);
+}
+}
+

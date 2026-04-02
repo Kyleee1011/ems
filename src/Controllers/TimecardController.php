@@ -166,6 +166,12 @@ class TimecardController
     {
         if (!$isHr) { echo json_encode(['success' => false, 'message' => 'Unauthorized']); exit; }
 
+        // CSRF Check
+        if (!\App\Utils\AppHelpers::validateCsrfToken($_POST['csrf_token'] ?? null)) {
+            echo json_encode(['success' => false, 'message' => 'Invalid CSRF token. Please refresh.']);
+            exit;
+        }
+
         $targetAc = $_POST['ac_no'] ?? null;
         $targetDate = $_POST['date'] ?? null;
         $type = $_POST['type'] ?? null;

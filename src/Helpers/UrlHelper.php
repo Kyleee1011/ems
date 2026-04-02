@@ -37,3 +37,16 @@ if (!function_exists('getDashboardUrl')) {
         return 'home';
     }
 }
+
+if (!function_exists('csrfField')) {
+    /**
+     * Generate a hidden CSRF input field.
+     *
+     * @return string
+     */
+    function csrfField()
+    {
+        $token = \App\Utils\AppHelpers::generateCsrfToken();
+        return '<input type="hidden" name="csrf_token" value="' . $token . '">';
+    }
+}

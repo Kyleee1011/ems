@@ -14,48 +14,70 @@ class DashboardModel
 
     // Methods for fetching stats cards data
     public function getTotalEmployees() {
-        return $this->pdo->query("SELECT COUNT(*) FROM employees WHERE employee_status = 'Active' AND salary_rate > 0")->fetchColumn();
+        $stmt = $this->pdo->prepare("SELECT COUNT(*) FROM employees WHERE employee_status = 'Active' AND salary_rate > 0");
+        $stmt->execute();
+        return $stmt->fetchColumn();
     }
 
     public function getNewHires() {
-        return $this->pdo->query("SELECT COUNT(*) FROM employees WHERE employee_status = 'Active' AND salary_rate > 0 AND MONTH(date_hired) = MONTH(CURRENT_DATE()) AND YEAR(date_hired) = YEAR(CURRENT_DATE())")->fetchColumn();
+        $stmt = $this->pdo->prepare("SELECT COUNT(*) FROM employees WHERE employee_status = 'Active' AND salary_rate > 0 AND MONTH(date_hired) = MONTH(CURRENT_DATE()) AND YEAR(date_hired) = YEAR(CURRENT_DATE())");
+        $stmt->execute();
+        return $stmt->fetchColumn();
     }
 
     public function getAvgSalary() {
-        return $this->pdo->query("SELECT AVG(salary_rate) FROM employees WHERE employee_status = 'Active' AND salary_rate > 0 AND (salary_type = 'Monthly' OR salary_type IS NULL OR salary_type = '')")->fetchColumn();
+        $stmt = $this->pdo->prepare("SELECT AVG(salary_rate) FROM employees WHERE employee_status = 'Active' AND salary_rate > 0 AND (salary_type = 'Monthly' OR salary_type IS NULL OR salary_type = '')");
+        $stmt->execute();
+        return $stmt->fetchColumn();
     }
 
     public function getMaleEmployeeCount() {
-        return $this->pdo->query("SELECT COUNT(*) FROM employees WHERE employee_status = 'Active' AND salary_rate > 0 AND gender = 'Male'")->fetchColumn();
+        $stmt = $this->pdo->prepare("SELECT COUNT(*) FROM employees WHERE employee_status = 'Active' AND salary_rate > 0 AND gender = 'Male'");
+        $stmt->execute();
+        return $stmt->fetchColumn();
     }
 
     public function getFemaleEmployeeCount() {
-        return $this->pdo->query("SELECT COUNT(*) FROM employees WHERE employee_status = 'Active' AND salary_rate > 0 AND gender = 'Female'")->fetchColumn();
+        $stmt = $this->pdo->prepare("SELECT COUNT(*) FROM employees WHERE employee_status = 'Active' AND salary_rate > 0 AND gender = 'Female'");
+        $stmt->execute();
+        return $stmt->fetchColumn();
     }
 
     public function getUnassignedGenderCount() {
-        return $this->pdo->query("SELECT COUNT(*) FROM employees WHERE employee_status = 'Active' AND salary_rate > 0 AND (gender IS NULL OR gender = '')")->fetchColumn();
+        $stmt = $this->pdo->prepare("SELECT COUNT(*) FROM employees WHERE employee_status = 'Active' AND salary_rate > 0 AND (gender IS NULL OR gender = '')");
+        $stmt->execute();
+        return $stmt->fetchColumn();
     }
 
     public function getPendingLeavesCount() {
-        return $this->pdo->query("SELECT COUNT(*) FROM leave_applications WHERE status = 'Submitted' OR status = 'Pending'")->fetchColumn();
+        $stmt = $this->pdo->prepare("SELECT COUNT(*) FROM leave_applications WHERE status = 'Submitted' OR status = 'Pending'");
+        $stmt->execute();
+        return $stmt->fetchColumn();
     }
 
 
     public function getDepartmentStats() {
-        return $this->pdo->query("SELECT d.dept_name, COUNT(e.emp_id) as count FROM employees e JOIN departments d ON e.dept_id = d.dept_id WHERE e.employee_status = 'Active' AND e.salary_rate > 0 GROUP BY d.dept_name")->fetchAll(PDO::FETCH_ASSOC);
+        $stmt = $this->pdo->prepare("SELECT d.dept_name, COUNT(e.emp_id) as count FROM employees e JOIN departments d ON e.dept_id = d.dept_id WHERE e.employee_status = 'Active' AND e.salary_rate > 0 GROUP BY d.dept_name");
+        $stmt->execute();
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
     public function getStatusStats() {
-        return $this->pdo->query("SELECT employment_status, COUNT(*) as count FROM employees WHERE employee_status = 'Active' AND salary_rate > 0 GROUP BY employment_status")->fetchAll(PDO::FETCH_ASSOC);
+        $stmt = $this->pdo->prepare("SELECT employment_status, COUNT(*) as count FROM employees WHERE employee_status = 'Active' AND salary_rate > 0 GROUP BY employment_status");
+        $stmt->execute();
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
     public function getPendingLeaveList() {
-        return $this->pdo->query("SELECT l.*, e.first_name, e.last_name FROM leave_applications l JOIN employees e ON l.emp_id = e.emp_id WHERE l.status IN ('Submitted', 'Pending') ORDER BY l.created_at ASC LIMIT 5")->fetchAll(PDO::FETCH_ASSOC);
+        $stmt = $this->pdo->prepare("SELECT l.*, e.first_name, e.last_name FROM leave_applications l JOIN employees e ON l.emp_id = e.emp_id WHERE l.status IN ('Submitted', 'Pending') ORDER BY l.created_at ASC LIMIT 5");
+        $stmt->execute();
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
     public function getDepartments() {
-        return $this->pdo->query("SELECT * FROM departments ORDER BY dept_name")->fetchAll(PDO::FETCH_ASSOC);
+        $stmt = $this->pdo->prepare("SELECT * FROM departments ORDER BY dept_name");
+        $stmt->execute();
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
     public function getActiveEmployeesByDept($dept_id) {
@@ -84,7 +106,9 @@ class DashboardModel
 
     public function getManpowerStats() {
         // Fetch all active employees with a salary rate > 0
-        $emps = $this->pdo->query("SELECT salary_rate, salary_type FROM employees WHERE employee_status = 'Active' AND salary_rate > 0")->fetchAll(PDO::FETCH_ASSOC);
+        $stmtEmps = $this->pdo->prepare("SELECT salary_rate, salary_type FROM employees WHERE employee_status = 'Active' AND salary_rate > 0");
+        $stmtEmps->execute();
+        $emps = $stmtEmps->fetchAll(PDO::FETCH_ASSOC);
         
         $totalSalary = 0;
         $totalERSss = 0;
@@ -92,13 +116,19 @@ class DashboardModel
         $totalERPagIbig = 0;
         
         // Fetch contribution tables for lookup
-        $sssTable = $this->pdo->query("SELECT min_salary, max_salary, er_share FROM payroll_sss_table ORDER BY min_salary ASC")->fetchAll(PDO::FETCH_ASSOC);
+        $stmtSss = $this->pdo->prepare("SELECT min_salary, max_salary, er_share FROM payroll_sss_table ORDER BY min_salary ASC");
+        $stmtSss->execute();
+        $sssTable = $stmtSss->fetchAll(PDO::FETCH_ASSOC);
         
         // PhilHealth: 5% total (2.5% EE, 2.5% ER)
-        $phConfig = $this->pdo->query("SELECT rate, min_salary, max_salary FROM payroll_philhealth_table LIMIT 1")->fetch(PDO::FETCH_ASSOC);
+        $stmtPh = $this->pdo->prepare("SELECT rate, min_salary, max_salary FROM payroll_philhealth_table LIMIT 1");
+        $stmtPh->execute();
+        $phConfig = $stmtPh->fetch(PDO::FETCH_ASSOC);
         
         // Pag-IBIG: Fixed amount (usually 200 EE, 200 ER)
-        $piFixed = (float)$this->pdo->query("SELECT fixed_amt FROM payroll_pagibig_table LIMIT 1")->fetchColumn() ?: 200.00;
+        $stmtPi = $this->pdo->prepare("SELECT fixed_amt FROM payroll_pagibig_table LIMIT 1");
+        $stmtPi->execute();
+        $piFixed = (float)$stmtPi->fetchColumn() ?: 200.00;
         
         foreach ($emps as $e) {
             $salary = (float)$e['salary_rate'];

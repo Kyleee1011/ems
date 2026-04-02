@@ -147,6 +147,7 @@
             <?php endif; ?>
 
             <form action="<?php echo baseUrl('login'); ?>" method="POST">
+                <?= csrfField() ?>
                 <div class="login-input-field" style="margin-top: 30px;">
                     <input type="text" name="ac_no" required autofocus autocomplete="off">
                     <label>AC Number</label>

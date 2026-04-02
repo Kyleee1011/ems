@@ -13,17 +13,24 @@ class PayrollConfigModel
     }
 
     public function updateSssTable($sssData) {
-        $stmt = $this->pdo->prepare("UPDATE payroll_sss_table SET min_salary=?, max_salary=?, ee_share=?, mpf=?, ee_total=?, er_share=? WHERE id=?");
-        foreach ($sssData as $d) {
-            $stmt->execute([
-                $d['min'], 
-                $d['max'], 
-                $d['ee'], 
-                $d['mpf'] ?? 0, 
-                $d['ee_total'] ?? 0, 
-                $d['er'] ?? 0, 
-                $d['id']
-            ]);
+        try {
+            $this->pdo->beginTransaction();
+            $stmt = $this->pdo->prepare("UPDATE payroll_sss_table SET min_salary=?, max_salary=?, ee_share=?, mpf=?, ee_total=?, er_share=? WHERE id=?");
+            foreach ($sssData as $d) {
+                $stmt->execute([
+                    $d['min'], 
+                    $d['max'], 
+                    $d['ee'], 
+                    $d['mpf'] ?? 0, 
+                    $d['ee_total'] ?? 0, 
+                    $d['er'] ?? 0, 
+                    $d['id']
+                ]);
+            }
+            $this->pdo->commit();
+        } catch (\Exception $e) {
+            if ($this->pdo->inTransaction()) $this->pdo->rollBack();
+            throw $e;
         }
     }
 
@@ -32,9 +39,16 @@ class PayrollConfigModel
     }
 
     public function updatePhilHealthTable($phData) {
-        $stmt = $this->pdo->prepare("UPDATE payroll_philhealth_table SET min_salary=?, max_salary=?, rate=? WHERE id=?");
-        foreach ($phData as $d) {
-            $stmt->execute([$d['min'], $d['max'], $d['rate'], $d['id']]);
+        try {
+            $this->pdo->beginTransaction();
+            $stmt = $this->pdo->prepare("UPDATE payroll_philhealth_table SET min_salary=?, max_salary=?, rate=? WHERE id=?");
+            foreach ($phData as $d) {
+                $stmt->execute([$d['min'], $d['max'], $d['rate'], $d['id']]);
+            }
+            $this->pdo->commit();
+        } catch (\Exception $e) {
+            if ($this->pdo->inTransaction()) $this->pdo->rollBack();
+            throw $e;
         }
     }
 
@@ -43,9 +57,16 @@ class PayrollConfigModel
     }
 
     public function updatePagIbigTable($piData) {
-        $stmt = $this->pdo->prepare("UPDATE payroll_pagibig_table SET fixed_amt=? WHERE id=?");
-        foreach ($piData as $d) {
-            $stmt->execute([$d['fixed'], $d['id']]);
+        try {
+            $this->pdo->beginTransaction();
+            $stmt = $this->pdo->prepare("UPDATE payroll_pagibig_table SET fixed_amt=? WHERE id=?");
+            foreach ($piData as $d) {
+                $stmt->execute([$d['fixed'], $d['id']]);
+            }
+            $this->pdo->commit();
+        } catch (\Exception $e) {
+            if ($this->pdo->inTransaction()) $this->pdo->rollBack();
+            throw $e;
         }
     }
 
@@ -54,11 +75,18 @@ class PayrollConfigModel
     }
 
     public function updateTaxTable($taxData) {
-        $stmt = $this->pdo->prepare("UPDATE payroll_tax_table SET min_salary=?, max_salary=?, base_tax=?, excess_rate=? WHERE id=?");
-        foreach ($taxData as $d) {
-            // Handle both 'rate' and 'excess' field names for compatibility
-            $excessRate = $d['excess'] ?? $d['rate'] ?? 0;
-            $stmt->execute([$d['min'], $d['max'], $d['base'], $excessRate, $d['id']]);
+        try {
+            $this->pdo->beginTransaction();
+            $stmt = $this->pdo->prepare("UPDATE payroll_tax_table SET min_salary=?, max_salary=?, base_tax=?, excess_rate=? WHERE id=?");
+            foreach ($taxData as $d) {
+                // Handle both 'rate' and 'excess' field names for compatibility
+                $excessRate = $d['excess'] ?? $d['rate'] ?? 0;
+                $stmt->execute([$d['min'], $d['max'], $d['base'], $excessRate, $d['id']]);
+            }
+            $this->pdo->commit();
+        } catch (\Exception $e) {
+            if ($this->pdo->inTransaction()) $this->pdo->rollBack();
+            throw $e;
         }
     }
 
@@ -67,9 +95,16 @@ class PayrollConfigModel
     }
 
     public function updateOvertimeRules($otRulesData) {
-        $stmt = $this->pdo->prepare("UPDATE payroll_overtime_rules SET ot_multiplier = ?, night_diff_percent = ?, updated_at = NOW() WHERE id = ?");
-        foreach ($otRulesData['ot_id'] as $idx => $id) {
-            $stmt->execute([$otRulesData['ot_multiplier'][$idx], $otRulesData['nd_multiplier'][$idx], $id]);
+        try {
+            $this->pdo->beginTransaction();
+            $stmt = $this->pdo->prepare("UPDATE payroll_overtime_rules SET ot_multiplier = ?, night_diff_percent = ?, updated_at = NOW() WHERE id = ?");
+            foreach ($otRulesData['ot_id'] as $idx => $id) {
+                $stmt->execute([$otRulesData['ot_multiplier'][$idx], $otRulesData['nd_multiplier'][$idx], $id]);
+            }
+            $this->pdo->commit();
+        } catch (\Exception $e) {
+            if ($this->pdo->inTransaction()) $this->pdo->rollBack();
+            throw $e;
         }
     }
 
@@ -78,9 +113,16 @@ class PayrollConfigModel
     }
 
     public function updateHolidayRules($holRulesData) {
-        $stmt = $this->pdo->prepare("UPDATE payroll_holiday_rules SET pay_if_unworked = ?, pay_if_worked = ?, updated_at = NOW() WHERE id = ?");
-        foreach ($holRulesData['hol_id'] as $idx => $id) {
-            $stmt->execute([$holRulesData['pay_unworked'][$idx], $holRulesData['pay_worked'][$idx], $id]);
+        try {
+            $this->pdo->beginTransaction();
+            $stmt = $this->pdo->prepare("UPDATE payroll_holiday_rules SET pay_if_unworked = ?, pay_if_worked = ?, updated_at = NOW() WHERE id = ?");
+            foreach ($holRulesData['hol_id'] as $idx => $id) {
+                $stmt->execute([$holRulesData['pay_unworked'][$idx], $holRulesData['pay_worked'][$idx], $id]);
+            }
+            $this->pdo->commit();
+        } catch (\Exception $e) {
+            if ($this->pdo->inTransaction()) $this->pdo->rollBack();
+            throw $e;
         }
     }
 
@@ -112,26 +154,40 @@ class PayrollConfigModel
     }
 
     public function assignAllowanceToAllActiveEmployees($allow_id, $startDate = null) {
-        $this->ensureAllowanceSchema();
-        $activeEmps = $this->pdo->query("SELECT emp_id FROM employees WHERE employee_status = 'Active'")->fetchAll(PDO::FETCH_COLUMN);
-        
-        $stmtCheck = $this->pdo->prepare("SELECT id FROM payroll_employee_allowances WHERE emp_id=? AND allowance_id=?");
-        $stmtInsert = $this->pdo->prepare("INSERT INTO payroll_employee_allowances (emp_id, allowance_id, start_cutoff_date, is_active) VALUES (?, ?, ?, 1)");
-        
-        foreach ($activeEmps as $emp_id) {
-            $stmtCheck->execute([$emp_id, $allow_id]);
-            if(!$stmtCheck->fetch()) {
-                $stmtInsert->execute([$emp_id, $allow_id, $startDate ?: null]);
+        try {
+            $this->pdo->beginTransaction();
+            $this->ensureAllowanceSchema();
+            $activeEmps = $this->pdo->query("SELECT emp_id FROM employees WHERE employee_status = 'Active'")->fetchAll(PDO::FETCH_COLUMN);
+            
+            $stmtCheck = $this->pdo->prepare("SELECT id FROM payroll_employee_allowances WHERE emp_id=? AND allowance_id=?");
+            $stmtInsert = $this->pdo->prepare("INSERT INTO payroll_employee_allowances (emp_id, allowance_id, start_cutoff_date, is_active) VALUES (?, ?, ?, 1)");
+            
+            foreach ($activeEmps as $emp_id) {
+                $stmtCheck->execute([$emp_id, $allow_id]);
+                if(!$stmtCheck->fetch()) {
+                    $stmtInsert->execute([$emp_id, $allow_id, $startDate ?: null]);
+                }
             }
+            $this->pdo->commit();
+        } catch (\Exception $e) {
+            if ($this->pdo->inTransaction()) $this->pdo->rollBack();
+            throw $e;
         }
     }
 
     public function deleteAllowanceType($allowanceId) {
-        $this->ensureAllowanceSchema();
-        $stmt = $this->pdo->prepare("UPDATE payroll_allowance_types SET is_active = 0 WHERE allowance_id = ?");
-        $stmt->execute([$allowanceId]);
-        $stmt2 = $this->pdo->prepare("UPDATE payroll_employee_allowances SET is_active = 0 WHERE allowance_id = ?");
-        $stmt2->execute([$allowanceId]);
+        try {
+            $this->pdo->beginTransaction();
+            $this->ensureAllowanceSchema();
+            $stmt = $this->pdo->prepare("UPDATE payroll_allowance_types SET is_active = 0 WHERE allowance_id = ?");
+            $stmt->execute([$allowanceId]);
+            $stmt2 = $this->pdo->prepare("UPDATE payroll_employee_allowances SET is_active = 0 WHERE allowance_id = ?");
+            $stmt2->execute([$allowanceId]);
+            $this->pdo->commit();
+        } catch (\Exception $e) {
+            if ($this->pdo->inTransaction()) $this->pdo->rollBack();
+            throw $e;
+        }
     }
 
     public function getAssignedEmployeeCount($allowanceId) {

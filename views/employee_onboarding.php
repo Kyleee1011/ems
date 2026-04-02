@@ -5,6 +5,7 @@
     </div>
     
     <form method="POST" action="" id="onboardingForm" class="card-body p-20" enctype="multipart/form-data">
+        <?= csrfField() ?>
         <input type="hidden" name="action" value="add_employee">
         
         <!-- SECTION 1: PERSONAL -->

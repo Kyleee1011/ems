@@ -18,6 +18,7 @@
         <button onclick="closeModal()" class="icon-btn" style="border:none; background:none;"><i class="fa-solid fa-times"></i></button>
     </div>
     <form method="POST" action="" id="editForm" style="display:contents;" enctype="multipart/form-data">
+        <?= csrfField() ?>
         <div class="modal-body">
             <input type="hidden" name="action" value="update_employee"><input type="hidden" name="emp_id" id="edit_emp_id">
             

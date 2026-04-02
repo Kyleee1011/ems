@@ -96,6 +96,13 @@ class LoanController
 
     private function handlePost()
     {
+        // CSRF Check
+        if (!\App\Utils\AppHelpers::validateCsrfToken($_POST['csrf_token'] ?? null)) {
+            $this->setFlash("Invalid CSRF token. Please refresh the page.", "error");
+            header("Location: " . baseUrl('loan'));
+            exit;
+        }
+
         $action = $_POST['action'] ?? '';
         try {
             if ($action === 'add_loan') {

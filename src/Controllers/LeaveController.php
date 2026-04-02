@@ -113,6 +113,13 @@ class LeaveController
 
     private function handlePost()
     {
+        // CSRF Check
+        if (!\App\Utils\AppHelpers::validateCsrfToken($_POST['csrf_token'] ?? null)) {
+            $this->setFlash("Invalid CSRF token. Please refresh the page.", "error");
+            header("Location: " . baseUrl('leave'));
+            exit;
+        }
+
         $action = $_POST['action'] ?? '';
         $redirect = 'leave';
 

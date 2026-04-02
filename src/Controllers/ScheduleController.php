@@ -115,6 +115,13 @@ require_once dirname(dirname(__DIR__)) . '/config_session.php';
 
     public function handleApi()
     {
+        // CSRF Check for POST requests
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            if (!\App\Utils\AppHelpers::validateCsrfToken($_POST['csrf_token'] ?? null)) {
+                $this->jsonResponse(false, 'Invalid CSRF token. Please refresh.');
+            }
+        }
+
         $action = $_REQUEST['action'] ?? '';
         $is_hr = (strcasecmp($this->currentUser['role'], 'HR') === 0);
         $is_ceo = (strcasecmp($this->currentUser['role'], 'CEO') === 0);
