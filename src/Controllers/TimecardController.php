@@ -23,6 +23,13 @@ class TimecardController
         
         $currentRole = $_SESSION['approval_role'] ?? 'Employee';
         $isHr = ($currentRole === 'HR');
+
+        $action = $_GET['action'] ?? '';
+        if ($action === 'audit') {
+            if (!$isHr) { header("Location: " . baseUrl('timecard')); exit; }
+            return $this->audit();
+        }
+
         $myAcNo = $_SESSION['ac_no'];
 
         // 2. AJAX Handler for Manual Adjustments
@@ -160,6 +167,33 @@ class TimecardController
         ]);
 
         require __DIR__ . '/../Views/timecard_view.php';
+    }
+
+    public function audit()
+    {
+        // 1. Cutoff - show last 3 months
+        $cutoffs = AppHelpers::generateCutoffPeriods($this->pdo, null, null, 3, -2);
+        $selectedCutoff = $_GET['cutoff'] ?? ($cutoffs[0]['value'] ?? '');
+        
+        if ($selectedCutoff) {
+            list($startDate, $endDate) = explode('|', $selectedCutoff);
+        } else {
+            $startDate = $endDate = date('Y-m-d');
+        }
+
+        // 2. Fetch "Broken" Logs
+        $brokenLogs = $this->model->getBrokenLogs($startDate, $endDate);
+
+        // 3. Render
+        extract([
+            'cutoffs' => $cutoffs,
+            'selected_cutoff' => $selectedCutoff,
+            'start_date' => $startDate,
+            'end_date' => $endDate,
+            'brokenLogs' => $brokenLogs
+        ]);
+
+        require __DIR__ . '/../Views/timecard_audit_view.php';
     }
 
     private function handleUpdateLog($isHr)

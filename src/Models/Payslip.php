@@ -107,16 +107,25 @@ class Payslip
 
     public function reverseLoanDeductions($endDate)
     {
-        $getPay = $this->pdo->prepare("SELECT payment_id, loan_id, amount_paid FROM loan_payments WHERE payment_date = ? AND notes = 'Payroll Deduction'");
-        $getPay->execute([$endDate]);
-        $payments = $getPay->fetchAll(PDO::FETCH_ASSOC);
+        try {
+            $this->pdo->beginTransaction();
+            $getPay = $this->pdo->prepare("SELECT payment_id, loan_id, amount_paid FROM loan_payments WHERE payment_date = ? AND notes = 'Payroll Deduction'");
+            $getPay->execute([$endDate]);
+            $payments = $getPay->fetchAll(PDO::FETCH_ASSOC);
 
-        foreach ($payments as $p) {
-            $updRev = $this->pdo->prepare("UPDATE employee_loans SET remaining_balance = remaining_balance + ?, status = 'Active' WHERE loan_id = ?");
-            $updRev->execute([$p['amount_paid'], $p['loan_id']]);
+            foreach ($payments as $p) {
+                $updRev = $this->pdo->prepare("UPDATE employee_loans SET remaining_balance = remaining_balance + ?, status = 'Active' WHERE loan_id = ?");
+                $updRev->execute([$p['amount_paid'], $p['loan_id']]);
 
-            $delPay = $this->pdo->prepare("DELETE FROM loan_payments WHERE payment_id = ?");
-            $delPay->execute([$p['payment_id']]);
+                $delPay = $this->pdo->prepare("DELETE FROM loan_payments WHERE payment_id = ?");
+                $delPay->execute([$p['payment_id']]);
+            }
+            $this->pdo->commit();
+        } catch (\Exception $e) {
+            if ($this->pdo->inTransaction()) {
+                $this->pdo->rollBack();
+            }
+            throw $e;
         }
     }
 

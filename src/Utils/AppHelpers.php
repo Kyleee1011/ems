@@ -82,8 +82,7 @@ class AppHelpers
 
         return ($iterations > 1) ? array_reverse($cutoffs) : $cutoffs;
     }
-public static function normalize
-Date($input)
+public static function normalizeDate($input)
 {
     if ($input instanceof DateTime) return $input->format('Y-m-d');
     if (is_numeric($input)) return date('Y-m-d', $input);

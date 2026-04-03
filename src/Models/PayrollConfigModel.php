@@ -131,9 +131,16 @@ class PayrollConfigModel
     }
 
     public function updateGeneralSettings($settingsData) {
-        $stmt = $this->pdo->prepare("UPDATE payroll_general_settings SET setting_value = ? WHERE setting_key = ?");
-        foreach ($settingsData as $key => $val) {
-            $stmt->execute([$val, $key]);
+        try {
+            $this->pdo->beginTransaction();
+            $stmt = $this->pdo->prepare("UPDATE payroll_general_settings SET setting_value = ? WHERE setting_key = ?");
+            foreach ($settingsData as $key => $val) {
+                $stmt->execute([$val, $key]);
+            }
+            $this->pdo->commit();
+        } catch (\Exception $e) {
+            if ($this->pdo->inTransaction()) $this->pdo->rollBack();
+            throw $e;
         }
     }
 

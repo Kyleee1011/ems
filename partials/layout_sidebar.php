@@ -77,6 +77,7 @@ $uri = $_SERVER['REQUEST_URI'];
             <a href="<?php echo baseUrl('cutoff-setup'); ?>" class="nav-sub-item <?php echo (strpos($uri, '/cutoff-setup') !== false) ? 'active' : ''; ?>">Cutoff Setup</a>
             <a href="<?php echo baseUrl('payroll-calculator'); ?>" class="nav-sub-item <?php echo (strpos($uri, '/payroll-calculator') !== false) ? 'active' : ''; ?>">Payroll Calc</a>
             <a href="<?php echo baseUrl('allowances'); ?>" class="nav-sub-item <?php echo (strpos($uri, '/allowances') !== false) ? 'active' : ''; ?>">Allowances</a>
+            <a href="<?php echo baseUrl('timecard?action=audit'); ?>" class="nav-sub-item <?php echo (strpos($uri, 'action=audit') !== false) ? 'active' : ''; ?>">Biometric Audit</a>
         </div>
         <?php endif; ?>
     </div>

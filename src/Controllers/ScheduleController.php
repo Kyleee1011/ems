@@ -358,35 +358,46 @@ require_once dirname(dirname(__DIR__)) . '/config_session.php';
                     $batch_id = $stmtBatch->fetchColumn();
                     
                     if ($batch_id) {
-                        $this->pdo->prepare("UPDATE schedule_batches SET status = ?, updated_at = NOW() WHERE batch_id = ?")->execute([$new_status, $batch_id]);
-            
-                        if ($new_status == 'Pending HR') {
-                            $this->pdo->prepare("UPDATE schedule_batches SET created_by = ? WHERE batch_id = ?")->execute([$this->currentUser['id'], $batch_id]);
+                        try {
+                            $this->pdo->beginTransaction();
+
+                            $this->pdo->prepare("UPDATE schedule_batches SET status = ?, updated_at = NOW() WHERE batch_id = ?")->execute([$new_status, $batch_id]);
+                
+                            if ($new_status == 'Pending HR') {
+                                $this->pdo->prepare("UPDATE schedule_batches SET created_by = ? WHERE batch_id = ?")->execute([$this->currentUser['id'], $batch_id]);
+                            }
+                
+                            if ($new_status == 'Approved') {
+                                // Finalize Logic
+                                 $this->pdo->prepare("DELETE fs FROM finalized_schedule fs JOIN employees e ON fs.ac_no = e.ac_no WHERE e.dept_id = ? AND fs.schedule_date BETWEEN ? AND ?")->execute([$dept_id, $start, $end]);
+                                 
+                                 $sqlMigrate = "INSERT INTO finalized_schedule (ac_no, schedule_date, shift_code, time_in, time_out, name, department)
+                                    SELECT e.ac_no, s.schedule_date, st.shift_code,
+                                        CASE WHEN st.time_in IS NULL THEN NULL ELSE ADDTIME(CAST(s.schedule_date AS DATETIME), st.time_in) END,
+                                        CASE WHEN st.time_out IS NULL THEN NULL WHEN st.time_out < st.time_in THEN ADDTIME(CAST(s.schedule_date + INTERVAL 1 DAY AS DATETIME), st.time_out) ELSE ADDTIME(CAST(s.schedule_date AS DATETIME), st.time_out) END,
+                                        CONCAT(e.first_name, ' ', e.last_name), d.dept_name
+                                    FROM schedules s
+                                    INNER JOIN employees e ON s.employee_id = e.emp_id
+                                    INNER JOIN departments d ON e.dept_id = d.dept_id
+                                    LEFT JOIN shift_types st ON s.shift_type_id = st.id
+                                    WHERE s.schedule_date BETWEEN ? AND ? AND e.dept_id = ?";
+                                 $this->pdo->prepare($sqlMigrate)->execute([$start, $end, $dept_id]);
+                            }
+                
+                            if ($new_status == 'Draft') {
+                                $this->pdo->prepare("DELETE fs FROM finalized_schedule fs JOIN employees e ON fs.ac_no = e.ac_no WHERE e.dept_id = ? AND fs.schedule_date BETWEEN ? AND ?")->execute([$dept_id, $start, $end]);
+                            }
+                
+                            $actionLabel = ($new_status == 'Pending HR') ? 'Submitted' : $new_status;
+                            $this->logHistory($batch_id, $actionLabel, $this->currentUser['name'], $this->currentUser['role'], $comments);
+
+                            $this->pdo->commit();
+                        } catch (\Exception $e) {
+                            if ($this->pdo->inTransaction()) {
+                                $this->pdo->rollBack();
+                            }
+                            throw $e;
                         }
-            
-                        if ($new_status == 'Approved') {
-                            // Finalize Logic
-                             $this->pdo->prepare("DELETE fs FROM finalized_schedule fs JOIN employees e ON fs.ac_no = e.ac_no WHERE e.dept_id = ? AND fs.schedule_date BETWEEN ? AND ?")->execute([$dept_id, $start, $end]);
-                             
-                             $sqlMigrate = "INSERT INTO finalized_schedule (ac_no, schedule_date, shift_code, time_in, time_out, name, department)
-                                SELECT e.ac_no, s.schedule_date, st.shift_code,
-                                    CASE WHEN st.time_in IS NULL THEN NULL ELSE ADDTIME(CAST(s.schedule_date AS DATETIME), st.time_in) END,
-                                    CASE WHEN st.time_out IS NULL THEN NULL WHEN st.time_out < st.time_in THEN ADDTIME(CAST(s.schedule_date + INTERVAL 1 DAY AS DATETIME), st.time_out) ELSE ADDTIME(CAST(s.schedule_date AS DATETIME), st.time_out) END,
-                                    CONCAT(e.first_name, ' ', e.last_name), d.dept_name
-                                FROM schedules s
-                                INNER JOIN employees e ON s.employee_id = e.emp_id
-                                INNER JOIN departments d ON e.dept_id = d.dept_id
-                                LEFT JOIN shift_types st ON s.shift_type_id = st.id
-                                WHERE s.schedule_date BETWEEN ? AND ? AND e.dept_id = ?";
-                             $this->pdo->prepare($sqlMigrate)->execute([$start, $end, $dept_id]);
-                        }
-            
-                        if ($new_status == 'Draft') {
-                            $this->pdo->prepare("DELETE fs FROM finalized_schedule fs JOIN employees e ON fs.ac_no = e.ac_no WHERE e.dept_id = ? AND fs.schedule_date BETWEEN ? AND ?")->execute([$dept_id, $start, $end]);
-                        }
-            
-                        $actionLabel = ($new_status == 'Pending HR') ? 'Submitted' : $new_status;
-                        $this->logHistory($batch_id, $actionLabel, $this->currentUser['name'], $this->currentUser['role'], $comments);
                     }
                     $this->jsonResponse(true);
                     break;

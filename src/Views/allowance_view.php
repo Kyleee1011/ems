@@ -70,6 +70,7 @@ require BASE_PATH . '/partials/layout_sidebar.php';
         <button onclick="closeAllModals()" class="icon-btn" style="border:none; background:none;"><i class="fa-solid fa-times"></i></button>
     </div>
     <form id="createForm">
+        <?= csrfField() ?>
         <div class="modal-body" style="padding:20px;">
             <div class="form-group"><label class="form-label">Allowance Name</label><input type="text" name="name" required class="input-field" placeholder="e.g. Rice Subsidy"></div>
             <div class="grid-2">
@@ -149,13 +150,15 @@ function toggleSelectAll() {
 
 function submitAssign() {
     const id = $('#assignAllowanceId').val(); const all = $('#assignAll').is(':checked'); const start = $('#assignStartDate').val();
+    const csrf = $('input[name="csrf_token"]').val();
     let ids = []; if(!all) $('.emp-cb:checked').each(function(){ ids.push($(this).val()); });
-    $.post('', { action:'assign', allowance_id:id, assign_all:all?'1':'0', emp_ids:JSON.stringify(ids), start_cutoff_date:start }, res => { if(res.success) location.reload(); else alert(res.message); }, 'json');
+    $.post('', { action:'assign', allowance_id:id, assign_all:all?'1':'0', emp_ids:JSON.stringify(ids), start_cutoff_date:start, csrf_token:csrf }, res => { if(res.success) location.reload(); else alert(res.message); }, 'json');
 }
 
 function showAssigned(id, name) {
     const at = allData.find(a => a.allowance_id == id);
     const list = at && at.assigned ? at.assigned : [];
+    const csrf = $('input[name="csrf_token"]').val();
     let html = '';
     if(list.length === 0) html = '<p style="text-align:center; padding:20px; color:var(--ink-4);">No one enrolled.</p>';
     else list.forEach(e => {
@@ -167,8 +170,14 @@ function showAssigned(id, name) {
     $('#assignedList').html(html); $('#assignedModal').show(); $('#modalBackdrop').show();
 }
 
-function deleteAllowance(id, name) { if(confirm(`Delete benefit: ${name}?`)) $.post('', {action:'delete', allowance_id:id}, res => location.reload(), 'json'); }
-function removeAssignment(eid, aid) { if(confirm('Remove employee from this benefit?')) $.post('', {action:'remove_assignment', emp_id:eid, allowance_id:aid}, res => location.reload(), 'json'); }
+function deleteAllowance(id, name) { 
+    const csrf = $('input[name="csrf_token"]').val();
+    if(confirm(`Delete benefit: ${name}?`)) $.post('', {action:'delete', allowance_id:id, csrf_token:csrf}, res => location.reload(), 'json'); 
+}
+function removeAssignment(eid, aid) { 
+    const csrf = $('input[name="csrf_token"]').val();
+    if(confirm('Remove employee from this benefit?')) $.post('', {action:'remove_assignment', emp_id:eid, allowance_id:aid, csrf_token:csrf}, res => location.reload(), 'json'); 
+}
 </script>
 
 <?php require BASE_PATH . '/partials/layout_footer.php'; ?>

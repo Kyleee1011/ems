@@ -756,6 +756,46 @@ class Timecard
      *     'absent_tally' => [ ['name', 'department', 'absent_count'], ... ],
      *   ]
      */
+    /**
+     * Identify "broken" logs (e.g., missing clock-outs or clock-ins) for audit.
+     */
+    public function getBrokenLogs($startDate, $endDate)
+    {
+        $stmt = $this->pdo->query("SELECT e.emp_id, e.ac_no, e.first_name, e.last_name, d.dept_name 
+                                   FROM employees e 
+                                   LEFT JOIN departments d ON e.dept_id = d.dept_id 
+                                   WHERE e.employee_status = 'Active' AND e.IsActive = 1
+                                   ORDER BY d.dept_name, e.last_name");
+        $employees = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+
+        $broken = [];
+        foreach ($employees as $emp) {
+            $dtr = $this->generateDtr($emp['ac_no'], $startDate, $endDate);
+            foreach ($dtr['days'] as $dateStr => $day) {
+                // Skip if it's an OFF day or no schedule
+                if (empty($day['sched_code']) || $day['sched_code'] === '-' || $day['sched_code'] === 'OFF') continue;
+                
+                $hasIn = !empty($day['actual_in']);
+                $hasOut = !empty($day['actual_out']);
+
+                if (($hasIn && !$hasOut) || (!$hasIn && $hasOut)) {
+                    $broken[] = [
+                        'emp_id' => $emp['emp_id'],
+                        'ac_no' => $emp['ac_no'],
+                        'name' => $emp['first_name'] . ' ' . $emp['last_name'],
+                        'dept' => $emp['dept_name'] ?? 'Unassigned',
+                        'date' => $dateStr,
+                        'sched' => $day['sched_in'] . ' - ' . $day['sched_out'],
+                        'actual_in' => $day['actual_in'] ?? '--:--',
+                        'actual_out' => $day['actual_out'] ?? '--:--',
+                        'issue' => ($hasIn && !$hasOut) ? 'Missing Clock-out' : 'Missing Clock-in'
+                    ];
+                }
+            }
+        }
+        return $broken;
+    }
+
     public function getAttendanceSummary(string $startDate, string $endDate): array
     {
         // 1. Get all employees with finalized schedules in this range

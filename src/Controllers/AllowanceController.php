@@ -25,6 +25,11 @@ class AllowanceController
         // Handle POST actions
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             header('Content-Type: application/json');
+            // CSRF Check
+            if (!\App\Utils\AppHelpers::validateCsrfToken($_POST['csrf_token'] ?? null)) {
+                echo json_encode(['success' => false, 'message' => 'Invalid CSRF token. Please refresh the page.']);
+                exit;
+            }
             $action = $_POST['action'] ?? '';
 
             try {
