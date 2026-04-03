@@ -133,56 +133,58 @@ function getRelativeTime($timestamp) {
     <!-- RIGHT: SIDEBAR WIDGETS -->
     <div class="widgets-column">
         <!-- CALENDAR -->
-        <div class="card mb-10">
+        <div class="card mb-10" id="calendar-widget">
             <div class="card-head">
-                <div class="card-title"><i class="fa-regular fa-calendar"></i> <?php echo $monthName . ' ' . $calYear; ?></div>
+                <div class="card-title"><i class="fa-regular fa-calendar"></i> <span id="cal-month-title"><?php echo $monthName . ' ' . $calYear; ?></span></div>
                 <div class="flex-row" style="gap: 4px;">
-                    <a href="?month=<?php echo $prevMonth; ?>&year=<?php echo $prevYear; ?>" class="icon-btn" style="width: 24px; height: 24px; font-size: 10px;"><i class="fa-solid fa-chevron-left"></i></a>
-                    <a href="?month=<?php echo $nextMonth; ?>&year=<?php echo $nextYear; ?>" class="icon-btn" style="width: 24px; height: 24px; font-size: 10px;"><i class="fa-solid fa-chevron-right"></i></a>
+                    <button onclick="changeMonth(<?php echo $prevMonth; ?>, <?php echo $prevYear; ?>, 'prev')" class="icon-btn" style="width: 24px; height: 24px; font-size: 10px; border:none; background:none; cursor:pointer;"><i class="fa-solid fa-chevron-left"></i></button>
+                    <button onclick="changeMonth(<?php echo $nextMonth; ?>, <?php echo $nextYear; ?>, 'next')" class="icon-btn" style="width: 24px; height: 24px; font-size: 10px; border:none; background:none; cursor:pointer;"><i class="fa-solid fa-chevron-right"></i></button>
                 </div>
             </div>
-            <div class="card-body" style="padding: 10px;">
-                <div style="display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; text-align: center; margin-bottom: 5px;">
-                    <?php foreach (['S','M','T','W','T','F','S'] as $day): ?>
-                        <div style="font-size: 9px; font-weight: 700; color: var(--ink-4);"><?php echo $day; ?></div>
-                    <?php endforeach; ?>
-                </div>
-                <div style="display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px;">
-                    <?php 
-                    for ($i = 0; $i < $dayOfWeek; $i++) echo '<div></div>';
-                    
-                    $todayDay = (int)date('j');
-                    $todayMonth = (int)date('m');
-                    $todayYear = (int)date('Y');
-
-                    for ($day = 1; $day <= $numberDays; $day++):
-                        $dateStr = sprintf('%04d-%02d-%02d', $calYear, $calMonth, $day);
-                        $isToday = ($day === $todayDay && $calMonth === $todayMonth && $calYear === $todayYear);
-                        $hasHoliday = isset($finalHolidays[$dateStr]);
-                        $holidayInfo = $hasHoliday ? $finalHolidays[$dateStr] : null;
+            <div class="card-body" id="calendar-body-container" style="padding: 10px; position: relative; overflow: hidden; min-height: 200px;">
+                <div id="calendar-content">
+                    <div style="display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; text-align: center; margin-bottom: 5px;">
+                        <?php foreach (['S','M','T','W','T','F','S'] as $day): ?>
+                            <div style="font-size: 9px; font-weight: 700; color: var(--ink-4);"><?php echo $day; ?></div>
+                        <?php endforeach; ?>
+                    </div>
+                    <div style="display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px;">
+                        <?php 
+                        for ($i = 0; $i < $dayOfWeek; $i++) echo '<div></div>';
                         
-                        $bg = '';
-                        $color = 'var(--ink-2)';
-                        $weight = '400';
-                        $border = 'none';
+                        $todayDay = (int)date('j');
+                        $todayMonth = (int)date('m');
+                        $todayYear = (int)date('Y');
 
-                        if ($isToday) {
-                            $bg = 'var(--teal)';
-                            $color = '#fff';
-                            $weight = '700';
-                        } elseif ($hasHoliday) {
-                            if ($holidayInfo['type'] === 'REGULAR') { $bg = 'var(--red-bg)'; $color = 'var(--red)'; }
-                            else { $bg = 'var(--amber-bg)'; $color = 'var(--amber)'; }
-                            $weight = '600';
-                        }
-                    ?>
-                        <div style="height: 32px; display: flex; align-items: center; justify-content: center; font-size: 11px; border-radius: 6px; cursor: pointer; transition: background 0.2s; 
-                            background: <?php echo $bg; ?>; color: <?php echo $color; ?>; font-weight: <?php echo $weight; ?>;"
-                            title="<?php echo $hasHoliday ? htmlspecialchars($holidayInfo['name']) : ''; ?>"
-                            <?php if ($is_hr): ?>onclick="openHolidayModal('<?php echo $dateStr; ?>', <?php echo $hasHoliday ? 'true' : 'false'; ?>, '<?php echo addslashes($holidayInfo['name'] ?? ''); ?>', '<?php echo $holidayInfo['type'] ?? ''; ?>')"<?php endif; ?>>
-                            <?php echo $day; ?>
-                        </div>
-                    <?php endfor; ?>
+                        for ($day = 1; $day <= $numberDays; $day++):
+                            $dateStr = sprintf('%04d-%02d-%02d', $calYear, $calMonth, $day);
+                            $isToday = ($day === $todayDay && $calMonth === $todayMonth && $calYear === $todayYear);
+                            $hasHoliday = isset($finalHolidays[$dateStr]);
+                            $holidayInfo = $hasHoliday ? $finalHolidays[$dateStr] : null;
+                            
+                            $bg = '';
+                            $color = 'var(--ink-2)';
+                            $weight = '400';
+                            $border = 'none';
+
+                            if ($isToday) {
+                                $bg = 'var(--teal)';
+                                $color = '#fff';
+                                $weight = '700';
+                            } elseif ($hasHoliday) {
+                                if ($holidayInfo['type'] === 'REGULAR') { $bg = 'var(--red-bg)'; $color = 'var(--red)'; }
+                                else { $bg = 'var(--amber-bg)'; $color = 'var(--amber)'; }
+                                $weight = '600';
+                            }
+                        ?>
+                            <div style="height: 32px; display: flex; align-items: center; justify-content: center; font-size: 11px; border-radius: 6px; cursor: pointer; transition: background 0.2s; 
+                                background: <?php echo $bg; ?>; color: <?php echo $color; ?>; font-weight: <?php echo $weight; ?>;"
+                                title="<?php echo $hasHoliday ? htmlspecialchars($holidayInfo['name']) : ''; ?>"
+                                <?php if ($is_hr): ?>onclick="openHolidayModal('<?php echo $dateStr; ?>', <?php echo $hasHoliday ? 'true' : 'false'; ?>, '<?php echo addslashes($holidayInfo['name'] ?? ''); ?>', '<?php echo $holidayInfo['type'] ?? ''; ?>')"<?php endif; ?>>
+                                <?php echo $day; ?>
+                            </div>
+                        <?php endfor; ?>
+                    </div>
                 </div>
             </div>
         </div>
@@ -215,7 +217,7 @@ function getRelativeTime($timestamp) {
         <!-- HOLIDAYS -->
         <div class="card">
             <div class="card-head"><div class="card-title"><i class="fa-solid fa-flag"></i> Holidays</div></div>
-            <div class="card-body" style="padding: 12px;">
+            <div class="card-body" id="holiday-list-container" style="padding: 12px;">
                 <?php 
                 $monthHolidays = array_filter($finalHolidays, function($date) use ($calYear, $calMonth) {
                     return strpos($date, sprintf('%04d-%02d', $calYear, $calMonth)) === 0;
@@ -239,7 +241,121 @@ function getRelativeTime($timestamp) {
     </div>
 </div>
 
+<!-- Holiday Modal -->
+<div id="holidayModalBackdrop" class="modal-overlay" style="position:fixed; inset:0; background:rgba(0,0,0,0.5); backdrop-filter:blur(4px); z-index:1000; display:none;" onclick="closeHolidayModal()"></div>
+<div id="holidayModal" class="modal-container" style="position:fixed; top:50%; left:50%; transform:translate(-50%, -50%); width:350px; background:var(--bg-card); border-radius:16px; border:1px solid var(--border); box-shadow:var(--sh-lg); z-index:1001; display:none; flex-direction:column;">
+    <div class="modal-header" style="padding:15px 20px; border-bottom:1px solid var(--border-lt); display:flex; align-items:center; justify-content:space-between; background:var(--bg-raised); border-radius:16px 16px 0 0;">
+        <h3 style="font-size:14px; font-weight:600;" id="holidayModalTitle">Add Holiday</h3>
+        <button onclick="closeHolidayModal()" class="icon-btn" style="border:none; background:none; cursor:pointer;"><i class="fa-solid fa-times"></i></button>
+    </div>
+    <form id="holidayForm" action="<?php echo baseUrl('home/holiday'); ?>" method="POST" style="padding:20px;">
+        <?= csrfField() ?>
+        <input type="hidden" name="action" id="holidayAction" value="add_holiday">
+        <input type="hidden" name="holiday_date" id="holidayDateInput">
+        
+        <div style="margin-bottom:15px;">
+            <label style="display:block; font-size:11px; font-weight:600; margin-bottom:5px; color:var(--ink-3);">Holiday Name</label>
+            <input type="text" name="holiday_name" id="holidayNameInput" class="input-field" required placeholder="e.g. Christmas Day">
+        </div>
+        
+        <div style="margin-bottom:20px;">
+            <label style="display:block; font-size:11px; font-weight:600; margin-bottom:5px; color:var(--ink-3);">Holiday Type</label>
+            <select name="holiday_type" id="holidayTypeInput" class="input-field">
+                <option value="REGULAR">Regular Holiday</option>
+                <option value="SPECIAL">Special Holiday</option>
+            </select>
+        </div>
+        
+        <div class="flex-row" style="gap:10px; justify-content:flex-end;">
+            <button type="button" id="deleteHolidayBtn" class="pill-btn" style="color:var(--red); display:none; border:1px solid var(--border-lt);" onclick="removeHoliday()">Delete</button>
+            <button type="submit" class="btn-primary" id="saveHolidayBtn">Save Holiday</button>
+        </div>
+    </form>
+</div>
+
+<style>
+    .calendar-animating { pointer-events: none; }
+    .calendar-content { transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.4s ease; }
+    .slide-out-left { transform: translateX(-100%); opacity: 0; }
+    .slide-out-right { transform: translateX(100%); opacity: 0; }
+    .slide-in-left { transform: translateX(100%); opacity: 0; animation: slideIn 0.4s forwards; }
+    .slide-in-right { transform: translateX(-100%); opacity: 0; animation: slideIn 0.4s forwards; }
+    
+    @keyframes slideIn {
+        to { transform: translateX(0); opacity: 1; }
+    }
+
+    /* Modal Styles if not already in style.css */
+    .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); backdrop-filter: blur(4px); z-index: 1000; display: none; }
+    .modal-container { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: var(--bg-card); border-radius: 16px; border: 1px solid var(--border); box-shadow: var(--sh-md); z-index: 1001; display: none; flex-direction: column; }
+</style>
+
 <script>
+    function changeMonth(m, y, direction) {
+        const contentContainer = $('#calendar-body-container');
+        const currentContent = $('#calendar-content');
+        
+        contentContainer.addClass('calendar-animating');
+        const slideOutClass = direction === 'next' ? 'slide-out-left' : 'slide-out-right';
+        currentContent.addClass(slideOutClass);
+        
+        $.get(window.location.pathname + '?month=' + m + '&year=' + y, function(data) {
+            const $data = $(data);
+            const newTitle = $data.find('#cal-month-title').text();
+            const newBody = $data.find('#calendar-content').html();
+            const newHolidays = $data.find('#holiday-list-container').html();
+            
+            setTimeout(() => {
+                $('#cal-month-title').text(newTitle);
+                const slideInClass = direction === 'next' ? 'slide-in-left' : 'slide-in-right';
+                contentContainer.html(`<div id="calendar-content" class="${slideInClass}">${newBody}</div>`);
+                $('#holiday-list-container').html(newHolidays);
+                
+                // Update navigation buttons
+                const $navBtns = $data.find('button[onclick*="changeMonth"]');
+                const newPrev = $navBtns.first().attr('onclick');
+                const newNext = $navBtns.eq(1).attr('onclick');
+                $('button[onclick*="changeMonth"]').first().attr('onclick', newPrev);
+                $('button[onclick*="changeMonth"]').eq(1).attr('onclick', newNext);
+                
+                contentContainer.removeClass('calendar-animating');
+                const newUrl = window.location.pathname + '?month=' + m + '&year=' + y;
+                window.history.pushState({}, '', newUrl);
+            }, 350);
+        });
+    }
+
+    function openHolidayModal(date, hasHoliday, name, type) {
+        $('#holidayDateInput').val(date);
+        $('#holidayModalTitle').text(hasHoliday ? 'Edit Holiday' : 'Add Holiday');
+        $('#holidayNameInput').val(name || '');
+        $('#holidayTypeInput').val(type || 'REGULAR');
+        $('#holidayAction').val('add_holiday');
+        
+        if (hasHoliday) {
+            $('#deleteHolidayBtn').show();
+            $('#saveHolidayBtn').text('Update Holiday');
+        } else {
+            $('#deleteHolidayBtn').hide();
+            $('#saveHolidayBtn').text('Save Holiday');
+        }
+        
+        $('#holidayModal').css('display', 'flex');
+        $('#holidayModalBackdrop').show();
+    }
+
+    function closeHolidayModal() {
+        $('#holidayModal').hide();
+        $('#holidayModalBackdrop').hide();
+    }
+
+    function removeHoliday() {
+        if (confirm('Are you sure you want to remove this holiday?')) {
+            $('#holidayAction').val('remove_holiday');
+            $('#holidayForm').submit();
+        }
+    }
+
     function previewImage(input) {
         if (input.files && input.files[0]) {
             var reader = new FileReader();
