@@ -125,7 +125,7 @@ require_once dirname(dirname(__DIR__)) . '/config_session.php';
         $action = $_REQUEST['action'] ?? '';
         $is_hr = (strcasecmp($this->currentUser['role'], 'HR') === 0);
         $is_ceo = (strcasecmp($this->currentUser['role'], 'CEO') === 0);
-        $is_head = (strcasecmp($this->currentUser['role'], 'DeptHead') === 0);
+        $is_head = (strcasecmp($this->currentUser['role'], 'DeptHead') === 0 || strcasecmp($this->currentUser['role'], 'Dept Head') === 0);
 
         try {
             switch ($action) {
@@ -233,14 +233,30 @@ require_once dirname(dirname(__DIR__)) . '/config_session.php';
                     $prepared_by = $batch ? $batch['creator_name'] : $this->currentUser['name'];
                     $prepared_sig_path = ($batch && !empty($batch['creator_sig_path'])) ? $batch['creator_sig_path'] : null;
             
-                    $stmtHR = $this->pdo->query("SELECT CONCAT(first_name, ' ', last_name) as name, signature_path FROM employees WHERE approval_role = 'HR' AND IsActive = 1 LIMIT 1");
+                    // HR Signatory
+                    $stmtHR = $this->pdo->query("SELECT CONCAT(first_name, ' ', last_name) as name, signature_path, d.dept_name as hr_dept_name 
+                                                 FROM employees e JOIN departments d ON e.dept_id = d.dept_id 
+                                                 WHERE approval_role = 'HR' AND IsActive = 1 LIMIT 1");
                     $rowHR = $stmtHR->fetch(PDO::FETCH_ASSOC);
                     $checked_by = $rowHR ? $rowHR['name'] : "HR Admin";
                     $checked_sig_path = $rowHR['signature_path'] ?? null;
+                    $hr_dept_name = $rowHR['hr_dept_name'] ?? 'Human Resources';
             
-                    $ownerSignatory = $this->getDeptSignatory("Owner");
-                    $approved_by = $ownerSignatory['name'];
-                    $approved_sig_path = $ownerSignatory['signature_path'];
+                    // CEO Signatory
+                    $stmtCEO = $this->pdo->query("SELECT CONCAT(first_name, ' ', last_name) as name, signature_path, d.dept_name as ceo_dept_name 
+                                                  FROM employees e LEFT JOIN departments d ON e.dept_id = d.dept_id 
+                                                  WHERE approval_role = 'CEO' AND IsActive = 1 LIMIT 1");
+                    $rowCEO = $stmtCEO->fetch(PDO::FETCH_ASSOC);
+                    if ($rowCEO) {
+                        $approved_by = $rowCEO['name'];
+                        $approved_sig_path = $rowCEO['signature_path'];
+                        $ceo_dept_name = $rowCEO['ceo_dept_name'] ?? 'President & CEO';
+                    } else {
+                        $ownerSignatory = $this->getDeptSignatory("Owner");
+                        $approved_by = $ownerSignatory['name'];
+                        $approved_sig_path = $ownerSignatory['signature_path'];
+                        $ceo_dept_name = 'President & CEO';
+                    }
             
                     $hasFinalized = false;
                     if ($status === 'Approved') {
@@ -273,16 +289,21 @@ require_once dirname(dirname(__DIR__)) . '/config_session.php';
                         $holidays[$h['holiday_date']] = ['name' => $h['holiday_name'], 'type' => $h['holiday_type']];
                     }
 
+                    $specialCodes = ['OFF', 'FLEX', 'HOLIDAY OFF', 'HOLIDAY-OFF', 'LWOP', 'LWP', 'RD', 'SL', 'VL', 'EL', 'ML', 'PL'];
+
                     while ($row = $stmtSched->fetch(PDO::FETCH_ASSOC)) {
                         $dateKey = $row['schedule_date'];
                         $tIn = $row['time_in']; $tOut = $row['time_out'];
                         $code = $row['shift_code'] ?? '-';
                         
                         $displayTime = '-';
-                        if ($tIn && $tOut) {
+                        if (in_array(strtoupper($code), $specialCodes)) {
+                            $displayTime = $code;
+                        } elseif ($tIn && $tOut && $tIn !== '00:00:00') {
                             $displayTime = (new DateTime($tIn))->format('h:iA') . '-' . (new DateTime($tOut))->format('h:iA');
+                        } elseif ($code && $code !== '-') {
+                            $displayTime = $code;
                         }
-                        if(in_array($code, ['OFF','FLEX','HOLIDAY OFF','LWOP','LWP'])) $displayTime = $code; 
                         
                         $schedules[$row['employee_id']][$dateKey] = ['code' => $code, 'time' => $displayTime];
                     }
@@ -292,10 +313,10 @@ require_once dirname(dirname(__DIR__)) . '/config_session.php';
                         'dept_name' => $dept_name,
                         'signatories' => [
                             'prepared' => $prepared_by, 'prepared_sig' => $prepared_sig_path,
-                            'checked' => $checked_by, 'checked_sig' => $checked_sig_path,
-                            'approved' => $approved_by, 'approved_sig' => $approved_sig_path
+                            'checked' => $checked_by, 'checked_sig' => $checked_sig_path, 'checked_dept' => $hr_dept_name,
+                            'approved' => $approved_by, 'approved_sig' => $approved_sig_path, 'approved_dept' => $ceo_dept_name
                         ],
-                        'can_edit' => ($is_head && in_array($status, ['Not Started', 'Draft', 'Rejected'])),
+                        'can_edit' => (($is_head || $is_hr || $is_ceo) && in_array($status, ['Not Started', 'Draft', 'Rejected'])),
                         'can_reset' => ($status == 'Approved' && ($is_ceo || $is_hr)), 
                         'is_hr' => $is_hr,
                         'can_approve_hr' => ($is_hr && $status == 'Pending HR'),
@@ -303,6 +324,29 @@ require_once dirname(dirname(__DIR__)) . '/config_session.php';
                         'schedules' => $schedules,
                         'holidays' => $holidays
                     ]);
+                    break;
+
+                case 'get_history':
+                    $dept_id = $_POST['dept_id'];
+                    $range = $_POST['range'];
+                    list($start, $end) = explode('|', $range);
+                    $sql = "SELECT h.* FROM schedule_history h 
+                            JOIN schedule_batches b ON h.batch_id = b.batch_id 
+                            WHERE b.dept_id = ? AND b.cutoff_start = ? 
+                            ORDER BY h.timestamp DESC";
+                    $stmt = $this->pdo->prepare($sql);
+                    $stmt->execute([$dept_id, $start]);
+                    $logs = [];
+                    while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+                        $rowTime = new DateTime($row['timestamp']);
+                        $logs[] = [
+                            'action' => $row['action'], 
+                            'actor' => $row['actor_name'] . ' (' . $row['actor_role'] . ')', 
+                            'time' => $rowTime->format('M d, Y h:i A'), 
+                            'comments' => $row['comments']
+                        ];
+                    }
+                    $this->jsonResponse(true, '', ['logs' => $logs]);
                     break;
 
                 case 'save_schedule':
@@ -386,6 +430,7 @@ require_once dirname(dirname(__DIR__)) . '/config_session.php';
                 
                             if ($new_status == 'Draft') {
                                 $this->pdo->prepare("DELETE fs FROM finalized_schedule fs JOIN employees e ON fs.ac_no = e.ac_no WHERE e.dept_id = ? AND fs.schedule_date BETWEEN ? AND ?")->execute([$dept_id, $start, $end]);
+                                $this->pdo->prepare("UPDATE schedule_batches SET created_by = NULL WHERE batch_id = ?")->execute([$batch_id]);
                             }
                 
                             $actionLabel = ($new_status == 'Pending HR') ? 'Submitted' : $new_status;
@@ -455,7 +500,7 @@ require_once dirname(dirname(__DIR__)) . '/config_session.php';
     }
 
     private function getDeptSignatory($deptName) {
-        $stmt = $this->pdo->prepare("SELECT CONCAT(e.first_name, ' ', e.last_name) as name, e.signature_path FROM employees e JOIN departments d ON e.dept_id = d.dept_id WHERE d.dept_name = ? AND e.approval_role = 'DeptHead' AND e.IsActive = 1 LIMIT 1");
+        $stmt = $this->pdo->prepare("SELECT CONCAT(e.first_name, ' ', e.last_name) as name, e.signature_path FROM employees e JOIN departments d ON e.dept_id = d.dept_id WHERE d.dept_name = ? AND (e.approval_role = 'DeptHead' OR e.approval_role = 'Dept Head') AND e.IsActive = 1 LIMIT 1");
         $stmt->execute([$deptName]);
         if ($row = $stmt->fetch(PDO::FETCH_ASSOC)) return $row;
 

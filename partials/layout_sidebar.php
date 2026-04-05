@@ -4,7 +4,7 @@ $approval_role = $_SESSION['approval_role'] ?? 'Employee';
 $dept_id = $_SESSION['dept_id'] ?? 0;
 $is_hr = (strcasecmp($approval_role, 'HR') === 0 || $dept_id == 5);
 $is_ceo = (strcasecmp($approval_role, 'CEO') === 0);
-$is_dept_head = (strcasecmp($approval_role, 'Dept Head') === 0);
+$is_dept_head = (strcasecmp($approval_role, 'Dept Head') === 0 || strcasecmp($approval_role, 'DeptHead') === 0);
 
 $current_page = basename($_SERVER['PHP_SELF'], '.php');
 // In this system, URI-based routing is used, so we might need a better way to detect active page
@@ -59,7 +59,7 @@ $uri = $_SERVER['REQUEST_URI'];
         </a>
     </div>
 
-    <?php if ($is_hr || $is_ceo || $is_dept_head): ?>
+    <?php if ($is_hr || $is_ceo): ?>
     <div class="nav-group">
         <div class="nav-label">Management</div>
         <a href="<?php echo baseUrl('employee'); ?>" class="nav-item <?php echo (strpos($uri, '/employee') !== false) ? 'active' : ''; ?>" title="Employee Directory">
@@ -67,7 +67,6 @@ $uri = $_SERVER['REQUEST_URI'];
             <span>Employee Directory</span>
         </a>
         
-        <?php if ($is_hr || $is_ceo): ?>
         <div class="nav-item has-sub" onclick="this.nextElementSibling.classList.toggle('open')" title="Payroll & Benefits">
             <div class="nav-ico"><i class="fa-solid fa-coins"></i></div>
             <span>Payroll & Benefits</span>
@@ -79,7 +78,6 @@ $uri = $_SERVER['REQUEST_URI'];
             <a href="<?php echo baseUrl('allowances'); ?>" class="nav-sub-item <?php echo (strpos($uri, '/allowances') !== false) ? 'active' : ''; ?>">Allowances</a>
             <a href="<?php echo baseUrl('timecard?action=audit'); ?>" class="nav-sub-item <?php echo (strpos($uri, 'action=audit') !== false) ? 'active' : ''; ?>">Biometric Audit</a>
         </div>
-        <?php endif; ?>
     </div>
     <?php endif; ?>
 

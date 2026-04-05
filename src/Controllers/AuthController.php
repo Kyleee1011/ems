@@ -83,7 +83,17 @@ require_once dirname(dirname(__DIR__)) . '/config_session.php';
                         $_SESSION['full_name'] = $row['first_name'] . ' ' . $row['last_name'];
                         $_SESSION['dept_id'] = $row['dept_id'];
                         $_SESSION['approval_role'] = $row['approval_role'] ?? 'Employee';
-                        $_SESSION['role'] = ($row['dept_name'] === 'Human Resources' || $row['dept_code'] === 'HRD') ? 'HR' : 'Employee';
+                        
+                        // Set display role
+                        if (strcasecmp($row['approval_role'] ?? '', 'CEO') === 0) {
+                            $_SESSION['role'] = 'CEO';
+                        } elseif (strcasecmp($row['approval_role'] ?? '', 'HR') === 0 || $row['dept_name'] === 'Human Resources' || $row['dept_code'] === 'HRD') {
+                            $_SESSION['role'] = 'HR';
+                        } elseif (strcasecmp($row['approval_role'] ?? '', 'DeptHead') === 0 || strcasecmp($row['approval_role'] ?? '', 'Dept Head') === 0) {
+                            $_SESSION['role'] = 'Dept Head';
+                        } else {
+                            $_SESSION['role'] = 'Employee';
+                        }
 
                         // Redirect based on role
                         header("Location: " . baseUrl('home'));

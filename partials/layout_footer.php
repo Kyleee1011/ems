@@ -41,7 +41,7 @@
         });
         
         // Auto-initialize cutoff and employee selectors if they exist
-        $('select[name="cutoff"], select[name="search_ac"], #deptFilter, #hr_search, #cutoff_select, #dept_select').select2({
+        $('select[name="cutoff"], select[name="search_ac"], select#deptFilter, select#hr_search, select#cutoff_select, select#dept_select').select2({
             width: '100%'
         });
     });

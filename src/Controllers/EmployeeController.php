@@ -22,6 +22,15 @@ require_once dirname(dirname(__DIR__)) . '/config_session.php';
         
         $this->currentUser = $_SESSION['user_id'];
         $this->userRole = trim($_SESSION['approval_role'] ?? 'HR');
+        
+        // Dept Heads should not access employee directory
+        $is_dept_head = (strcasecmp($this->userRole, 'Dept Head') === 0 || strcasecmp($this->userRole, 'DeptHead') === 0);
+        $is_hr_or_ceo = (strcasecmp($this->userRole, 'HR') === 0 || strcasecmp($this->userRole, 'CEO') === 0);
+        
+        if ($is_dept_head && !$is_hr_or_ceo) {
+            header("Location: " . baseUrl('home'));
+            exit;
+        }
     }
 
     public function index()

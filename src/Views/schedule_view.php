@@ -85,6 +85,12 @@ $can_set_colors = ($is_dept_head || $is_hr || $is_ceo);
         }
         .doc-table { border: 1px solid #000; }
         .doc-table th, .doc-table td { border: 1px solid #000; color: #000 !important; }
+        
+        * {
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+        }
+
         .signature-img { height: 60px; }
     }
 </style>
@@ -96,6 +102,7 @@ $can_set_colors = ($is_dept_head || $is_hr || $is_ceo);
     </div>
     <div class="header-actions">
         <span id="status_display" class="tag tag-teal" style="padding: 5px 15px; display:none; font-weight: 800;">Draft</span>
+        <button onclick="viewHistory()" class="pill-btn no-print" style="margin-right: 10px;"><i class="fa-solid fa-clock-rotate-left"></i> Logs</button>
         <button onclick="window.print()" class="pill-btn"><i class="fa-solid fa-print"></i> Print Schedule</button>
     </div>
 </div>
@@ -229,6 +236,17 @@ $can_set_colors = ($is_dept_head || $is_hr || $is_ceo);
     </div>
 </div>
 
+<!-- ACTIVITY LOG MODAL -->
+<div id="historyModal" class="modal-container" style="position:fixed; top:50%; left:50%; transform:translate(-50%, -50%); width:600px; background:var(--bg-card); border-radius:16px; border:1px solid var(--border); box-shadow:var(--sh-lg); z-index:101; display:none; flex-direction:column; max-height:85vh;">
+    <div class="modal-header" style="padding:15px 20px; border-bottom:1px solid var(--border-lt); display:flex; align-items:center; justify-content:space-between; background:var(--bg-raised); border-radius:16px 16px 0 0;">
+        <h3 class="card-title">Activity Log</h3>
+        <button onclick="$('#historyModal').hide(); $('#modalBackdrop').hide();" class="icon-btn" style="border:none; background:none;"><i class="fa-solid fa-times"></i></button>
+    </div>
+    <div class="modal-body" style="padding:20px; overflow-y:auto; display:flex; flex-direction:column; gap:10px;" id="history_list">
+        <!-- Logs loaded here -->
+    </div>
+</div>
+
 <script>
 let currentEditing = { empId: null, date: null };
 let canEdit = false;
@@ -244,6 +262,20 @@ const approvalConfig = {
 };
 
 $(document).ready(() => {
+    // Inject CSRF globally for all AJAX POST requests on this page
+    $.ajaxPrefilter(function (options, originalOptions, jqXHR) {
+        if (options.type && options.type.toUpperCase() === "POST") {
+            const token = '<?php echo \App\Utils\AppHelpers::generateCsrfToken(); ?>';
+            if (typeof options.data === "string") {
+                options.data += (options.data ? "&" : "") + "csrf_token=" + encodeURIComponent(token);
+            } else if (options.data && typeof options.data === "object" && !(options.data instanceof FormData)) {
+                options.data.csrf_token = token;
+            } else if (!options.data) {
+                options.data = "csrf_token=" + encodeURIComponent(token);
+            }
+        }
+    });
+
     if(isAdminView) switchTab('dashboard'); else loadData();
 });
 
@@ -285,7 +317,7 @@ function loadData() {
             renderDocTable(res.employees, data.schedules, range);
             
             const renderSig = (id, path, show) => {
-                if(show && path) $(`#sig_img_${id}`).html(`<img src="<?php echo baseUrl(''); ?>${path.replace('../', '')}" class="signature-img signature-animate" alt="Sig">`);
+                if(show && path) $(`#sig_img_${id}`).html(`<img src="<?php echo baseUrl(''); ?>${path.replace('../', '')}" class="signature-img" alt="Sig">`);
                 else $(`#sig_img_${id}`).empty();
             };
             renderSig('prepared', data.signatories.prepared_sig, (data.status !== 'Draft' && data.status !== 'Not Started'));
@@ -395,8 +427,46 @@ function handleWorkflowAction(status) {
     $('<button id="btn_cancel_wf" class="pill-btn" onclick="loadData()">Cancel</button>').insertAfter(btn);
 }
 
+function viewHistory() {
+    const dept = $('#dept_select').val(); const range = $('#cutoff_select').val();
+    if(!dept || !range) return alert("Please select department and cutoff first.");
+    
+    $.post('<?php echo baseUrl('schedule/api'); ?>', { action: 'get_history', dept_id: dept, range: range }, function(res) {
+        let html = '';
+        if(!res.logs || res.logs.length === 0) html = '<div style="text-align:center; color:var(--ink-4); padding:20px;">No history logs found.</div>';
+        else res.logs.forEach(log => {
+            html += `<div style="background:var(--bg-raised); padding:12px; border-radius:8px; border:1px solid var(--border-lt);">
+                <div style="display:flex; justify-content:space-between; font-size:10px; font-weight:800; margin-bottom:4px;">
+                    <span style="color:var(--teal-deep); text-transform:uppercase;">${log.action}</span>
+                    <span style="color:var(--ink-4);">${log.time}</span>
+                </div>
+                <div style="font-size:11px; font-weight:700;">By: ${log.actor}</div>
+                ${log.comments ? `<div style="font-size:10px; color:var(--ink-3); margin-top:5px; padding-top:5px; border-top:1px dashed var(--border-lt); font-style:italic;">"${log.comments}"</div>` : ''}
+            </div>`;
+        });
+        $('#history_list').html(html);
+        $('#historyModal').css('display', 'flex');
+        $('#modalBackdrop').show();
+    });
+}
+
 function updateStatus(status) {
-    $.post('<?php echo baseUrl('schedule/api'); ?>', { action: 'update_status', dept_id: $('#dept_select').val(), range: $('#cutoff_select').val(), status: status }, function() { loadData(); if(isAdminView && status === 'Approved') switchTab('dashboard'); });
+    let msg = `Confirm status change to: ${status}?`;
+    if(status === 'Draft') msg = "WARNING: This will unlock the matrix and CLEAR any finalized entries for this period so you can resubmit. Continue?";
+    
+    if(!confirm(msg)) return;
+    const comments = prompt("Optional comments:");
+
+    $.post('<?php echo baseUrl('schedule/api'); ?>', { 
+        action: 'update_status', 
+        dept_id: $('#dept_select').val(), 
+        range: $('#cutoff_select').val(), 
+        status: status,
+        comments: comments
+    }, function() { 
+        loadData(); 
+        if(isAdminView && (status === 'Approved' || status === 'Pending CEO')) switchTab('dashboard'); 
+    });
 }
 </script>
 
