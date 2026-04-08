@@ -14,13 +14,13 @@ class DashboardModel
 
     // Methods for fetching stats cards data
     public function getTotalEmployees() {
-        $stmt = $this->pdo->prepare("SELECT COUNT(*) FROM employees WHERE employee_status = 'Active' AND salary_rate > 0");
+        $stmt = $this->pdo->prepare("SELECT COUNT(*) FROM employees WHERE employee_status = 'Active'");
         $stmt->execute();
         return $stmt->fetchColumn();
     }
 
     public function getNewHires() {
-        $stmt = $this->pdo->prepare("SELECT COUNT(*) FROM employees WHERE employee_status = 'Active' AND salary_rate > 0 AND MONTH(date_hired) = MONTH(CURRENT_DATE()) AND YEAR(date_hired) = YEAR(CURRENT_DATE())");
+        $stmt = $this->pdo->prepare("SELECT COUNT(*) FROM employees WHERE employee_status = 'Active' AND MONTH(date_hired) = MONTH(CURRENT_DATE()) AND YEAR(date_hired) = YEAR(CURRENT_DATE())");
         $stmt->execute();
         return $stmt->fetchColumn();
     }
@@ -32,19 +32,19 @@ class DashboardModel
     }
 
     public function getMaleEmployeeCount() {
-        $stmt = $this->pdo->prepare("SELECT COUNT(*) FROM employees WHERE employee_status = 'Active' AND salary_rate > 0 AND gender = 'Male'");
+        $stmt = $this->pdo->prepare("SELECT COUNT(*) FROM employees WHERE employee_status = 'Active' AND gender = 'Male'");
         $stmt->execute();
         return $stmt->fetchColumn();
     }
 
     public function getFemaleEmployeeCount() {
-        $stmt = $this->pdo->prepare("SELECT COUNT(*) FROM employees WHERE employee_status = 'Active' AND salary_rate > 0 AND gender = 'Female'");
+        $stmt = $this->pdo->prepare("SELECT COUNT(*) FROM employees WHERE employee_status = 'Active' AND gender = 'Female'");
         $stmt->execute();
         return $stmt->fetchColumn();
     }
 
     public function getUnassignedGenderCount() {
-        $stmt = $this->pdo->prepare("SELECT COUNT(*) FROM employees WHERE employee_status = 'Active' AND salary_rate > 0 AND (gender IS NULL OR gender = '')");
+        $stmt = $this->pdo->prepare("SELECT COUNT(*) FROM employees WHERE employee_status = 'Active' AND (gender IS NULL OR gender = '')");
         $stmt->execute();
         return $stmt->fetchColumn();
     }
@@ -57,13 +57,13 @@ class DashboardModel
 
 
     public function getDepartmentStats() {
-        $stmt = $this->pdo->prepare("SELECT d.dept_name, COUNT(e.emp_id) as count FROM employees e JOIN departments d ON e.dept_id = d.dept_id WHERE e.employee_status = 'Active' AND e.salary_rate > 0 GROUP BY d.dept_name");
+        $stmt = $this->pdo->prepare("SELECT d.dept_name, COUNT(e.emp_id) as count FROM employees e JOIN departments d ON e.dept_id = d.dept_id WHERE e.employee_status = 'Active' GROUP BY d.dept_name");
         $stmt->execute();
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
     public function getStatusStats() {
-        $stmt = $this->pdo->prepare("SELECT employment_status, COUNT(*) as count FROM employees WHERE employee_status = 'Active' AND salary_rate > 0 GROUP BY employment_status");
+        $stmt = $this->pdo->prepare("SELECT employment_status, COUNT(*) as count FROM employees WHERE employee_status = 'Active' GROUP BY employment_status");
         $stmt->execute();
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
