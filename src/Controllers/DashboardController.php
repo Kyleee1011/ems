@@ -115,7 +115,7 @@ class DashboardController
         
         // Determine Current Cutoff Range
         // Determine Current Cutoff Range
-        $cutoff_options = AppHelpers::generateCutoffPeriods($this->pdo);
+        $cutoff_options = AppHelpers::generateCutoffPeriods($this->pdo, null, null, 5, -4);
         $today = date('Y-m-d'); 
         
         // Default to current date logic
@@ -400,7 +400,7 @@ class DashboardController
         $totalPending = array_sum($counts);
         $activeTab = $_GET['tab'] ?? 'dashboard';
         
-        $cutoff_options = \App\Utils\AppHelpers::generateCutoffPeriods($this->pdo);
+        $cutoff_options = \App\Utils\AppHelpers::generateCutoffPeriods($this->pdo, null, null, 5, -4);
 
         $totalEmp = $this->dashboardModel->getTotalEmployees();
         $manpowerStats = $this->dashboardModel->getManpowerStats();
@@ -420,7 +420,7 @@ class DashboardController
         // 2. Fetch Data (Analytics)
         
         // Determine Current Cutoff Range
-        $cutoff_options = \App\Utils\AppHelpers::generateCutoffPeriods($this->pdo);
+        $cutoff_options = \App\Utils\AppHelpers::generateCutoffPeriods($this->pdo, null, null, 5, -4);
         $today = date('Y-m-d'); 
         
         // Default to current date logic
@@ -581,7 +581,7 @@ class DashboardController
 
         // D. Employees on Leave for Current Cutoff
         // Get current cutoff range first
-        $cutoff_options = \App\Utils\AppHelpers::generateCutoffPeriods($this->pdo);
+        $cutoff_options = \App\Utils\AppHelpers::generateCutoffPeriods($this->pdo, null, null, 5, -4);
         $today = date('Y-m-d'); 
         $currentWait = explode('|', $cutoff_options[0]['value']);
         $cStart = $currentWait[0]; $cEnd = $currentWait[1];

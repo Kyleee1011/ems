@@ -47,6 +47,11 @@ $uri = $_SERVER['REQUEST_URI'];
             <div class="nav-ico"><i class="fa-solid fa-calendar-days"></i></div>
             <span>Schedule</span>
         </a>
+        <a href="<?php echo baseUrl('changesched'); ?>"
+            class="nav-item <?php echo (strpos($uri, '/changesched') !== false) ? 'active' : ''; ?>" title="Change Schedule">
+            <div class="nav-ico"><i class="fa-solid fa-calendar-plus"></i></div>
+            <span>Change Schedule</span>
+        </a>
         <a href="<?php echo baseUrl('leave'); ?>"
             class="nav-item <?php echo (strpos($uri, '/leave') !== false) ? 'active' : ''; ?>" title="Leave Request">
             <div class="nav-ico"><i class="fa-solid fa-calendar-plus"></i></div>
