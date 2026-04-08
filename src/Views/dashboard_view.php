@@ -317,6 +317,42 @@ require BASE_PATH . '/partials/layout_sidebar.php';
                     </div>
                 </div>
             </div>
+
+            <div class="card">
+                <div class="card-head"><div class="card-title"><i class="fa-solid fa-calendar-exchange"></i> Change Schedule</div></div>
+                <div class="card-body" style="padding: 0;">
+                    <div class="table-wrap" style="border: none; border-radius: 0;">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Employee</th>
+                                    <th>Target Date</th>
+                                    <th>New Shift</th>
+                                    <th style="text-align: right;">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <?php foreach($pendingChangeSchedList as $cs): ?>
+                                <tr>
+                                    <td style="font-weight: 600;"><?php echo htmlspecialchars($cs['first_name'].' '.$cs['last_name']); ?></td>
+                                    <td style="font-size: 11px;"><?php echo date('M d', strtotime($cs['schedule_date'])); ?></td>
+                                    <td><span class="tag tag-teal"><?php echo htmlspecialchars($cs['new_shift_code']); ?></span></td>
+                                    <td style="text-align: right;">
+                                        <form method="POST" style="display: inline-flex; gap: 4px;">
+                                            <?= csrfField() ?>
+                                            <input type="hidden" name="action" value="process_change_sched">
+                                            <input type="hidden" name="req_id" value="<?php echo $cs['id']; ?>">
+                                            <button name="decision" value="approve" class="icon-btn ico-green" style="width: 26px; height: 26px;" title="Approve"><i class="fa-solid fa-check"></i></button>
+                                            <button name="decision" value="reject" class="icon-btn ico-red" style="width: 26px; height: 26px;" title="Reject"><i class="fa-solid fa-times"></i></button>
+                                        </form>
+                                    </td>
+                                </tr>
+                                <?php endforeach; if(empty($pendingChangeSchedList)) echo "<tr><td colspan='4' style='text-align:center; padding:20px; color:var(--ink-4);'>No pending requests.</td></tr>"; ?>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
         </div>
 
         <!-- RIGHT: SCHED & LOANS -->

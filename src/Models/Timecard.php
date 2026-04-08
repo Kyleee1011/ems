@@ -270,10 +270,11 @@ class Timecard
         string $schedDate, 
         bool $isRestDay,
         ?int $ndLimitTsIn = null,
-        ?int $ndLimitTsOut = null
+        ?int $ndLimitTsOut = null,
+        int $utMins = 0
     ): array {
         // 1. Calculate Shift using the unified Engine
-        $breakHours = ($totalHours > 5) ? 1.0 : 0.0;
+        $breakHours = ($totalHours > 5 && $utMins <= 120) ? 1.0 : 0.0;
         
         $effectiveStart = new DateTime("@$tsIn");
         $effectiveStart->setTimezone(new \DateTimeZone(date_default_timezone_get()));
@@ -625,8 +626,8 @@ class Timecard
                     $ndLimitStart = $ndLimitTsIn ? (new DateTime("@$ndLimitTsIn"))->setTimezone(new \DateTimeZone(date_default_timezone_get())) : null;
                     $ndLimitEnd = $ndLimitTsOut ? (new DateTime("@$ndLimitTsOut"))->setTimezone(new \DateTimeZone(date_default_timezone_get())) : null;
 
-                    // Break: 1-hour if > 5 hours (existing rule, unchanged)
-                    $breakHours = ($totalHrsFloat > 5) ? 1.0 : 0.0;
+                    // Break: 1-hour if > 5 hours, no break if undertime > 120 mins
+                    $breakHours = ($totalHrsFloat > 5 && $day['ut_mins'] <= 120) ? 1.0 : 0.0;
                     
                     $shiftResult = $this->shiftPayrollCalculator->calculateShiftPay(
                         1.0, 
@@ -643,7 +644,7 @@ class Timecard
                     // Cross-day detection: does the schedule window cross midnight?
                     $midnightTs = strtotime("$dStr +1 day 00:00:00");
                     if ($classifyTsOut > $midnightTs) {
-                        $classification = $this->classifyHoursCrossDay($classifyTsIn, $classifyTsOut, $totalHrsFloat, $otHrsFloat, $dStr, $isRestDay, $ndLimitTsIn, $ndLimitTsOut);
+                        $classification = $this->classifyHoursCrossDay($classifyTsIn, $classifyTsOut, $totalHrsFloat, $otHrsFloat, $dStr, $isRestDay, $ndLimitTsIn, $ndLimitTsOut, $day['ut_mins']);
                     } else {
                         // Deduct mandatory break for paid-hour classification
                         // (cross-day path already does this via ShiftPayrollCalculator)
@@ -652,6 +653,12 @@ class Timecard
                         $classification = $this->classifyHours($paidHrsFloat, $paidOtFloat, $ndMins, $dayType, $isRestDay);
                     }
                     $day = array_merge($day, $classification);
+                    
+                    // Deduct break from total display hours to match classification logic
+                    $currentTotal = (float)$day['hours'];
+                    if ($currentTotal > 5 && $day['ut_mins'] <= 120) {
+                        $day['hours'] = number_format($currentTotal - 1.0, 2);
+                    }
                     
                     if ($day['sched_in'] === '17:00') {
                         $debOut = sprintf("[%s] in=%d, out=%d, isOff=%d, ndMinsCalc=%d, classifiedND=%d\n",
