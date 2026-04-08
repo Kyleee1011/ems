@@ -44,6 +44,20 @@
         $('select[name="cutoff"], select[name="search_ac"], select#deptFilter, select#hr_search, select#cutoff_select, select#dept_select').select2({
             width: '100%'
         });
+
+        // Global CSRF Token Injection
+        $.ajaxPrefilter(function (options, originalOptions, jqXHR) {
+            if (options.type && options.type.toUpperCase() === "POST") {
+                const token = '<?php echo \App\Utils\AppHelpers::generateCsrfToken(); ?>';
+                if (typeof options.data === "string") {
+                    options.data += (options.data ? "&" : "") + "csrf_token=" + encodeURIComponent(token);
+                } else if (options.data && typeof options.data === "object" && !(options.data instanceof FormData)) {
+                    options.data.csrf_token = token;
+                } else if (!options.data) {
+                    options.data = "csrf_token=" + encodeURIComponent(token);
+                }
+            }
+        });
     });
 
     // Nav sub-menu toggle fix

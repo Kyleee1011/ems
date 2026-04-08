@@ -400,26 +400,21 @@ if ($isHr) {
           $rowCount++;
           
           // Determine values
-          $lateMins = (float)($day['late_mins'] ?? 0);
+          $lateMins = (float)($day['late_mins'] ?? 0) + (float)($day['ut_mins'] ?? 0);
           $isAbsent = (isset($day['remarks']) && $day['remarks'] === 'ABSENT');
           $regHrs = (float)($day['regular_hrs'] ?? 0);
           $regOtHrs = (float)($day['regular_ot_hrs'] ?? 0);
-          $ndHrs = (float)($day['nd_hrs'] ?? 0);
+          
+          $ndHrs = (float)($day['nd_hrs'] ?? 0) + (float)($day['nd_regular_holiday_hrs'] ?? 0) + (float)($day['nd_special_holiday_hrs'] ?? 0) + (float)($day['nd_double_holiday_hrs'] ?? 0);
           $ndOtHrs = (float)($day['nd_ot_hrs'] ?? 0);
           
-          $lhHrs = (float)($day['regular_holiday_hrs'] ?? 0) + (float)($day['double_holiday_hrs'] ?? 0);
+          $lhHrs = (float)($day['regular_holiday_hrs'] ?? 0) + (float)($day['double_holiday_hrs'] ?? 0) + (float)($day['rest_day_regular_holiday_hrs'] ?? 0);
           $lhotHrs = (float)($day['regular_holiday_ot_hrs'] ?? 0) + (float)($day['double_holiday_ot_hrs'] ?? 0);
           
           $shHrs = (float)($day['special_holiday_hrs'] ?? 0);
           $shotHrs = (float)($day['special_holiday_ot_hrs'] ?? 0) + (float)($day['rest_day_special_holiday_hrs'] ?? 0);
           
           $rdotHrs = (float)($day['rest_day_hrs'] ?? 0) + (float)($day['rest_day_ot_hrs'] ?? 0);
-
-          // 1-hour break deduction logic for regular shifts crossing 5+ hours
-          if ($regHrs > 5) $regHrs -= 1;
-          elseif ($lhHrs > 5) $lhHrs -= 1;
-          elseif ($shHrs > 5) $shHrs -= 1;
-          elseif ($rdotHrs > 5) $rdotHrs -= 1;
 
           // Accumulate totals
           $totals['lates'] += $lateMins;

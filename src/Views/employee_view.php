@@ -178,7 +178,7 @@ require BASE_PATH . '/partials/layout_sidebar.php';
     function softDeleteEmployee(id) { if(confirm('Mark as Inactive?')) createPost(id, 'soft_delete'); }
     function restoreEmployee(id) { if(confirm('Set this employee as Active?')) createPost(id, 'restore'); }
     function hardDeleteEmployee(id) { if(confirm('PERMANENTLY DELETE?')) createPost(id, 'hard_delete'); }
-    function createPost(id, action) { const f = document.createElement('form'); f.method = 'POST'; f.action = ''; f.innerHTML = `<input type="hidden" name="action" value="${action}"><input type="hidden" name="emp_id" value="${id}">`; document.body.appendChild(f); f.submit(); }
+    function createPost(id, action) { const f = document.createElement('form'); f.method = 'POST'; f.action = ''; f.innerHTML = `<?= csrfField() ?><input type="hidden" name="action" value="${action}"><input type="hidden" name="emp_id" value="${id}">`; document.body.appendChild(f); f.submit(); }
 </script>
 
 <?php require BASE_PATH . '/partials/layout_footer.php'; ?>

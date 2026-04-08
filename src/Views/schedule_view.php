@@ -262,20 +262,6 @@ const approvalConfig = {
 };
 
 $(document).ready(() => {
-    // Inject CSRF globally for all AJAX POST requests on this page
-    $.ajaxPrefilter(function (options, originalOptions, jqXHR) {
-        if (options.type && options.type.toUpperCase() === "POST") {
-            const token = '<?php echo \App\Utils\AppHelpers::generateCsrfToken(); ?>';
-            if (typeof options.data === "string") {
-                options.data += (options.data ? "&" : "") + "csrf_token=" + encodeURIComponent(token);
-            } else if (options.data && typeof options.data === "object" && !(options.data instanceof FormData)) {
-                options.data.csrf_token = token;
-            } else if (!options.data) {
-                options.data = "csrf_token=" + encodeURIComponent(token);
-            }
-        }
-    });
-
     if(isAdminView) switchTab('dashboard'); else loadData();
 });
 
