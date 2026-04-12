@@ -267,11 +267,14 @@ class Payslip
             'hrs_rd' => 0, 'pay_rd' => 0,       // Rest Day (1.3)
             'hrs_sh' => 0, 'pay_sh' => 0,       // Special Hol (1.3)
             'hrs_rd_sh_ot' => 0, 'pay_rd_sh_ot' => 0,
-            'hrs_sh_nd' => 0, 'pay_sh_nd' => 0, // Special Hol ND
-            'hrs_rd_sh_nd' => 0, 'pay_rd_sh_nd' => 0, // Rest Day ND
+            'hrs_sh_nd' => 0, 'pay_sh_nd' => 0, // Special Hol ND (1.3 * 0.1)
+            'hrs_rd_nd' => 0, 'pay_rd_nd' => 0, // Rest Day ND (1.3 * 0.1)
+            'hrs_rd_sh_nd' => 0, 'pay_rd_sh_nd' => 0, // Rest Day + Special Hol ND (1.5 * 0.1)
             'hrs_rh' => 0, 'pay_rh' => 0,       // Holiday (2.0)
             'hrs_rh_ot' => 0, 'pay_rh_ot' => 0,
-            'hrs_rh_nd' => 0, 'pay_rh_nd' => 0,
+            'hrs_rh_nd' => 0, 'pay_rh_nd' => 0, // Regular Holiday ND (2.0 * 0.1)
+            'hrs_rd_rh_nd' => 0, 'pay_rd_rh_nd' => 0, // Rest Day + Regular Holiday ND (2.6 * 0.1)
+            'total_hrs_nd' => 0,
             
             'deduct_absent' => 0,
             'credits_adj' => 0,
@@ -366,11 +369,21 @@ class Payslip
                 $breakdown['hrs_rh'] += $day['rest_day_regular_holiday_hrs'];
                 $breakdown['pay_rh'] += $day['rest_day_regular_holiday_hrs'] * $hourly_rate * (2.6 - $holidaySubtrahend);
                 
+                $breakdown['hrs_rd_rh_nd'] += $day['nd_rest_day_regular_holiday_hrs'];
+                $breakdown['pay_rd_rh_nd'] += $day['nd_rest_day_regular_holiday_hrs'] * $hourly_rate * 2.6 * 0.10;
+                
                 // 8. REST DAY + SPECIAL HOLIDAY (Multiplier 1.5)
                 $breakdown['hrs_rd_sh'] += $day['rest_day_special_holiday_hrs'];
                 $breakdown['pay_rd_sh'] += $day['rest_day_special_holiday_hrs'] * $hourly_rate * (1.5 - $holidaySubtrahend);
 
-                // 9. Late & Undertime Deductions
+                $breakdown['hrs_rd_sh_nd'] += $day['nd_rest_day_special_holiday_hrs'];
+                $breakdown['pay_rd_sh_nd'] += $day['nd_rest_day_special_holiday_hrs'] * $hourly_rate * 1.5 * 0.10;
+
+                // 9. Pure Rest Day Night Diff
+                $breakdown['hrs_rd_nd'] += $day['nd_rest_day_hrs'];
+                $breakdown['pay_rd_nd'] += $day['nd_rest_day_hrs'] * $hourly_rate * 1.3 * 0.10;
+
+                // 10. Late & Undertime Deductions
                 $breakdown['deduct_late'] += ($day['late_mins'] * $minute_rate);
                 $breakdown['deduct_ut'] += ($day['ut_mins'] * $minute_rate);
 
@@ -405,7 +418,11 @@ class Payslip
 
         $breakdown['pay_holiday'] = $breakdown['pay_rh'] + $breakdown['pay_sh'] + $breakdown['pay_rd'] + $breakdown['pay_rd_sh'];
         $breakdown['pay_overtime'] = $breakdown['pay_reg_ot'] + $breakdown['pay_rd_sh_ot'] + $breakdown['pay_rh_ot'];
-        $breakdown['pay_nightdiff'] = $breakdown['pay_nd'] + $breakdown['pay_rd_sh_nd'] + $breakdown['pay_sh_nd'] + $breakdown['pay_rh_nd'];
+        $breakdown['pay_nightdiff'] = $breakdown['pay_nd'] + $breakdown['pay_sh_nd'] + $breakdown['pay_rh_nd'] + 
+                                     $breakdown['pay_rd_nd'] + $breakdown['pay_rd_sh_nd'] + $breakdown['pay_rd_rh_nd'];
+        
+        $breakdown['total_hrs_nd'] = $breakdown['hrs_nd'] + $breakdown['hrs_sh_nd'] + $breakdown['hrs_rh_nd'] + 
+                                    $breakdown['hrs_rd_nd'] + $breakdown['hrs_rd_sh_nd'] + $breakdown['hrs_rd_rh_nd'];
 
         if ($isMonthlyPaid && $salary_rate > 0) {
             $cutoffBasePayHalf = $salary_rate / 2;

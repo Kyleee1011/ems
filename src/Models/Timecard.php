@@ -173,6 +173,9 @@ class Timecard
             'nd_regular_holiday_hrs'       => 0,
             'nd_special_holiday_hrs'       => 0,
             'nd_double_holiday_hrs'        => 0,
+            'nd_rest_day_hrs'              => 0,
+            'nd_rest_day_regular_holiday_hrs' => 0,
+            'nd_rest_day_special_holiday_hrs' => 0,
             'rest_day_regular_holiday_hrs' => 0,
             'rest_day_special_holiday_hrs' => 0,
             'day_type'                     => 'REGULAR_DAY',
@@ -227,9 +230,17 @@ class Timecard
             $cls['regular_ot_hrs'] = round($otHours, 2);
         }
 
-        // Night differential breakdown — split ND hours by day type
+        // Night differential breakdown — split ND hours by day type and rest day status
         if ($ndHours > 0) {
-            if ($dayType === HolidayCalculator::DAY_TYPE_REGULAR_HOLIDAY) {
+            if ($isRestDay) {
+                if ($dayType === HolidayCalculator::DAY_TYPE_REGULAR_HOLIDAY) {
+                    $cls['nd_rest_day_regular_holiday_hrs'] = round($ndHours, 2);
+                } elseif ($dayType === HolidayCalculator::DAY_TYPE_SPECIAL_HOLIDAY) {
+                    $cls['nd_rest_day_special_holiday_hrs'] = round($ndHours, 2);
+                } else {
+                    $cls['nd_rest_day_hrs'] = round($ndHours, 2);
+                }
+            } elseif ($dayType === HolidayCalculator::DAY_TYPE_REGULAR_HOLIDAY) {
                 $cls['nd_regular_holiday_hrs'] = round($ndHours, 2);
             } elseif ($dayType === HolidayCalculator::DAY_TYPE_SPECIAL_HOLIDAY) {
                 $cls['nd_special_holiday_hrs'] = round($ndHours, 2);
@@ -348,7 +359,15 @@ class Timecard
 
             // Night Diff Buckets
             if ($segND > 0) {
-                if ($dayType === HolidayCalculator::DAY_TYPE_REGULAR_HOLIDAY) {
+                if ($isRestDay) {
+                    if ($dayType === HolidayCalculator::DAY_TYPE_REGULAR_HOLIDAY) {
+                        $merged['nd_rest_day_regular_holiday_hrs'] += $segND;
+                    } elseif ($dayType === HolidayCalculator::DAY_TYPE_SPECIAL_HOLIDAY) {
+                        $merged['nd_rest_day_special_holiday_hrs'] += $segND;
+                    } else {
+                        $merged['nd_rest_day_hrs'] += $segND;
+                    }
+                } elseif ($dayType === HolidayCalculator::DAY_TYPE_REGULAR_HOLIDAY) {
                     $merged['nd_regular_holiday_hrs'] += $segND;
                 } elseif ($dayType === HolidayCalculator::DAY_TYPE_SPECIAL_HOLIDAY) {
                     $merged['nd_special_holiday_hrs'] += $segND;

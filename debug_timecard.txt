@@ -2,3 +2,15 @@
 [2026-03-14] in=1773478800, out=1773511200, isOff=0, ndMinsCalc=240, classifiedND=240
 [2026-03-20] in=1773997200, out=1774029600, isOff=0, ndMinsCalc=240, classifiedND=240
 [2026-03-21] in=1774083600, out=1774116000, isOff=0, ndMinsCalc=240, classifiedND=240
+[2026-04-04] in=1775293200, out=1775325600, isOff=0, ndMinsCalc=240, classifiedND=240
+[2026-04-04] in=1775293200, out=1775325600, isOff=0, ndMinsCalc=240, classifiedND=240
+[2026-04-04] in=1775293200, out=1775325600, isOff=0, ndMinsCalc=240, classifiedND=240
+[2026-04-04] in=1775293200, out=1775325600, isOff=0, ndMinsCalc=240, classifiedND=240
+[2026-04-04] in=1775293200, out=1775325600, isOff=0, ndMinsCalc=240, classifiedND=240
+[2026-04-04] in=1775293200, out=1775325600, isOff=0, ndMinsCalc=240, classifiedND=240
+[2026-04-04] in=1775293200, out=1775325600, isOff=0, ndMinsCalc=240, classifiedND=240
+[2026-03-13] in=1773392400, out=1773424800, isOff=0, ndMinsCalc=240, classifiedND=240
+[2026-03-14] in=1773478800, out=1773511200, isOff=0, ndMinsCalc=240, classifiedND=240
+[2026-03-20] in=1773997200, out=1774029600, isOff=0, ndMinsCalc=240, classifiedND=240
+[2026-03-21] in=1774083600, out=1774116000, isOff=0, ndMinsCalc=240, classifiedND=240
+[2026-04-04] in=1775293200, out=1775325600, isOff=0, ndMinsCalc=240, classifiedND=240

@@ -235,18 +235,60 @@ $totalDeductionsRequested = $govTotal + $loanTotal;
                             <td class="hrs"><?php echo fmtHrs($breakdown['hrs_rh'] ?? 0); ?></td>
                             <td class="val"><?php echo fmt($breakdown['pay_rh'] ?? 0); ?></td>
                         </tr>
+                        <?php if(($breakdown['pay_nightdiff'] ?? 0) > 0): ?>
+                        <tr>
+                            <td class="label" style="padding-left: 10px;">Night Differential</td>
+                            <td class="hrs"><?php echo fmtHrs($breakdown['total_hrs_nd'] ?? 0); ?></td>
+                            <td class="val"><?php echo fmt($breakdown['pay_nightdiff'] ?? 0); ?></td>
+                        </tr>
+                        <?php if(($breakdown['hrs_nd'] ?? 0) > 0): ?>
+                        <tr style="font-size: 9px; opacity: 0.8;">
+                            <td class="label" style="padding-left: 25px;">- ND Regular</td>
+                            <td class="hrs"><?php echo fmtHrs($breakdown['hrs_nd']); ?></td>
+                            <td class="val"><?php echo fmt($breakdown['pay_nd']); ?></td>
+                        </tr>
+                        <?php endif; ?>
+                        <?php if(($breakdown['hrs_sh_nd'] ?? 0) > 0): ?>
+                        <tr style="font-size: 9px; opacity: 0.8;">
+                            <td class="label" style="padding-left: 25px;">- ND Special Holiday</td>
+                            <td class="hrs"><?php echo fmtHrs($breakdown['hrs_sh_nd']); ?></td>
+                            <td class="val"><?php echo fmt($breakdown['pay_sh_nd']); ?></td>
+                        </tr>
+                        <?php endif; ?>
+                        <?php if(($breakdown['hrs_rh_nd'] ?? 0) > 0): ?>
+                        <tr style="font-size: 9px; opacity: 0.8;">
+                            <td class="label" style="padding-left: 25px;">- ND Regular Holiday</td>
+                            <td class="hrs"><?php echo fmtHrs($breakdown['hrs_rh_nd']); ?></td>
+                            <td class="val"><?php echo fmt($breakdown['pay_rh_nd']); ?></td>
+                        </tr>
+                        <?php endif; ?>
+                        <?php if(($breakdown['hrs_rd_nd'] ?? 0) > 0): ?>
+                        <tr style="font-size: 9px; opacity: 0.8;">
+                            <td class="label" style="padding-left: 25px;">- ND Rest Day</td>
+                            <td class="hrs"><?php echo fmtHrs($breakdown['hrs_rd_nd']); ?></td>
+                            <td class="val"><?php echo fmt($breakdown['pay_rd_nd']); ?></td>
+                        </tr>
+                        <?php endif; ?>
+                        <?php if(($breakdown['hrs_rd_sh_nd'] ?? 0) > 0): ?>
+                        <tr style="font-size: 9px; opacity: 0.8;">
+                            <td class="label" style="padding-left: 25px;">- ND RD + Special</td>
+                            <td class="hrs"><?php echo fmtHrs($breakdown['hrs_rd_sh_nd']); ?></td>
+                            <td class="val"><?php echo fmt($breakdown['pay_rd_sh_nd']); ?></td>
+                        </tr>
+                        <?php endif; ?>
+                        <?php if(($breakdown['hrs_rd_rh_nd'] ?? 0) > 0): ?>
+                        <tr style="font-size: 9px; opacity: 0.8;">
+                            <td class="label" style="padding-left: 25px;">- ND RD + Holiday</td>
+                            <td class="hrs"><?php echo fmtHrs($breakdown['hrs_rd_rh_nd']); ?></td>
+                            <td class="val"><?php echo fmt($breakdown['pay_rd_rh_nd']); ?></td>
+                        </tr>
+                        <?php endif; ?>
+                        <?php endif; ?>
                         <?php if(($breakdown['pay_overtime'] ?? 0) > 0): ?>
                         <tr>
                             <td class="label">Overtime</td>
                             <td class="hrs"><?php echo fmtHrs($breakdown['hours_ot'] ?? 0); ?></td>
                             <td class="val"><?php echo fmt($breakdown['pay_overtime'] ?? 0); ?></td>
-                        </tr>
-                        <?php endif; ?>
-                        <?php if(($breakdown['pay_nightdiff'] ?? 0) > 0): ?>
-                        <tr>
-                            <td class="label">Night Differential</td>
-                            <td class="hrs"><?php echo fmtHrs($breakdown['hrs_nd'] ?? 0); ?></td>
-                            <td class="val"><?php echo fmt($breakdown['pay_nightdiff'] ?? 0); ?></td>
                         </tr>
                         <?php endif; ?>
                         <tr style="border-top: 1px dashed var(--border); font-weight: 700;">
