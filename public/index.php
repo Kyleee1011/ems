@@ -12,9 +12,16 @@ require_once BASE_PATH . '/config.php';
 // Start the session
 require_once dirname(__DIR__) . '/config_session.php';
 
-// Basic Error Handling for now
-ini_set('display_errors', 1);
-error_reporting(E_ALL);
+// Error Handling based on environment
+$appEnv = $_ENV['APP_ENV'] ?? 'production';
+if ($appEnv === 'development') {
+    ini_set('display_errors', 1);
+    error_reporting(E_ALL);
+} else {
+    ini_set('display_errors', 0);
+    error_reporting(0);
+}
+
 $scriptDir = str_replace('\\', '/', dirname($_SERVER['SCRIPT_NAME']));
 // Ensure no trailing slash unless it's just /
 if ($scriptDir !== '/' && substr($scriptDir, -1) === '/') {
@@ -42,7 +49,8 @@ $dispatcher = FastRoute\simpleDispatcher(function(FastRoute\RouteCollector $r) {
     $r->addRoute('GET', '/logout', function() {
 require_once dirname(__DIR__) . '/session_config.php';
         session_destroy();
-        setcookie(session_name(), '', time() - 3600, '/ems1');
+        $cookiePath = $_ENV['SESSION_COOKIE_PATH'] ?? '/';
+        setcookie(session_name(), '', time() - 3600, $cookiePath);
         header("Location: " . BASE_URL . "/login");
         exit();
     });

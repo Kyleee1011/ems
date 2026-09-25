@@ -159,8 +159,7 @@ $can_set_colors = ($is_dept_head || $is_hr || $is_ceo);
 
             <div id="workflow_actions" class="flex-row" style="margin-top: 10px; flex: 100%; justify-content: center; display:none; gap: 10px;">
                 <button id="btn_submit" class="btn-primary" onclick="handleWorkflowAction('Pending HR')" style="display:none;">Sign & Submit</button>
-                <button id="btn_approve_hr" class="btn-primary" style="background:var(--blue); display:none;" onclick="handleWorkflowAction('Pending CEO')">Approve (HR)</button>
-                <button id="btn_approve_ceo" class="btn-primary" onclick="handleWorkflowAction('Approved')" style="display:none;">Final Release</button>
+                <button id="btn_approve_hr" class="btn-primary" style="background:var(--blue); display:none;" onclick="handleWorkflowAction('Approved')">Approve (HR)</button>
                 <button id="btn_reject" class="pill-btn" style="color:var(--red); border-color:var(--red-bdr); display:none;" onclick="updateStatus('Rejected')">Reject</button>
                 <button id="btn_reset" class="pill-btn" style="display:none;" onclick="updateStatus('Draft')">Unlock Matrix</button>
             </div>
@@ -187,7 +186,7 @@ $can_set_colors = ($is_dept_head || $is_hr || $is_ceo);
 
             <p style="font-size: 8px; font-style: italic; margin-top: 10px; color: var(--ink-4);">Note: Subjected to changes for events/functions as required.</p>
 
-            <div class="grid-3 mt-20" style="margin-top: 40px; text-align: center; gap: 40px;">
+            <div class="grid-2 mt-20" style="margin-top: 40px; text-align: center; gap: 40px; display: grid; grid-template-columns: 1fr 1fr;">
                 <div style="position: relative;">
                     <p style="font-size: 9px; font-weight: 700; color: var(--ink-4); text-transform: uppercase; margin-bottom: 30px; text-align: left;">Prepared By:</p>
                     <div id="sig_img_prepared" style="height: 40px; margin-bottom: 5px; position: relative;"></div>
@@ -196,18 +195,11 @@ $can_set_colors = ($is_dept_head || $is_hr || $is_ceo);
                     <p id="dept_prepared" style="font-size: 8px; font-weight: 600; color: var(--ink-3);">-</p>
                 </div>
                 <div style="position: relative;">
-                    <p style="font-size: 9px; font-weight: 700; color: var(--ink-4); text-transform: uppercase; margin-bottom: 30px; text-align: left;">Checked By (HR):</p>
+                    <p style="font-size: 9px; font-weight: 700; color: var(--ink-4); text-transform: uppercase; margin-bottom: 30px; text-align: left;">Checked & Approved By (HR):</p>
                     <div id="sig_img_checked" style="height: 40px; margin-bottom: 5px; position: relative;"></div>
                     <div style="border-bottom: 1px solid #000; margin: 0;"></div>
                     <p style="font-size: 10px; font-weight: 800; margin-top: 5px;"><?php echo htmlspecialchars($pageHrName); ?></p>
                     <p style="font-size: 8px; font-weight: 600; color: var(--ink-3);">Human Resources Department</p>
-                </div>
-                <div style="position: relative;">
-                    <p style="font-size: 9px; font-weight: 700; color: var(--ink-4); text-transform: uppercase; margin-bottom: 30px; text-align: left;">Approved By (CEO):</p>
-                    <div id="sig_img_approved" style="height: 40px; margin-bottom: 5px; position: relative;"></div>
-                    <div style="border-bottom: 1px solid #000; margin: 0;"></div>
-                    <p style="font-size: 10px; font-weight: 800; margin-top: 5px;"><?php echo htmlspecialchars($pageCeoName); ?></p>
-                    <p style="font-size: 8px; font-weight: 600; color: var(--ink-3);">President & CEO</p>
                 </div>
             </div>
         </div>
@@ -257,8 +249,7 @@ let canSetColors = <?php echo ($can_set_colors ? 'true' : 'false'); ?>;
 // Approval Configuration
 const approvalConfig = {
     'Pending HR': { areaId: 'sig_img_prepared', btnId: 'btn_submit', originalHtml: 'Sign & Submit' },
-    'Pending CEO': { areaId: 'sig_img_checked', btnId: 'btn_approve_hr', originalHtml: 'Approve (HR)' },
-    'Approved': { areaId: 'sig_img_approved', btnId: 'btn_approve_ceo', originalHtml: 'Final Release' }
+    'Approved': { areaId: 'sig_img_checked', btnId: 'btn_approve_hr', originalHtml: 'Approve (HR)' }
 };
 
 $(document).ready(() => {
@@ -273,12 +264,21 @@ function switchTab(tab) {
 
 function loadDashboard() {
     $.post('<?php echo baseUrl('schedule/api'); ?>', { action: 'get_pending_approvals' }, function(res) {
+        if (typeof res === 'string') {
+            try { res = JSON.parse(res); } catch(e) { console.error("Invalid response:", res); showToast('Invalid server response — could not load approvals queue.', 'error'); return; }
+        }
         let html = '';
-        if (res.approvals.length === 0) html = '<tr><td colspan="4" style="text-align:center; padding:40px; font-style:italic;">No pending schedules.</td></tr>';
-        else res.approvals.forEach(r => {
-            html += `<tr><td><b>${r.dept_name}</b></td><td>${r.cutoff_label}</td><td style="font-size:10px;">${r.last_updated}</td><td style="text-align:right;"><button class="btn-primary" style="font-size:10px; height:26px; padding:0 10px;" onclick="reviewBatch(${r.dept_id}, '${r.range_value}')">Review</button></td></tr>`;
-        });
+        if (!res || !res.approvals || !Array.isArray(res.approvals) || res.approvals.length === 0) {
+            html = '<tr><td colspan="4" style="text-align:center; padding:40px; font-style:italic;">No pending schedules.</td></tr>';
+        } else {
+            res.approvals.forEach(r => {
+                html += `<tr><td><b>${r.dept_name}</b></td><td>${r.cutoff_label}</td><td style="font-size:10px;">${r.last_updated}</td><td style="text-align:right;"><button class="btn-primary" style="font-size:10px; height:26px; padding:0 10px;" onclick="reviewBatch(${r.dept_id}, '${r.range_value}')">Review</button></td></tr>`;
+            });
+        }
         $('#approval_list').html(html);
+    }).fail(function() {
+        showToast('Network error — could not load approvals queue. Check your connection.', 'error');
+        $('#approval_list').html('<tr><td colspan="4" style="text-align:center; padding:40px; color:var(--red);">Failed to load approvals queue.</td></tr>');
     });
 }
 
@@ -293,33 +293,50 @@ function loadData() {
     Object.values(approvalConfig).forEach(c => $('#' + c.btnId).text(c.originalHtml).removeClass('btn-confirm'));
 
     $.post('<?php echo baseUrl('schedule/api'); ?>', { action: 'get_employees_by_dept', dept_id: dept }, function(res) {
+        if (typeof res === 'string') {
+            try { res = JSON.parse(res); } catch(e) {}
+        }
         $.post('<?php echo baseUrl('schedule/api'); ?>', { action: 'get_schedules', dept_id: dept, range: range }, function(data) {
-            canEdit = data.can_edit;
-            $('#status_display').text(data.status).show();
-            $('#doc_dept_name').text(data.dept_name.toUpperCase() + ' DEPARTMENT');
-            $('#dept_prepared').text(data.dept_name + ' Department');
-            $('#name_prepared').text(data.signatories.prepared || '-');
+            if (typeof data === 'string') {
+                try { data = JSON.parse(data); } catch(e) {}
+            }
+            if (!data) data = {};
+            canEdit = !!data.can_edit;
+            $('#status_display').text(data.status || 'Draft').show();
+            $('#doc_dept_name').text((data.dept_name || '').toUpperCase() + ' DEPARTMENT');
+            $('#dept_prepared').text((data.dept_name || '') + ' Department');
+            $('#name_prepared').text((data.signatories && data.signatories.prepared) ? data.signatories.prepared : '-');
             
-            renderDocTable(res.employees, data.schedules, range);
+            const employees = (res && Array.isArray(res.employees)) ? res.employees : [];
+            const schedules = (data && data.schedules) ? data.schedules : {};
+            
+            renderDocTable(employees, schedules, range);
             
             const renderSig = (id, path, show) => {
-                if(show && path) $(`#sig_img_${id}`).html(`<img src="<?php echo baseUrl(''); ?>${path.replace('../', '')}" class="signature-img" alt="Sig">`);
-                else $(`#sig_img_${id}`).empty();
+                if(show && path) {
+                    let cleanPath = path.replace('../', '');
+                    let srcUrl = cleanPath.startsWith('http') || cleanPath.startsWith('/') ? cleanPath : '<?php echo baseUrl(''); ?>' + cleanPath;
+                    $(`#sig_img_${id}`).html(`<img src="${srcUrl}" class="signature-img" alt="Sig" onerror="this.onerror=null; this.style.display='none';">`);
+                } else {
+                    $(`#sig_img_${id}`).empty();
+                }
             };
-            renderSig('prepared', data.signatories.prepared_sig, (data.status !== 'Draft' && data.status !== 'Not Started'));
-            renderSig('checked', data.signatories.checked_sig, (data.status === 'Pending CEO' || data.status === 'Approved'));
-            renderSig('approved', data.signatories.approved_sig, data.status === 'Approved');
+            renderSig('prepared', data.signatories ? data.signatories.prepared_sig : null, (data.status !== 'Draft' && data.status !== 'Not Started'));
+            renderSig('checked', data.signatories ? data.signatories.checked_sig : null, data.status === 'Approved');
 
             $('#workflow_actions').show(); $('#workflow_actions button').hide();
             if (canEdit) $('#btn_submit').show();
             if (data.can_approve_hr) { $('#btn_approve_hr').show(); $('#btn_reject').show(); }
-            if (data.can_approve_ceo) { $('#btn_approve_ceo').show(); $('#btn_reject').show(); }
             if (data.can_reset) $('#btn_reset').show();
         });
     });
 }
 
 function renderDocTable(employees, schedules, range) {
+    if (!employees || !Array.isArray(employees)) employees = [];
+    if (!schedules || typeof schedules !== 'object') schedules = {};
+    if (!range) return;
+
     const [startStr, endStr] = range.split('|');
     const sDate = new Date(startStr); const eDate = new Date(endStr);
     $('#doc_cutoff_label').text(`Period: ${sDate.toLocaleDateString('en-US', {month:'long', day:'numeric'})} – ${eDate.toLocaleDateString('en-US', {month:'long', day:'numeric', year:'numeric'})}`);
@@ -389,28 +406,42 @@ function openShiftModal(id, d) { currentEditing = {empId:id, date:d}; $('#shiftM
 function closeShiftModal() { $('#shiftModal').hide(); $('#modalBackdrop').hide(); }
 
 function saveShift(code) {
-    $.post('<?php echo baseUrl('schedule/api'); ?>', { action: 'save_schedule', employee_id: currentEditing.empId, schedule_date: currentEditing.date, shift_code: code, dept_id: $('#dept_select').val(), range: $('#cutoff_select').val() }, function() { 
+    $.post('<?php echo baseUrl('schedule/api'); ?>', { action: 'save_schedule', employee_id: currentEditing.empId, schedule_date: currentEditing.date, shift_code: code, dept_id: $('#dept_select').val(), range: $('#cutoff_select').val() }, function(res) {
+        if (typeof res === 'string') { try { res = JSON.parse(res); } catch(e) {} }
         $('#shiftModal').hide(); $('#modalBackdrop').hide();
-        currentEditing.recentlySaved = true; // Trigger animation
-        loadData(); 
+        if (res && res.success === false) {
+            showToast('Failed to save shift: ' + (res.message || 'Unknown error'), 'error');
+            return;
+        }
+        showToast('Shift saved successfully.', 'success');
+        currentEditing.recentlySaved = true;
+        loadData();
+    }).fail(function() {
+        showToast('Network error — could not save shift. Please try again.', 'error');
     });
 }
 
 function handleWorkflowAction(status) {
     const config = approvalConfig[status];
     if(!config) { updateStatus(status); return; }
-    if(!currentUserSigPath) { alert("Electronic signature not found in your profile."); return; }
+    if(!currentUserSigPath) {
+        showToast('Electronic signature not found in your profile. Please upload one before submitting.', 'error');
+        return;
+    }
 
     const btn = $('#' + config.btnId);
     if (btn.data('confirming')) { updateStatus(status); return; }
 
     // Visual Confirmation Step
-    const sigImg = $(`<img src="<?php echo baseUrl(''); ?>${currentUserSigPath.replace('../', '')}" class="signature-img signature-animate" alt="Sig">`);
+    let cleanSig = currentUserSigPath.replace('../', '');
+    let sigUrl = cleanSig.startsWith('http') || cleanSig.startsWith('/') ? cleanSig : '<?php echo baseUrl(''); ?>' + cleanSig;
+    const sigImg = $(`<img src="${sigUrl}" class="signature-img signature-animate" alt="Sig" onerror="this.onerror=null; this.style.display='none';">`);
     $('#' + config.areaId).html(sigImg);
     
     btn.data('confirming', true).text('Click Again to Confirm').css('background', 'var(--teal-deep)');
     $('#workflow_actions button').not(btn).hide();
     $('<button id="btn_cancel_wf" class="pill-btn" onclick="loadData()">Cancel</button>').insertAfter(btn);
+    showToast('Signature preview loaded. Click the button again to confirm.', 'info');
 }
 
 function viewHistory() {
@@ -418,8 +449,11 @@ function viewHistory() {
     if(!dept || !range) return alert("Please select department and cutoff first.");
     
     $.post('<?php echo baseUrl('schedule/api'); ?>', { action: 'get_history', dept_id: dept, range: range }, function(res) {
+        if (typeof res === 'string') {
+            try { res = JSON.parse(res); } catch(e) {}
+        }
         let html = '';
-        if(!res.logs || res.logs.length === 0) html = '<div style="text-align:center; color:var(--ink-4); padding:20px;">No history logs found.</div>';
+        if(!res || !res.logs || !Array.isArray(res.logs) || res.logs.length === 0) html = '<div style="text-align:center; color:var(--ink-4); padding:20px;">No history logs found.</div>';
         else res.logs.forEach(log => {
             html += `<div style="background:var(--bg-raised); padding:12px; border-radius:8px; border:1px solid var(--border-lt);">
                 <div style="display:flex; justify-content:space-between; font-size:10px; font-weight:800; margin-bottom:4px;">
@@ -449,9 +483,22 @@ function updateStatus(status) {
         range: $('#cutoff_select').val(), 
         status: status,
         comments: comments
-    }, function() { 
-        loadData(); 
-        if(isAdminView && (status === 'Approved' || status === 'Pending CEO')) switchTab('dashboard'); 
+    }, function(res) { 
+        if (typeof res === 'string') {
+            try { res = JSON.parse(res); } catch(e) {}
+        }
+        if (res && res.success === false) {
+            showToast('Error updating status: ' + (res.message || 'Unknown error'), 'error');
+            return;
+        }
+        showToast('Schedule status updated to: ' + status, 'success');
+        loadData();
+        if (isAdminView && (status === 'Approved' || status === 'Pending CEO')) {
+            // Delay tab switch so the success toast is visible first
+            setTimeout(function() { switchTab('dashboard'); }, 1200);
+        }
+    }).fail(function() {
+        showToast('Network error — status update failed. Please try again.', 'error');
     });
 }
 </script>

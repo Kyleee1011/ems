@@ -6,8 +6,8 @@
 // Set a unique session name to prevent collision
 session_name('EMS1_SESSION');
 
-// Use root path for session cookie to ensure it works across all pages and subdirectories
-$cookie_path = '/';
+// Use session cookie path from environment or default to /
+$cookie_path = $_ENV['SESSION_COOKIE_PATH'] ?? '/';
 
 // Restrict session cookie parameters
 session_set_cookie_params([

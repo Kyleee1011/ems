@@ -40,24 +40,24 @@ require BASE_PATH . '/partials/layout_sidebar.php';
         <?php 
         switch ($activeTab) {
             case 'onboarding':
-                require BASE_PATH . '/views/employee_onboarding.php';
+                require BASE_PATH . '/src/Views/Employee/employee_onboarding.php';
                 break;
             case 'bulk_upload':
-                require BASE_PATH . '/views/employee_bulk_upload.php';
+                require BASE_PATH . '/src/Views/Employee/employee_bulk_upload.php';
                 break;
             case 'recycle':
-                require BASE_PATH . '/views/employee_recycle_bin.php';
+                require BASE_PATH . '/src/Views/Employee/employee_recycle_bin.php';
                 break;
             case 'directory':
             default:
-                require BASE_PATH . '/views/employee_list.php';
+                require BASE_PATH . '/src/Views/Employee/employee_list.php';
                 break;
         }
         ?>
     </div>
 </div>
 
-<?php include BASE_PATH . '/views/employee_modals.php'; ?>
+<?php include BASE_PATH . '/src/Views/Employee/employee_modals.php'; ?>
 
 <script>
     function exportData() {

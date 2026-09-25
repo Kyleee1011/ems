@@ -104,9 +104,7 @@ require_once dirname(dirname(__DIR__)) . '/config_session.php';
             'default_cutoff' => $default_cutoff,
             'grouped_shifts' => $grouped_shifts,
             'pageHrName' => $pageHrName,
-            'pageHrDept' => $pageHrDept,
-            'pageCeoName' => $pageCeoName,
-            'pageCeoDept' => $pageCeoDept
+            'pageHrDept' => $pageHrDept
         ];
         
         extract($data);
@@ -132,7 +130,7 @@ require_once dirname(dirname(__DIR__)) . '/config_session.php';
                 case 'get_pending_approvals':
                     $target_status = '';
                     if ($is_hr) $target_status = 'Pending HR';
-                    if ($is_ceo) $target_status = 'Pending CEO';
+                    // CEO no longer approves schedules in the new workflow
     
                     if ($target_status === '') {
                         $this->jsonResponse(true, '', ['approvals' => []]);
@@ -242,22 +240,6 @@ require_once dirname(dirname(__DIR__)) . '/config_session.php';
                     $checked_sig_path = $rowHR['signature_path'] ?? null;
                     $hr_dept_name = $rowHR['hr_dept_name'] ?? 'Human Resources';
             
-                    // CEO Signatory
-                    $stmtCEO = $this->pdo->query("SELECT CONCAT(first_name, ' ', last_name) as name, signature_path, d.dept_name as ceo_dept_name 
-                                                  FROM employees e LEFT JOIN departments d ON e.dept_id = d.dept_id 
-                                                  WHERE approval_role = 'CEO' AND IsActive = 1 LIMIT 1");
-                    $rowCEO = $stmtCEO->fetch(PDO::FETCH_ASSOC);
-                    if ($rowCEO) {
-                        $approved_by = $rowCEO['name'];
-                        $approved_sig_path = $rowCEO['signature_path'];
-                        $ceo_dept_name = $rowCEO['ceo_dept_name'] ?? 'President & CEO';
-                    } else {
-                        $ownerSignatory = $this->getDeptSignatory("Owner");
-                        $approved_by = $ownerSignatory['name'];
-                        $approved_sig_path = $ownerSignatory['signature_path'];
-                        $ceo_dept_name = 'President & CEO';
-                    }
-            
                     $hasFinalized = false;
                     if ($status === 'Approved') {
                         $stmtCheckF = $this->pdo->prepare("SELECT COUNT(*) FROM finalized_schedule fs JOIN employees e ON fs.ac_no = e.ac_no WHERE e.dept_id = ? AND fs.schedule_date BETWEEN ? AND ?");
@@ -313,14 +295,12 @@ require_once dirname(dirname(__DIR__)) . '/config_session.php';
                         'dept_name' => $dept_name,
                         'signatories' => [
                             'prepared' => $prepared_by, 'prepared_sig' => $prepared_sig_path,
-                            'checked' => $checked_by, 'checked_sig' => $checked_sig_path, 'checked_dept' => $hr_dept_name,
-                            'approved' => $approved_by, 'approved_sig' => $approved_sig_path, 'approved_dept' => $ceo_dept_name
+                            'checked' => $checked_by, 'checked_sig' => $checked_sig_path, 'checked_dept' => $hr_dept_name
                         ],
                         'can_edit' => (($is_head || $is_hr || $is_ceo) && in_array($status, ['Not Started', 'Draft', 'Rejected'])),
                         'can_reset' => ($status == 'Approved' && ($is_ceo || $is_hr)), 
                         'is_hr' => $is_hr,
                         'can_approve_hr' => ($is_hr && $status == 'Pending HR'),
-                        'can_approve_ceo' => ($is_ceo && $status == 'Pending CEO'),
                         'schedules' => $schedules,
                         'holidays' => $holidays
                     ]);
