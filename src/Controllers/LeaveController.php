@@ -28,21 +28,37 @@ class LeaveController
         $this->loadSharedData();
         
         $mySilCredits = $this->model->getCredits($this->currentUserId);
+        $myAllCredits = $this->model->getAllCredits($this->currentUserId);
         $myLeaves = $this->model->getLeaveHistory($this->currentUserId);
         $consumedData = $this->model->getConsumedLeaveHistory($this->currentUserId);
         $hrLeaves = $this->isHr ? $this->model->getPendingLeaves() : [];
         
         $leaveTypes = [
-            'Service Incentive Leave', 'Vacation Leave', 'Sick Leave', 'Emergency Leave',
-            'Maternity/Paternity', 'Bereavement', 'DAYOFF', 'FLEX', 'HOLIDAY OFF', 'Leave Without Pay', 'Leave With Pay'
+            'Service Incentive Leave',
+            'Vacation Leave',
+            'Sick Leave',
+            'Bereavement (Immediate Family)',
+            'Bereavement (Extended Family)',
+            'Paternity Leave',
+            'Maternity Leave (105 Days Unpaid)',
+            'Emergency Leave',
+            'Leave With Pay',
+            'Leave Without Pay',
+            'DAYOFF',
+            'FLEX',
+            'HOLIDAY OFF'
         ];
+
+        $allEmployeesCredits = $this->isHr ? $this->model->getAllEmployeesWithCredits() : [];
 
         $vars = array_merge($this->sharedVars, [
             'my_sil_credits' => $mySilCredits,
+            'my_all_credits' => $myAllCredits,
             'my_leaves' => $myLeaves,
             'consumed_history' => $consumedData['history'],
             'consumed_totals' => $consumedData['totals'],
             'hr_leaves' => $hrLeaves,
+            'all_employees_credits' => $allEmployeesCredits,
             'leaveTypes' => $leaveTypes,
             'appeal_data' => $_SESSION['appeal_data'] ?? null,
             'show_appeal' => isset($_GET['show_appeal']),
@@ -277,6 +293,42 @@ class LeaveController
                     }
                     $appealTag = (!empty($leaveRow['is_appeal'])) ? ' appeal' : '';
                     $this->setFlash("Leave{$appealTag} " . strtolower($status), "success");
+                    break;
+
+                case 'update_credits':
+                    if (!$this->isHr) throw new Exception("Unauthorized: Only HR can input or modify leave credits.");
+                    $targetEmpId = (int)($_POST['target_emp_id'] ?? 0);
+                    if (!$targetEmpId) throw new Exception("Employee ID is required.");
+
+                    $creditsData = [
+                        'sil_credits' => (float)($_POST['sil_credits'] ?? 0),
+                        'vl_credits' => (float)($_POST['vl_credits'] ?? 0),
+                        'sl_credits' => (float)($_POST['sl_credits'] ?? 0),
+                        'paternity_credits' => (float)($_POST['paternity_credits'] ?? 7),
+                        'maternity_credits' => (float)($_POST['maternity_credits'] ?? 105),
+                        'bereavement_immediate_credits' => (float)($_POST['bereavement_immediate_credits'] ?? 5),
+                        'bereavement_extended_credits' => (float)($_POST['bereavement_extended_credits'] ?? 3),
+                    ];
+
+                    $this->model->updateEmployeeCredits($targetEmpId, $creditsData);
+
+                    \App\Services\AuditService::log(
+                        'LEAVE_CREDITS_UPDATED',
+                        'employee_credits',
+                        (string)$targetEmpId,
+                        null,
+                        $creditsData
+                    );
+
+                    \App\Services\NotificationService::notify(
+                        $targetEmpId,
+                        \App\Services\NotificationTypes::PROFILE_UPDATED_BY_HR,
+                        'Leave Credits Updated',
+                        'Your leave credits have been updated by Human Resources.',
+                        'leave'
+                    );
+
+                    $this->setFlash("Leave credits updated successfully by HR.", "success");
                     break;
 
                 case 'update_ot_status':

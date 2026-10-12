@@ -190,7 +190,8 @@ class Employee
                 employment_type, work_schedule, work_days_mode, salary_rate, daily_rate, hourly_rate, payroll_group,
                 tin_number, sss_number, philhealth_number, pagibig_number, bank_account_number,
                 date_hired, date_deployed, contract_start_date, contract_end_date, employee_status,
-                approval_role, sil_credits, IsActive, signature_path, profile_picture, password_hash
+                approval_role, sil_credits, vl_credits, sl_credits, paternity_credits, maternity_credits, bereavement_immediate_credits, bereavement_extended_credits,
+                IsActive, signature_path, profile_picture, password_hash
             ) VALUES (
                 :ac_no, :last_name, :first_name, :middle_name, :date_of_birth, :gender,
                 :address, :contact_number, :email_address, :civil_status, :nationality,
@@ -199,7 +200,8 @@ class Employee
                 :employment_type, :work_schedule, :work_days_mode, :salary_rate, :daily_rate, :hourly_rate, :payroll_group,
                 :tin_number, :sss_number, :philhealth_number, :pagibig_number, :bank_account_number,
                 :date_hired, :date_deployed, :contract_start_date, :contract_end_date, :employee_status,
-                :approval_role, :sil_credits, 1, :signature_path, :profile_picture, :password_hash
+                :approval_role, :sil_credits, :vl_credits, :sl_credits, :paternity_credits, :maternity_credits, :bereavement_immediate_credits, :bereavement_extended_credits,
+                1, :signature_path, :profile_picture, :password_hash
             )";
             $stmt = $this->pdo->prepare($sql);
             
@@ -243,6 +245,18 @@ class Employee
             $stmt->bindParam(':employee_status', $data['employee_status']);
             $stmt->bindParam(':approval_role', $data['approval_role']);
             $stmt->bindParam(':sil_credits', $data['sil_credits']);
+            $vlCredits = $data['vl_credits'] ?? 0;
+            $stmt->bindParam(':vl_credits', $vlCredits);
+            $slCredits = $data['sl_credits'] ?? 0;
+            $stmt->bindParam(':sl_credits', $slCredits);
+            $paternityCredits = $data['paternity_credits'] ?? 7;
+            $stmt->bindParam(':paternity_credits', $paternityCredits);
+            $maternityCredits = $data['maternity_credits'] ?? 105;
+            $stmt->bindParam(':maternity_credits', $maternityCredits);
+            $bereavImmCredits = $data['bereavement_immediate_credits'] ?? 5;
+            $stmt->bindParam(':bereavement_immediate_credits', $bereavImmCredits);
+            $bereavExtCredits = $data['bereavement_extended_credits'] ?? 3;
+            $stmt->bindParam(':bereavement_extended_credits', $bereavExtCredits);
             $stmt->bindParam(':signature_path', $signaturePath);
             $stmt->bindParam(':profile_picture', $profilePicPath);
             $stmt->bindParam(':password_hash', $defaultPasswordHash);
@@ -324,6 +338,9 @@ class Employee
             date_hired = :date_hired, date_deployed = :date_deployed, date_regularized = :date_regularized,
             contract_start_date = :contract_start_date, contract_end_date = :contract_end_date,
             approval_role = :approval_role, sil_credits = :sil_credits, 
+            vl_credits = :vl_credits, sl_credits = :sl_credits,
+            paternity_credits = :paternity_credits, maternity_credits = :maternity_credits,
+            bereavement_immediate_credits = :bereavement_immediate_credits, bereavement_extended_credits = :bereavement_extended_credits,
             employee_status = :employee_status, IsActive = :is_active,
             updated_at = NOW()
             $signatureSQL $profilePicSQL
@@ -374,6 +391,18 @@ class Employee
         $stmt->bindParam(':contract_end_date', $data['contract_end_date']);
         $stmt->bindParam(':approval_role', $data['approval_role']);
         $stmt->bindParam(':sil_credits', $data['sil_credits']);
+        $vlCredits = $data['vl_credits'] ?? 0;
+        $stmt->bindParam(':vl_credits', $vlCredits);
+        $slCredits = $data['sl_credits'] ?? 0;
+        $stmt->bindParam(':sl_credits', $slCredits);
+        $paternityCredits = $data['paternity_credits'] ?? 7;
+        $stmt->bindParam(':paternity_credits', $paternityCredits);
+        $maternityCredits = $data['maternity_credits'] ?? 105;
+        $stmt->bindParam(':maternity_credits', $maternityCredits);
+        $bereavImmCredits = $data['bereavement_immediate_credits'] ?? 5;
+        $stmt->bindParam(':bereavement_immediate_credits', $bereavImmCredits);
+        $bereavExtCredits = $data['bereavement_extended_credits'] ?? 3;
+        $stmt->bindParam(':bereavement_extended_credits', $bereavExtCredits);
         if($signaturePath) { $stmt->bindParam(':signature_path', $signaturePath); }
         if($profilePicPath) { $stmt->bindParam(':profile_picture', $profilePicPath); }
         

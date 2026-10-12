@@ -117,9 +117,15 @@ require BASE_PATH . '/partials/layout_sidebar.php';
             setVal('edit_location_assignment', emp.location_assignment); setVal('edit_work_schedule', emp.work_schedule);
             setVal('edit_date_hired', emp.date_hired); setVal('edit_approval_role', emp.approval_role); 
             
-            // Payroll
+            // Payroll & Leave Credits
             setVal('edit_salary_rate', emp.salary_rate); 
             setVal('edit_sil_credits', emp.sil_credits);
+            setVal('edit_vl_credits', emp.vl_credits !== undefined ? emp.vl_credits : '0.0');
+            setVal('edit_sl_credits', emp.sl_credits !== undefined ? emp.sl_credits : '0.0');
+            setVal('edit_paternity_credits', emp.paternity_credits !== undefined ? emp.paternity_credits : '7');
+            setVal('edit_maternity_credits', emp.maternity_credits !== undefined ? emp.maternity_credits : '105');
+            setVal('edit_bereav_imm', emp.bereavement_immediate_credits !== undefined ? emp.bereavement_immediate_credits : '5');
+            setVal('edit_bereav_ext', emp.bereavement_extended_credits !== undefined ? emp.bereavement_extended_credits : '3');
             setVal('edit_payroll_group', emp.payroll_group);
             setVal('edit_bank_account_number', emp.bank_account_number);
             setVal('edit_tin_number', emp.tin_number);
@@ -217,6 +223,12 @@ require BASE_PATH . '/partials/layout_sidebar.php';
                         <div><div style="color:var(--ink-4); font-size:10px;">DAILY RATE</div><b style="font-family:'DM Mono'; font-size:13px;">₱ ${money(emp.daily_rate)}</b></div>
                         <div><div style="color:var(--ink-4); font-size:10px;">HOURLY RATE</div><b style="font-family:'DM Mono'; font-size:13px;">₱ ${money(emp.hourly_rate)}</b></div>
                         <div><div style="color:var(--ink-4); font-size:10px;">SIL CREDITS</div><b style="font-family:'DM Mono'; font-size:13px; color:var(--amber);">${val(emp.sil_credits)} days</b></div>
+                    </div>
+                    <div style="display:grid; grid-template-columns: repeat(4, 1fr); gap:12px; font-size:11px; margin-top:10px; padding-top:10px; border-top:1px dashed var(--border-lt);">
+                        <div><span style="color:var(--ink-4);">VL Credits:</span> <b>${val(emp.vl_credits, '0.0')}d</b></div>
+                        <div><span style="color:var(--ink-4);">SL Credits:</span> <b>${val(emp.sl_credits, '0.0')}d</b></div>
+                        <div><span style="color:var(--ink-4);">Paternity:</span> <b>${val(emp.paternity_credits, '7')}d</b></div>
+                        <div><span style="color:var(--ink-4);">Maternity:</span> <b>${val(emp.maternity_credits, '105')}d</b></div>
                     </div>
                     <div style="display:grid; grid-template-columns: repeat(4, 1fr); gap:12px; font-size:11px; margin-top:12px; padding-top:12px; border-top:1px dashed var(--border-lt);">
                         <div><span style="color:var(--ink-4);">SSS:</span> <b>${val(emp.sss_number)}</b></div>

@@ -98,8 +98,32 @@
             <div class="form-group"><label class="form-label">Hourly Rate (Auto)</label><input type="number" step="0.01" name="hourly_rate" id="add_hourly" class="input-field" style="background:var(--bg-subtle); font-family:'DM Mono'; font-weight:600;" readonly></div>
             <div class="form-group"><label class="form-label">Payroll Group</label><select name="payroll_group" class="input-field"><option value="Monthly">Monthly</option><option value="Semi-Monthly">Semi-Monthly</option></select></div>
             <div class="form-group">
-                <label class="form-label" style="color:var(--amber);">SIL Credits</label>
+                <label class="form-label" style="color:var(--amber); font-weight:700;">SIL Credits</label>
                 <input type="number" step="0.5" name="sil_credits" class="input-field" style="border-color:var(--amber-bdr); background:var(--amber-bg);" placeholder="0.0">
+            </div>
+            <div class="form-group">
+                <label class="form-label" style="color:var(--teal); font-weight:700;">VL Credits</label>
+                <input type="number" step="0.5" name="vl_credits" class="input-field" placeholder="0.0">
+            </div>
+            <div class="form-group">
+                <label class="form-label" style="color:var(--blue); font-weight:700;">SL Credits</label>
+                <input type="number" step="0.5" name="sl_credits" class="input-field" placeholder="0.0">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Paternity (Days)</label>
+                <input type="number" step="1" name="paternity_credits" class="input-field" value="7">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Maternity (Days)</label>
+                <input type="number" step="1" name="maternity_credits" class="input-field" value="105">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Bereav. Imm (Days)</label>
+                <input type="number" step="1" name="bereavement_immediate_credits" class="input-field" value="5">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Bereav. Ext (Days)</label>
+                <input type="number" step="1" name="bereavement_extended_credits" class="input-field" value="3">
             </div>
             <div class="form-group"><label class="form-label">Bank Account</label><input type="text" name="bank_account_number" class="input-field"></div>
             <div class="form-group"><label class="form-label">TIN Number</label><input type="text" name="tin_number" class="input-field"></div>

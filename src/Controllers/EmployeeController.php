@@ -212,6 +212,12 @@ require_once dirname(dirname(__DIR__)) . '/config_session.php';
                 'employee_status' => 'Active',
                 'approval_role' => $getPost('approval_role'),
                 'sil_credits' => AppHelpers::cleanNum($getPost('sil_credits')),
+                'vl_credits' => AppHelpers::cleanNum($getPost('vl_credits')),
+                'sl_credits' => AppHelpers::cleanNum($getPost('sl_credits')),
+                'paternity_credits' => AppHelpers::cleanNum($getPost('paternity_credits', 7)),
+                'maternity_credits' => AppHelpers::cleanNum($getPost('maternity_credits', 105)),
+                'bereavement_immediate_credits' => AppHelpers::cleanNum($getPost('bereavement_immediate_credits', 5)),
+                'bereavement_extended_credits' => AppHelpers::cleanNum($getPost('bereavement_extended_credits', 3)),
                 'date_regularized' => AppHelpers::cleanDate($getPost('date_regularized')),
                 'work_days_mode' => $getPost('work_days_mode', '6')
             ];
