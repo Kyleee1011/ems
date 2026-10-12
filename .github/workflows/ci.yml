@@ -59,8 +59,11 @@ jobs:
         uses: shivammathur/setup-php@v2
         with:
           php-version: '8.2'
-          tools: php-parallel-lint/php-parallel-lint
+
+      - name: Install PHP Parallel Lint
+        run: composer global require php-parallel-lint/php-parallel-lint
 
       - name: Run PHP syntax check
         run: |
-          php-parallel-lint --exclude vendor --exclude .git .
+          ~/.composer/vendor/bin/parallel-lint --exclude vendor --exclude .git .
+
