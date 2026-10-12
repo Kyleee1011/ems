@@ -1,0 +1,66 @@
+name: EMS CI Pipeline
+
+on:
+  push:
+    branches: [ main, master, develop ]
+  pull_request:
+    branches: [ main, master, develop ]
+
+jobs:
+  test:
+    name: PHP ${{ matrix.php-version }} Tests
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        php-version: ['8.2']
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup PHP ${{ matrix.php-version }}
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php-version }}
+          extensions: pdo, pdo_sqlite, mbstring, xml
+          coverage: xdebug
+
+      - name: Cache Composer dependencies
+        uses: actions/cache@v4
+        with:
+          path: vendor
+          key: composer-${{ hashFiles('composer.lock', 'composer.json') }}
+          restore-keys: composer-
+
+      - name: Install dependencies
+        run: composer install --prefer-dist --no-progress --no-interaction
+
+      - name: Copy env file
+        run: cp .env.example .env
+
+      - name: Run PHPUnit tests
+        run: vendor/bin/phpunit --testdox --colors=always
+
+      - name: Run PHPUnit with coverage report
+        if: matrix.php-version == '8.2'
+        run: vendor/bin/phpunit --coverage-text --coverage-clover=coverage.xml
+        continue-on-error: true
+
+  lint:
+    name: PHP Syntax Check
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          tools: php-parallel-lint/php-parallel-lint
+
+      - name: Run PHP syntax check
+        run: |
+          php-parallel-lint --exclude vendor --exclude .git .

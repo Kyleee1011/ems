@@ -1,0 +1,77 @@
+#!/bin/sh
+#
+# Pre-commit hook: Runs PHPUnit tests and PHP syntax checks before allowing a commit.
+# If any test fails or syntax errors are found, the commit is blocked.
+#
+
+echo ""
+echo "========================================"
+echo "  Running pre-commit checks..."
+echo "========================================"
+echo ""
+
+# ─── 1. PHP Syntax Check ───────────────────────────────────────────
+echo "[1/2] Checking PHP syntax on staged files..."
+
+# Get list of staged PHP files
+STAGED_PHP_FILES=$(git diff --cached --name-only --diff-filter=ACM | grep -E '\.php$')
+
+if [ -n "$STAGED_PHP_FILES" ]; then
+    SYNTAX_ERRORS=0
+    for FILE in $STAGED_PHP_FILES; do
+        # Only lint files that exist (not deleted)
+        if [ -f "$FILE" ]; then
+            php -l "$FILE" > /dev/null 2>&1
+            if [ $? -ne 0 ]; then
+                echo "  ✘ Syntax error in: $FILE"
+                php -l "$FILE"
+                SYNTAX_ERRORS=1
+            fi
+        fi
+    done
+
+    if [ $SYNTAX_ERRORS -ne 0 ]; then
+        echo ""
+        echo "✘ COMMIT BLOCKED: Fix PHP syntax errors above."
+        echo ""
+        exit 1
+    fi
+    echo "  ✔ All staged PHP files have valid syntax."
+else
+    echo "  (No staged PHP files to check)"
+fi
+
+echo ""
+
+# ─── 2. PHPUnit Tests ──────────────────────────────────────────────
+echo "[2/2] Running PHPUnit tests..."
+
+# Try common phpunit locations
+if [ -f "vendor/bin/phpunit" ]; then
+    PHPUNIT="vendor/bin/phpunit"
+elif [ -f "vendor/bin/phpunit.bat" ]; then
+    PHPUNIT="php vendor/bin/phpunit"
+else
+    echo "  ⚠ PHPUnit not found, skipping tests."
+    exit 0
+fi
+
+$PHPUNIT --testdox --colors=always 2>&1
+
+if [ $? -ne 0 ]; then
+    echo ""
+    echo "========================================"
+    echo "  ✘ COMMIT BLOCKED: Tests are failing!"
+    echo "  Fix the failing tests before committing."
+    echo "========================================"
+    echo ""
+    exit 1
+fi
+
+echo ""
+echo "========================================"
+echo "  ✔ All checks passed! Committing..."
+echo "========================================"
+echo ""
+
+exit 0

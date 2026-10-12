@@ -1,0 +1,43 @@
+#!/bin/sh
+#
+# Pre-push hook: Runs the full test suite before allowing a push.
+# This is the last line of defense before code reaches the remote.
+#
+
+echo ""
+echo "========================================"
+echo "  Running pre-push checks..."
+echo "========================================"
+echo ""
+
+# Run the full PHPUnit test suite
+echo "[1/1] Running full PHPUnit test suite..."
+
+if [ -f "vendor/bin/phpunit" ]; then
+    PHPUNIT="vendor/bin/phpunit"
+elif [ -f "vendor/bin/phpunit.bat" ]; then
+    PHPUNIT="php vendor/bin/phpunit"
+else
+    echo "  ⚠ PHPUnit not found, skipping tests."
+    exit 0
+fi
+
+$PHPUNIT --testdox --colors=always 2>&1
+
+if [ $? -ne 0 ]; then
+    echo ""
+    echo "========================================"
+    echo "  ✘ PUSH BLOCKED: Tests are failing!"
+    echo "  Fix the failing tests before pushing."
+    echo "========================================"
+    echo ""
+    exit 1
+fi
+
+echo ""
+echo "========================================"
+echo "  ✔ All checks passed! Pushing..."
+echo "========================================"
+echo ""
+
+exit 0
