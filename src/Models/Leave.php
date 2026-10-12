@@ -47,8 +47,125 @@ class Leave
             if ($credits < $days) throw new Exception("Insufficient SIL Credits. Available: $credits, Requested: $days.");
         }
 
+        // Enforce leave filing rules for VL and SL
+        $ruleCheck = $this->checkLeaveRules($empId, $type, $startStr);
+        if (!$ruleCheck['valid']) {
+            throw new Exception("RULE_VIOLATION|" . $ruleCheck['rule'] . "|" . $ruleCheck['message'] . "|" . $ruleCheck['violation_note']);
+        }
+
         $sql = "INSERT INTO leave_applications (emp_id, leave_type, start_date, end_date, reason, status, created_at) VALUES (?, ?, ?, ?, ?, 'Submitted', NOW())";
         return $this->pdo->prepare($sql)->execute([$empId, $type, $startStr, $endStr, $reason]);
+    }
+
+    /**
+     * Submit a leave application as an appeal (when filing rules are violated).
+     */
+    public function applyLeaveAppeal($empId, $type, $startStr, $endStr, $reason, $appealReason, $attachmentPath, $violationNote) {
+        $start = new DateTime($startStr);
+        $end = new DateTime($endStr);
+
+        $checkSql = "SELECT COUNT(*) FROM leave_applications
+                     WHERE emp_id = ? AND status != 'Rejected' AND ((start_date <= ? AND end_date >= ?))";
+        $checkStmt = $this->pdo->prepare($checkSql);
+        $checkStmt->execute([$empId, $endStr, $startStr]);
+
+        if ($checkStmt->fetchColumn() > 0) throw new Exception("You already have a pending or approved leave for these dates.");
+
+        if ($type === 'Service Incentive Leave') {
+            $days = $start->diff($end)->days + 1;
+            $credits = $this->getCredits($empId);
+            if ($credits < $days) throw new Exception("Insufficient SIL Credits. Available: $credits, Requested: $days.");
+        }
+
+        $sql = "INSERT INTO leave_applications (emp_id, leave_type, start_date, end_date, reason, status, is_appeal, appeal_reason, attachment_path, violation_note, created_at)
+                VALUES (?, ?, ?, ?, ?, 'Submitted', 1, ?, ?, ?, NOW())";
+        return $this->pdo->prepare($sql)->execute([$empId, $type, $startStr, $endStr, $reason, $appealReason, $attachmentPath, $violationNote]);
+    }
+
+    /**
+     * Check leave filing rules:
+     *  - Vacation Leave: must be filed at least 3 days before start_date
+     *  - Sick Leave: must be filed at least 2 hours before scheduled duty start
+     *
+     * @return array ['valid' => bool, 'rule' => string, 'message' => string, 'violation_note' => string]
+     */
+    public function checkLeaveRules($empId, $leaveType, $startDateStr) {
+        $today = new DateTime('today');
+        $startDate = new DateTime($startDateStr);
+
+        // Vacation Leave — must be filed at least 3 calendar days before
+        if ($leaveType === 'Vacation Leave') {
+            $diffDays = (int)$today->diff($startDate)->format('%r%a');
+            if ($diffDays < 3) {
+                $label = $diffDays <= 0 ? 'same day or past date' : "$diffDays day(s) before leave";
+                return [
+                    'valid' => false,
+                    'rule' => 'VL_3_DAYS',
+                    'message' => 'Vacation Leave must be filed at least 3 days in advance. You may submit an appeal instead.',
+                    'violation_note' => "Filed $label (Minimum: 3 days)"
+                ];
+            }
+        }
+
+        // Sick Leave — must be filed at least 2 hours before duty start
+        if ($leaveType === 'Sick Leave') {
+            $dutyStartTime = $this->getDutyStartTime($empId, $startDateStr);
+            $dutyDateTime = strtotime("$startDateStr $dutyStartTime");
+            $now = time();
+            $diffSeconds = $dutyDateTime - $now;
+            $diffHours = round($diffSeconds / 3600, 1);
+
+            if ($diffSeconds < 7200) { // less than 2 hours
+                if ($diffSeconds <= 0) {
+                    $label = 'after duty already started';
+                } else {
+                    $label = number_format($diffHours, 1) . " hour(s) before duty";
+                }
+                return [
+                    'valid' => false,
+                    'rule' => 'SL_2_HOURS',
+                    'message' => "Sick Leave must be filed at least 2 hours before duty start ($dutyStartTime). You may submit an appeal instead.",
+                    'violation_note' => "Filed $label (Minimum: 2 hours before duty at $dutyStartTime)"
+                ];
+            }
+        }
+
+        return ['valid' => true, 'rule' => '', 'message' => '', 'violation_note' => ''];
+    }
+
+    /**
+     * Look up the employee's scheduled duty start time for a given date.
+     * Checks finalized_schedule first, then schedules+shift_types, defaults to 08:00.
+     */
+    private function getDutyStartTime($empId, $dateStr) {
+        // Get ac_no for the employee
+        $acNo = $this->getAcNo($empId);
+
+        // 1. Check finalized_schedule
+        if ($acNo) {
+            $stmt = $this->pdo->prepare("SELECT time_in FROM finalized_schedule WHERE ac_no = ? AND schedule_date = ? AND time_in IS NOT NULL LIMIT 1");
+            $stmt->execute([$acNo, $dateStr]);
+            $row = $stmt->fetch(PDO::FETCH_ASSOC);
+            if ($row && !empty($row['time_in'])) {
+                return $row['time_in'];
+            }
+        }
+
+        // 2. Check schedules joined with shift_types
+        $stmt2 = $this->pdo->prepare(
+            "SELECT st.time_in FROM schedules es
+             JOIN shift_types st ON es.shift_code = st.shift_code
+             WHERE es.employee_id = ? AND es.schedule_date = ? AND st.time_in IS NOT NULL
+             LIMIT 1"
+        );
+        $stmt2->execute([$empId, $dateStr]);
+        $row2 = $stmt2->fetch(PDO::FETCH_ASSOC);
+        if ($row2 && !empty($row2['time_in'])) {
+            return $row2['time_in'];
+        }
+
+        // 3. Default fallback
+        return '08:00:00';
     }
 
     public function getLeaveHistory($empId) {
@@ -91,7 +208,7 @@ class Leave
                JOIN employees e ON l.emp_id = e.emp_id
                LEFT JOIN departments d ON e.dept_id = d.dept_id
                WHERE l.status = 'Submitted' OR l.status = 'Pending'
-               ORDER BY l.created_at ASC";
+               ORDER BY l.is_appeal DESC, l.created_at ASC";
         return $this->pdo->query($sql)->fetchAll(PDO::FETCH_ASSOC);
     }
 

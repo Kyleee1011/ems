@@ -30,6 +30,7 @@ class AuditActions
     public const LEAVE_APPLIED = 'LEAVE_APPLIED';
     public const LEAVE_APPROVED = 'LEAVE_APPROVED';
     public const LEAVE_REJECTED = 'LEAVE_REJECTED';
+    public const LEAVE_APPEAL_SUBMITTED = 'LEAVE_APPEAL_SUBMITTED';
 
     // Overtime
     public const OVERTIME_APPLIED = 'OVERTIME_APPLIED';

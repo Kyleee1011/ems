@@ -43,7 +43,9 @@ class LeaveController
             'consumed_history' => $consumedData['history'],
             'consumed_totals' => $consumedData['totals'],
             'hr_leaves' => $hrLeaves,
-            'leaveTypes' => $leaveTypes
+            'leaveTypes' => $leaveTypes,
+            'appeal_data' => $_SESSION['appeal_data'] ?? null,
+            'show_appeal' => isset($_GET['show_appeal']),
         ]);
         
         extract($vars);
@@ -126,7 +128,27 @@ class LeaveController
         try {
             switch ($action) {
                 case 'apply_leave':
-                    $this->model->applyLeave($this->currentUserId, $_POST['leave_type'], $_POST['start_date'], $_POST['end_date'], $_POST['reason']);
+                    try {
+                        $this->model->applyLeave($this->currentUserId, $_POST['leave_type'], $_POST['start_date'], $_POST['end_date'], $_POST['reason']);
+                    } catch (Exception $ruleEx) {
+                        // Check if this is a rule violation that needs appeal
+                        if (strpos($ruleEx->getMessage(), 'RULE_VIOLATION|') === 0) {
+                            $parts = explode('|', $ruleEx->getMessage());
+                            // parts: [0]=RULE_VIOLATION, [1]=rule code, [2]=message, [3]=violation_note
+                            $_SESSION['appeal_data'] = [
+                                'leave_type' => $_POST['leave_type'],
+                                'start_date' => $_POST['start_date'],
+                                'end_date' => $_POST['end_date'],
+                                'reason' => $_POST['reason'],
+                                'rule' => $parts[1] ?? '',
+                                'violation_note' => $parts[3] ?? '',
+                            ];
+                            $this->setFlash($parts[2] ?? 'Filing requirement not met.', "warning");
+                            header("Location: " . baseUrl('leave') . "?show_appeal=1");
+                            exit;
+                        }
+                        throw $ruleEx; // Re-throw non-rule exceptions
+                    }
                     \App\Services\AuditService::log(
                         \App\Services\AuditActions::LEAVE_APPLIED,
                         'leave',
@@ -142,6 +164,50 @@ class LeaveController
                         'leave'
                     );
                     $this->setFlash("Leave application submitted successfully!", "success");
+                    break;
+
+                case 'apply_leave_appeal':
+                    $leaveType = $_POST['leave_type'] ?? '';
+                    $startDate = $_POST['start_date'] ?? '';
+                    $endDate = $_POST['end_date'] ?? '';
+                    $reason = $_POST['reason'] ?? '';
+                    $appealReason = $_POST['appeal_reason'] ?? '';
+                    $violationNote = $_POST['violation_note'] ?? '';
+
+                    if (empty($appealReason)) throw new Exception("Appeal reason is required.");
+
+                    // Handle file upload
+                    $attachmentPath = null;
+                    if (isset($_FILES['appeal_attachment']) && $_FILES['appeal_attachment']['error'] !== UPLOAD_ERR_NO_FILE) {
+                        $attachmentPath = \App\Services\FileUploadService::handleFileUpload(
+                            $_FILES['appeal_attachment'],
+                            'appeal_' . $this->currentUserId,
+                            'leave_appeals'
+                        );
+                    }
+
+                    $this->model->applyLeaveAppeal(
+                        $this->currentUserId, $leaveType, $startDate, $endDate,
+                        $reason, $appealReason, $attachmentPath, $violationNote
+                    );
+
+                    \App\Services\AuditService::log(
+                        \App\Services\AuditActions::LEAVE_APPEAL_SUBMITTED,
+                        'leave',
+                        null,
+                        null,
+                        ['leave_type' => $leaveType, 'start_date' => $startDate, 'end_date' => $endDate, 'appeal_reason' => $appealReason, 'violation_note' => $violationNote]
+                    );
+                    \App\Services\NotificationService::notifyRole(
+                        'HR',
+                        \App\Services\NotificationTypes::LEAVE_APPEAL_SUBMITTED,
+                        'Leave Appeal Submitted',
+                        ($_SESSION['full_name'] ?? 'An employee') . " submitted a leave appeal for $leaveType ($startDate to $endDate). Reason: $appealReason",
+                        'leave'
+                    );
+                    // Clear stored appeal data
+                    unset($_SESSION['appeal_data']);
+                    $this->setFlash("Leave appeal submitted successfully! HR will review your request.", "success");
                     break;
 
                 case 'apply_ot':
@@ -188,27 +254,29 @@ class LeaveController
                     $leaveId = (int)$_POST['leave_id'];
                     $status = $_POST['status'];
                     
-                    // Fetch leave details to notify applicant
-                    $gStmt = $this->model->getPdo()->prepare("SELECT emp_id, leave_type, start_date, end_date FROM leave_applications WHERE leave_id = ?");
+                    // Fetch leave details to notify applicant (including appeal info)
+                    $gStmt = $this->model->getPdo()->prepare("SELECT emp_id, leave_type, start_date, end_date, is_appeal FROM leave_applications WHERE leave_id = ?");
                     $gStmt->execute([$leaveId]);
                     $leaveRow = $gStmt->fetch(PDO::FETCH_ASSOC);
 
                     $this->model->updateLeaveStatus($leaveId, $status, $this->currentUserId);
 
                     $auditAction = ($status === 'Approved') ? \App\Services\AuditActions::LEAVE_APPROVED : \App\Services\AuditActions::LEAVE_REJECTED;
-                    \App\Services\AuditService::log($auditAction, 'leave', (string)$leaveId, null, ['status' => $status]);
+                    \App\Services\AuditService::log($auditAction, 'leave', (string)$leaveId, null, ['status' => $status, 'is_appeal' => $leaveRow['is_appeal'] ?? 0]);
 
                     if ($leaveRow && !empty($leaveRow['emp_id'])) {
                         $notifType = ($status === 'Approved') ? \App\Services\NotificationTypes::LEAVE_APPROVED : \App\Services\NotificationTypes::LEAVE_REJECTED;
+                        $appealLabel = !empty($leaveRow['is_appeal']) ? 'Appeal ' : '';
                         \App\Services\NotificationService::notify(
                             (int)$leaveRow['emp_id'],
                             $notifType,
-                            "Leave Application " . $status,
-                            "Your {$leaveRow['leave_type']} ({$leaveRow['start_date']} to {$leaveRow['end_date']}) has been {$status}.",
+                            "Leave {$appealLabel}Application " . $status,
+                            "Your {$leaveRow['leave_type']} {$appealLabel}({$leaveRow['start_date']} to {$leaveRow['end_date']}) has been {$status}.",
                             'leave'
                         );
                     }
-                    $this->setFlash("Leave " . strtolower($status), "success");
+                    $appealTag = (!empty($leaveRow['is_appeal'])) ? ' appeal' : '';
+                    $this->setFlash("Leave{$appealTag} " . strtolower($status), "success");
                     break;
 
                 case 'update_ot_status':
