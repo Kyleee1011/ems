@@ -49,7 +49,27 @@ class LeaveController
             'HOLIDAY OFF'
         ];
 
-        $allEmployeesCredits = $this->isHr ? $this->model->getAllEmployeesWithCredits() : [];
+        $allEmployeesCredits = [];
+        $creditSearchTerm = trim($_GET['credit_search'] ?? '');
+        $creditFilterDept = $_GET['credit_dept'] ?? '';
+        $creditPage = isset($_GET['credit_page']) && is_numeric($_GET['credit_page']) ? (int)$_GET['credit_page'] : 1;
+        $creditLimit = 8;
+        $creditTotalRecords = 0;
+        $creditTotalPages = 1;
+        $creditDepts = [];
+
+        if ($this->isHr) {
+            $creditDepts = $this->model->getDepartments();
+            $paginatedCredits = $this->model->getPaginatedEmployeesWithCredits($creditSearchTerm, $creditFilterDept, $creditPage, $creditLimit);
+            $allEmployeesCredits = $paginatedCredits['employees'];
+            $creditTotalRecords = $paginatedCredits['totalRecords'];
+            $creditTotalPages = $paginatedCredits['totalPages'];
+        }
+
+        $activeTab = $_GET['tab'] ?? 'leave';
+        if (isset($_GET['credit_search']) || isset($_GET['credit_dept']) || isset($_GET['credit_page'])) {
+            $activeTab = 'hr-credits';
+        }
 
         $vars = array_merge($this->sharedVars, [
             'my_sil_credits' => $mySilCredits,
@@ -59,6 +79,14 @@ class LeaveController
             'consumed_totals' => $consumedData['totals'],
             'hr_leaves' => $hrLeaves,
             'all_employees_credits' => $allEmployeesCredits,
+            'creditSearchTerm' => $creditSearchTerm,
+            'creditFilterDept' => $creditFilterDept,
+            'creditPage' => $creditPage,
+            'creditTotalRecords' => $creditTotalRecords,
+            'creditTotalPages' => $creditTotalPages,
+            'creditLimit' => $creditLimit,
+            'creditDepts' => $creditDepts,
+            'activeTab' => $activeTab,
             'leaveTypes' => $leaveTypes,
             'appeal_data' => $_SESSION['appeal_data'] ?? null,
             'show_appeal' => isset($_GET['show_appeal']),
@@ -328,6 +356,7 @@ class LeaveController
                         'leave'
                     );
 
+                    $redirect = 'leave?tab=hr-credits';
                     $this->setFlash("Leave credits updated successfully by HR.", "success");
                     break;
 

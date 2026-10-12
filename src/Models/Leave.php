@@ -90,6 +90,60 @@ class Leave
         return $this->pdo->query("SELECT emp_id, first_name, last_name, ac_no, dept_id, sil_credits, vl_credits, sl_credits, paternity_credits, maternity_credits, bereavement_immediate_credits, bereavement_extended_credits FROM employees WHERE employee_status = 'Active' ORDER BY last_name ASC")->fetchAll(PDO::FETCH_ASSOC);
     }
 
+    public function getDepartments() {
+        return $this->pdo->query("SELECT dept_id, dept_name FROM departments ORDER BY dept_name ASC")->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    public function getPaginatedEmployeesWithCredits($searchTerm = '', $filterDept = '', $page = 1, $limit = 8) {
+        $offset = ($page - 1) * $limit;
+        $whereClauses = ["e.employee_status = 'Active'"];
+        $params = [];
+
+        if (!empty($searchTerm)) {
+            $whereClauses[] = "(e.full_name LIKE :s1 OR e.ac_no LIKE :s2 OR d.dept_name LIKE :s3)";
+            $params[':s1'] = "%$searchTerm%";
+            $params[':s2'] = "%$searchTerm%";
+            $params[':s3'] = "%$searchTerm%";
+        }
+
+        if (!empty($filterDept)) {
+            $whereClauses[] = "e.dept_id = :dept";
+            $params[':dept'] = $filterDept;
+        }
+
+        $whereSQL = " WHERE " . implode(" AND ", $whereClauses);
+        $baseFrom = "FROM employees e LEFT JOIN departments d ON e.dept_id = d.dept_id";
+
+        $countSql = "SELECT COUNT(*) as total " . $baseFrom . $whereSQL;
+        $countStmt = $this->pdo->prepare($countSql);
+        $countStmt->execute($params);
+        $totalRecords = (int)($countStmt->fetch(PDO::FETCH_ASSOC)['total'] ?? 0);
+
+        $sql = "SELECT e.emp_id, e.first_name, e.last_name, e.full_name, e.ac_no, e.dept_id, d.dept_name,
+                       e.sil_credits, e.vl_credits, e.sl_credits, e.paternity_credits, e.maternity_credits,
+                       e.bereavement_immediate_credits, e.bereavement_extended_credits
+                " . $baseFrom . $whereSQL . "
+                ORDER BY e.last_name ASC, e.first_name ASC
+                LIMIT :limit OFFSET :offset";
+
+        $stmt = $this->pdo->prepare($sql);
+        foreach ($params as $key => &$val) {
+            $stmt->bindParam($key, $val);
+        }
+        $stmt->bindParam(':limit', $limit, PDO::PARAM_INT);
+        $stmt->bindParam(':offset', $offset, PDO::PARAM_INT);
+        $stmt->execute();
+        $employees = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        return [
+            'employees' => $employees,
+            'totalRecords' => $totalRecords,
+            'totalPages' => max(1, (int)ceil($totalRecords / $limit)),
+            'currentPage' => $page,
+            'limit' => $limit
+        ];
+    }
+
     public function validateLeaveCredits($empId, $type, $days) {
         if ($type === 'Service Incentive Leave') {
             $credits = $this->getCredits($empId, $type);

@@ -41,13 +41,13 @@ $creditsMap = [
 
 <!-- TABS NAVIGATION -->
 <div class="flex-row mb-20" style="border-bottom: 1px solid var(--border-lt); gap: 20px;">
-    <button onclick="switchTab('leave')" id="tab-leave" class="nav-item active" style="padding: 10px 5px; border-bottom: 2px solid var(--teal); background: none;">Personal Service</button>
+    <button onclick="switchTab('leave')" id="tab-leave" class="nav-item <?php echo ($activeTab === 'leave') ? 'active' : ''; ?>" style="padding: 10px 5px; border-bottom: 2px solid <?php echo ($activeTab === 'leave') ? 'var(--teal)' : 'transparent'; ?>; background: none;">Personal Service</button>
     <?php if ($is_hr): ?>
-    <button onclick="switchTab('hr-leave')" id="tab-hr-leave" class="nav-item" style="padding: 10px 5px; border-bottom: 2px solid transparent; background: none;">
+    <button onclick="switchTab('hr-leave')" id="tab-hr-leave" class="nav-item <?php echo ($activeTab === 'hr-leave') ? 'active' : ''; ?>" style="padding: 10px 5px; border-bottom: 2px solid <?php echo ($activeTab === 'hr-leave') ? 'var(--teal)' : 'transparent'; ?>; background: none;">
         Pending Approvals
         <?php if(count($hr_leaves) > 0): ?><span class="tag tag-red" style="margin-left:5px;"><?php echo count($hr_leaves); ?></span><?php endif; ?>
     </button>
-    <button onclick="switchTab('hr-credits')" id="tab-hr-credits" class="nav-item" style="padding: 10px 5px; border-bottom: 2px solid transparent; background: none;">
+    <button onclick="switchTab('hr-credits')" id="tab-hr-credits" class="nav-item <?php echo ($activeTab === 'hr-credits') ? 'active' : ''; ?>" style="padding: 10px 5px; border-bottom: 2px solid <?php echo ($activeTab === 'hr-credits') ? 'var(--teal)' : 'transparent'; ?>; background: none;">
         <i class="fa-solid fa-coins"></i> Employee Credits Manager (HR Only)
     </button>
     <?php endif; ?>
@@ -62,7 +62,7 @@ $creditsMap = [
     </div>
 <?php endif; ?>
 
-<div id="panel-leave" class="panel active">
+<div id="panel-leave" class="panel <?php echo ($activeTab === 'leave') ? 'active' : ''; ?>" style="<?php echo ($activeTab === 'leave') ? '' : 'display:none;'; ?>">
     <div class="grid-2" style="grid-template-columns: 360px 1fr; align-items: start; gap: 20px;">
         <!-- REQUEST FORM -->
         <div class="space-y-20">
@@ -192,44 +192,6 @@ $creditsMap = [
 
         <!-- HISTORY & CREDITS BREAKDOWN -->
         <div class="space-y-20">
-            <!-- PHILIPPINE LEAVE BENEFITS SUMMARY -->
-            <div class="card">
-                <div class="card-head"><div class="card-title"><i class="fa-solid fa-scale-balanced"></i> Philippine Standard Leave Allowances</div></div>
-                <div class="card-body" style="padding: 12px 16px;">
-                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; font-size: 11px;">
-                        <div style="padding: 8px; border-radius: 6px; background: var(--bg-raised); border: 1px solid var(--border-lt);">
-                            <div style="font-weight: 700; color: var(--teal);">Service Incentive (SIL)</div>
-                            <div style="color: var(--ink-3); font-size: 10px; margin-top: 2px;">5 days/yr under Labor Code Art. 95</div>
-                            <div style="font-weight: 800; font-size: 12px; margin-top: 4px;"><?php echo number_format($creditsMap['sil'], 1); ?>d available</div>
-                        </div>
-                        <div style="padding: 8px; border-radius: 6px; background: var(--bg-raised); border: 1px solid var(--border-lt);">
-                            <div style="font-weight: 700; color: var(--teal);">Vacation Leave (VL)</div>
-                            <div style="color: var(--ink-3); font-size: 10px; margin-top: 2px;">Min. 3 days advance filing rule</div>
-                            <div style="font-weight: 800; font-size: 12px; margin-top: 4px;"><?php echo number_format($creditsMap['vl'], 1); ?>d available</div>
-                        </div>
-                        <div style="padding: 8px; border-radius: 6px; background: var(--bg-raised); border: 1px solid var(--border-lt);">
-                            <div style="font-weight: 700; color: var(--teal);">Sick Leave (SL)</div>
-                            <div style="color: var(--ink-3); font-size: 10px; margin-top: 2px;">Min. 2 hours before duty rule</div>
-                            <div style="font-weight: 800; font-size: 12px; margin-top: 4px;"><?php echo number_format($creditsMap['sl'], 1); ?>d available</div>
-                        </div>
-                        <div style="padding: 8px; border-radius: 6px; background: var(--bg-raised); border: 1px solid var(--border-lt);">
-                            <div style="font-weight: 700; color: #7c3aed;">Bereavement Leave</div>
-                            <div style="color: var(--ink-3); font-size: 10px; margin-top: 2px;">Immediate: 5 days | Extended: 3 days</div>
-                            <div style="font-weight: 800; font-size: 12px; margin-top: 4px;">5d / 3d statutory</div>
-                        </div>
-                        <div style="padding: 8px; border-radius: 6px; background: var(--bg-raised); border: 1px solid var(--border-lt);">
-                            <div style="font-weight: 700; color: #2563eb;">Paternity Leave</div>
-                            <div style="color: var(--ink-3); font-size: 10px; margin-top: 2px;">7 days (Republic Act 8187)</div>
-                            <div style="font-weight: 800; font-size: 12px; margin-top: 4px;"><?php echo number_format($creditsMap['paternity'], 0); ?>d entitlement</div>
-                        </div>
-                        <div style="padding: 8px; border-radius: 6px; background: var(--bg-raised); border: 1px solid var(--border-lt);">
-                            <div style="font-weight: 700; color: #db2777;">Maternity Leave</div>
-                            <div style="color: var(--ink-3); font-size: 10px; margin-top: 2px;">105 days unpaid (Republic Act 11210)</div>
-                            <div style="font-weight: 800; font-size: 12px; margin-top: 4px;"><?php echo number_format($creditsMap['maternity'], 0); ?>d entitlement</div>
-                        </div>
-                    </div>
-                </div>
-            </div>
 
             <!-- MY LEAVE HISTORY -->
             <div class="card">
@@ -296,7 +258,7 @@ $creditsMap = [
 </div>
 
 <?php if ($is_hr): ?>
-<div id="panel-hr-leave" class="panel" style="display:none;">
+<div id="panel-hr-leave" class="panel <?php echo ($activeTab === 'hr-leave') ? 'active' : ''; ?>" style="<?php echo ($activeTab === 'hr-leave') ? '' : 'display:none;'; ?>">
     <div class="card">
         <div class="card-head"><div class="card-title">Pending Applications Queue</div></div>
         <div class="card-body" style="padding: 0;">
@@ -391,18 +353,34 @@ $creditsMap = [
 
 <?php if ($is_hr): ?>
 <!-- HR ONLY: EMPLOYEE LEAVE CREDITS MANAGEMENT PANEL -->
-<div id="panel-hr-credits" class="panel" style="display:none;">
+<div id="panel-hr-credits" class="panel <?php echo ($activeTab === 'hr-credits') ? 'active' : ''; ?>" style="<?php echo ($activeTab === 'hr-credits') ? '' : 'display:none;'; ?>">
     <div class="card">
-        <div class="card-head" style="display: flex; justify-content: space-between; align-items: center;">
-            <div>
-                <div class="card-title"><i class="fa-solid fa-coins"></i> Employee Leave Credits Manager</div>
-                <p style="font-size: 11px; color: var(--ink-4); margin-top: 3px;">
-                    <i class="fa-solid fa-lock"></i> Restricted to HR: Only HR can set, allocate, or adjust employee leave credits.
-                </p>
+        <div class="card-head" style="background:var(--bg-card); border-bottom:1px solid var(--border-lt); padding:15px 20px; display:flex; flex-wrap:wrap; justify-content:space-between; align-items:center; gap:12px;">
+            <div class="flex-row" style="gap:10px;">
+                <span class="tag tag-teal"><?php echo $creditTotalRecords; ?> Total</span>
+                <span style="font-size:11px; color:var(--ink-4);">
+                    <i class="fa-solid fa-lock"></i> Restricted to HR: Only HR can set or modify leave credits.
+                </span>
             </div>
-            <div style="font-size: 11px; color: var(--teal); font-weight: 700;">
-                Total Active Employees: <?php echo count($all_employees_credits); ?>
-            </div>
+            <form method="GET" action="" id="creditSearchForm" class="flex-row" style="gap:8px;">
+                <input type="hidden" name="tab" value="hr-credits">
+                <select name="credit_dept" id="creditDeptFilter" onchange="this.form.submit()" class="input-field" style="width:180px; height:32px; font-size:11px;">
+                    <option value="">All Departments</option>
+                    <?php foreach($creditDepts as $d): ?>
+                        <option value="<?php echo $d['dept_id']; ?>" <?php echo ($creditFilterDept == $d['dept_id']) ? 'selected' : ''; ?>>
+                            <?php echo htmlspecialchars($d['dept_name']); ?>
+                        </option>
+                    <?php endforeach; ?>
+                </select>
+                <div style="position:relative;">
+                    <i class="fa-solid fa-search" style="position:absolute; left:10px; top:10px; font-size:10px; color:var(--ink-4);"></i>
+                    <input type="text" name="credit_search" id="creditSearchInput" autocomplete="off" placeholder="Search name, AC, or dept..." value="<?php echo htmlspecialchars($creditSearchTerm); ?>" class="input-field" style="padding-left:30px; width:220px; height:32px; font-size:11px;">
+                </div>
+                <button type="submit" class="btn-primary" style="height:32px; padding:0 15px;">Search</button>
+                <?php if ($creditSearchTerm !== '' || $creditFilterDept !== ''): ?>
+                    <a href="?tab=hr-credits" class="pill-btn" style="height:32px; font-size:11px; display:inline-flex; align-items:center;">Clear</a>
+                <?php endif; ?>
+            </form>
         </div>
         <div class="card-body" style="padding: 0;">
             <div class="table-wrap" style="border: none; border-radius: 0;">
@@ -410,6 +388,7 @@ $creditsMap = [
                     <thead>
                         <tr>
                             <th>Employee</th>
+                            <th>Department</th>
                             <th style="text-align: center;">SIL</th>
                             <th style="text-align: center;">VL</th>
                             <th style="text-align: center;">SL</th>
@@ -420,43 +399,68 @@ $creditsMap = [
                         </tr>
                     </thead>
                     <tbody>
-                        <?php foreach($all_employees_credits as $ec): ?>
-                        <tr>
-                            <td>
-                                <div style="font-weight: 700;"><?php echo htmlspecialchars($ec['first_name'] . ' ' . $ec['last_name']); ?></div>
-                                <div style="font-size: 10px; color: var(--ink-4);">AC: <?php echo htmlspecialchars($ec['ac_no'] ?? '-'); ?></div>
-                            </td>
-                            <td style="text-align: center; font-weight: 700; font-family: 'DM Mono';">
-                                <span class="tag <?php echo ((float)$ec['sil_credits'] > 0) ? 'tag-green' : 'tag-amber'; ?>">
-                                    <?php echo number_format((float)$ec['sil_credits'], 1); ?>d
-                                </span>
-                            </td>
-                            <td style="text-align: center; font-weight: 700; font-family: 'DM Mono';">
-                                <span class="tag tag-teal"><?php echo number_format((float)($ec['vl_credits'] ?? 0), 1); ?>d</span>
-                            </td>
-                            <td style="text-align: center; font-weight: 700; font-family: 'DM Mono';">
-                                <span class="tag tag-blue"><?php echo number_format((float)($ec['sl_credits'] ?? 0), 1); ?>d</span>
-                            </td>
-                            <td style="text-align: center; font-weight: 700; font-family: 'DM Mono'; font-size: 11px;">
-                                <?php echo number_format((float)($ec['paternity_credits'] ?? 7), 0); ?>d
-                            </td>
-                            <td style="text-align: center; font-weight: 700; font-family: 'DM Mono'; font-size: 11px;">
-                                <?php echo number_format((float)($ec['maternity_credits'] ?? 105), 0); ?>d
-                            </td>
-                            <td style="text-align: center; font-size: 11px; font-weight: 700; font-family: 'DM Mono';">
-                                <?php echo number_format((float)($ec['bereavement_immediate_credits'] ?? 5), 0); ?>d / <?php echo number_format((float)($ec['bereavement_extended_credits'] ?? 3), 0); ?>d
-                            </td>
-                            <td style="text-align: right;">
-                                <button type="button" class="btn-primary" style="font-size: 10px; height: 26px; padding: 0 10px;" 
-                                    onclick='openCreditEditModal(<?php echo json_encode($ec); ?>)'>
-                                    <i class="fa-solid fa-pen-to-square"></i> Set Credits
-                                </button>
-                            </td>
-                        </tr>
-                        <?php endforeach; if(empty($all_employees_credits)) echo "<tr><td colspan='8' style='text-align:center; padding:30px; color:var(--ink-4);'>No active employees found.</td></tr>"; ?>
+                        <?php if (count($all_employees_credits) > 0): ?>
+                            <?php foreach($all_employees_credits as $ec): ?>
+                            <tr>
+                                <td>
+                                    <div style="font-weight: 700; color: var(--ink-1);"><?php echo htmlspecialchars($ec['first_name'] . ' ' . $ec['last_name']); ?></div>
+                                    <div style="font-size: 10px; color: var(--ink-4); font-family: 'DM Mono';">AC: <?php echo htmlspecialchars($ec['ac_no'] ?? '-'); ?></div>
+                                </td>
+                                <td>
+                                    <span style="font-size: 11px; color: var(--ink-3);"><?php echo htmlspecialchars($ec['dept_name'] ?? 'General'); ?></span>
+                                </td>
+                                <td style="text-align: center; font-weight: 700; font-family: 'DM Mono';">
+                                    <span class="tag <?php echo ((float)$ec['sil_credits'] > 0) ? 'tag-green' : 'tag-amber'; ?>">
+                                        <?php echo number_format((float)$ec['sil_credits'], 1); ?>d
+                                    </span>
+                                </td>
+                                <td style="text-align: center; font-weight: 700; font-family: 'DM Mono';">
+                                    <span class="tag tag-teal"><?php echo number_format((float)($ec['vl_credits'] ?? 0), 1); ?>d</span>
+                                </td>
+                                <td style="text-align: center; font-weight: 700; font-family: 'DM Mono';">
+                                    <span class="tag tag-blue"><?php echo number_format((float)($ec['sl_credits'] ?? 0), 1); ?>d</span>
+                                </td>
+                                <td style="text-align: center; font-weight: 700; font-family: 'DM Mono'; font-size: 11px;">
+                                    <?php echo number_format((float)($ec['paternity_credits'] ?? 7), 0); ?>d
+                                </td>
+                                <td style="text-align: center; font-weight: 700; font-family: 'DM Mono'; font-size: 11px;">
+                                    <?php echo number_format((float)($ec['maternity_credits'] ?? 105), 0); ?>d
+                                </td>
+                                <td style="text-align: center; font-size: 11px; font-weight: 700; font-family: 'DM Mono';">
+                                    <?php echo number_format((float)($ec['bereavement_immediate_credits'] ?? 5), 0); ?>d / <?php echo number_format((float)($ec['bereavement_extended_credits'] ?? 3), 0); ?>d
+                                </td>
+                                <td style="text-align: right;">
+                                    <button type="button" class="btn-primary" style="font-size: 10px; height: 26px; padding: 0 10px;" 
+                                        onclick='openCreditEditModal(<?php echo json_encode($ec); ?>)'>
+                                        <i class="fa-solid fa-pen-to-square"></i> Set Credits
+                                    </button>
+                                </td>
+                            </tr>
+                            <?php endforeach; ?>
+                        <?php else: ?>
+                            <tr><td colspan="9" style="text-align:center; padding:40px; color:var(--ink-4);">No employees matching criteria.</td></tr>
+                        <?php endif; ?>
                     </tbody>
                 </table>
             </div>
+
+            <?php if ($creditTotalPages > 1): ?>
+            <div class="card-footer" style="padding:10px 20px; border-top:1px solid var(--border-lt);">
+                <div class="flex-between">
+                    <div style="font-size:11px; color:var(--ink-4);">
+                        Showing <?php echo ($creditPage-1)*$creditLimit + 1; ?> to <?php echo min($creditPage*$creditLimit, $creditTotalRecords); ?> of <?php echo $creditTotalRecords; ?>
+                    </div>
+                    <div class="flex-row" style="gap:5px;">
+                        <?php for($i=1; $i<=$creditTotalPages; $i++): ?>
+                            <a href="?tab=hr-credits&credit_page=<?php echo $i; ?>&credit_dept=<?php echo urlencode($creditFilterDept); ?>&credit_search=<?php echo urlencode($creditSearchTerm); ?>" 
+                               class="pill-btn" style="<?php echo ($i==$creditPage) ? 'background:var(--teal); color:#fff; border-color:var(--teal-deep);' : ''; ?> padding:2px 10px; font-size:11px;">
+                                <?php echo $i; ?>
+                            </a>
+                        <?php endfor; ?>
+                    </div>
+                </div>
+            </div>
+            <?php endif; ?>
         </div>
     </div>
 </div>
@@ -525,9 +529,17 @@ $creditsMap = [
             n.style.borderBottomColor = 'transparent';
         });
         
-        document.getElementById('panel-' + tabName).style.display = 'block';
-        document.getElementById('tab-' + tabName).classList.add('active');
-        document.getElementById('tab-' + tabName).style.borderBottomColor = 'var(--teal)';
+        const targetPanel = document.getElementById('panel-' + tabName);
+        const targetTab = document.getElementById('tab-' + tabName);
+        if (targetPanel) targetPanel.style.display = 'block';
+        if (targetTab) {
+            targetTab.classList.add('active');
+            targetTab.style.borderBottomColor = 'var(--teal)';
+        }
+
+        const url = new URL(window.location);
+        url.searchParams.set('tab', tabName);
+        window.history.replaceState({}, '', url);
     }
 
     /**
