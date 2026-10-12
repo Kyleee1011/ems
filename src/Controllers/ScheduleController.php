@@ -136,13 +136,15 @@ require_once dirname(dirname(__DIR__)) . '/config_session.php';
                         $this->jsonResponse(true, '', ['approvals' => []]);
                     }
     
-                    $sql = "SELECT b.batch_id, b.dept_id, d.dept_name, b.cutoff_label, b.cutoff_start, b.cutoff_end, b.updated_at, 
+                    $sql = "SELECT b.batch_id, b.dept_id, d.dept_name, b.cutoff_label, b.cutoff_start, b.cutoff_end, b.updated_at,
+                                   CONCAT(e.first_name, ' ', e.last_name) as creator_name,
                                    (SELECT COUNT(*) FROM schedules s 
-                                    JOIN employees e ON s.employee_id = e.emp_id 
-                                    WHERE e.dept_id = b.dept_id 
+                                    JOIN employees emp ON s.employee_id = emp.emp_id 
+                                    WHERE emp.dept_id = b.dept_id 
                                     AND s.cutoff_start_date = b.cutoff_start) as emp_count
                             FROM schedule_batches b
                             JOIN departments d ON b.dept_id = d.dept_id
+                            LEFT JOIN employees e ON b.created_by = e.emp_id
                             WHERE b.status = ?
                             ORDER BY b.updated_at DESC";
                     
@@ -159,6 +161,7 @@ require_once dirname(dirname(__DIR__)) . '/config_session.php';
                         $approvals[] = [
                             'dept_id' => $row['dept_id'],
                             'dept_name' => $row['dept_name'],
+                            'creator_name' => $row['creator_name'] ?: 'Department Head',
                             'cutoff_label' => $row['cutoff_label'],
                             'range_value' => $range,
                             'last_updated' => $lastUpdated,
@@ -228,8 +231,35 @@ require_once dirname(dirname(__DIR__)) . '/config_session.php';
                         $dept_name = $stmtD->fetchColumn();
                     }
                     
-                    $prepared_by = $batch ? $batch['creator_name'] : $this->currentUser['name'];
+                    // Determine Prepared By (schedule creator):
+                    // 1. Direct creator from batch if populated
+                    $prepared_by = ($batch && !empty($batch['creator_name'])) ? $batch['creator_name'] : null;
                     $prepared_sig_path = ($batch && !empty($batch['creator_sig_path'])) ? $batch['creator_sig_path'] : null;
+                    
+                    // 2. Fallback to schedule_history creator/submitter log if created_by was cleared or missing
+                    if (!$prepared_by && $batch && !empty($batch['batch_id'])) {
+                        $stmtHist = $this->pdo->prepare("SELECT actor_name FROM schedule_history WHERE batch_id = ? AND action IN ('Created', 'Submitted') ORDER BY timestamp ASC LIMIT 1");
+                        $stmtHist->execute([$batch['batch_id']]);
+                        $histActor = $stmtHist->fetchColumn();
+                        if ($histActor) {
+                            $prepared_by = $histActor;
+                            // Also lookup signature of this actor by name
+                            $stmtActorSig = $this->pdo->prepare("SELECT signature_path FROM employees WHERE CONCAT(first_name, ' ', last_name) = ? LIMIT 1");
+                            $stmtActorSig->execute([$histActor]);
+                            $prepared_sig_path = $stmtActorSig->fetchColumn() ?: null;
+                        }
+                    }
+
+                    // 3. Fallback to Department Head or current user if draft/not started
+                    if (!$prepared_by) {
+                        $deptSig = $this->getDeptSignatory($dept_name);
+                        if (!empty($deptSig['name']) && $deptSig['name'] !== ($dept_name . ' Head')) {
+                            $prepared_by = $deptSig['name'];
+                            $prepared_sig_path = $deptSig['signature_path'] ?? null;
+                        } else {
+                            $prepared_by = $this->currentUser['name'];
+                        }
+                    }
             
                     // HR Signatory
                     $stmtHR = $this->pdo->query("SELECT CONCAT(first_name, ' ', last_name) as name, signature_path, d.dept_name as hr_dept_name 
@@ -410,7 +440,6 @@ require_once dirname(dirname(__DIR__)) . '/config_session.php';
                 
                             if ($new_status == 'Draft') {
                                 $this->pdo->prepare("DELETE fs FROM finalized_schedule fs JOIN employees e ON fs.ac_no = e.ac_no WHERE e.dept_id = ? AND fs.schedule_date BETWEEN ? AND ?")->execute([$dept_id, $start, $end]);
-                                $this->pdo->prepare("UPDATE schedule_batches SET created_by = NULL WHERE batch_id = ?")->execute([$batch_id]);
                             }
                 
                             $actionLabel = ($new_status == 'Pending HR') ? 'Submitted' : $new_status;

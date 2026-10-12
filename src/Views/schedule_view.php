@@ -120,10 +120,10 @@ $can_set_colors = ($is_dept_head || $is_hr || $is_ceo);
             <div class="table-wrap" style="border:none;">
                 <table>
                     <thead>
-                        <tr><th>Department</th><th>Period</th><th>Updated</th><th style="text-align:right;">Action</th></tr>
+                        <tr><th>Department</th><th>Prepared By</th><th>Period</th><th>Updated</th><th style="text-align:right;">Action</th></tr>
                     </thead>
                     <tbody id="approval_list">
-                        <tr><td colspan="4" style="text-align:center; padding:40px; color:var(--ink-4);">Checking for updates...</td></tr>
+                        <tr><td colspan="5" style="text-align:center; padding:40px; color:var(--ink-4);">Checking for updates...</td></tr>
                     </tbody>
                 </table>
             </div>
@@ -269,16 +269,16 @@ function loadDashboard() {
         }
         let html = '';
         if (!res || !res.approvals || !Array.isArray(res.approvals) || res.approvals.length === 0) {
-            html = '<tr><td colspan="4" style="text-align:center; padding:40px; font-style:italic;">No pending schedules.</td></tr>';
+            html = '<tr><td colspan="5" style="text-align:center; padding:40px; font-style:italic;">No pending schedules.</td></tr>';
         } else {
             res.approvals.forEach(r => {
-                html += `<tr><td><b>${r.dept_name}</b></td><td>${r.cutoff_label}</td><td style="font-size:10px;">${r.last_updated}</td><td style="text-align:right;"><button class="btn-primary" style="font-size:10px; height:26px; padding:0 10px;" onclick="reviewBatch(${r.dept_id}, '${r.range_value}')">Review</button></td></tr>`;
+                html += `<tr><td><b>${r.dept_name}</b></td><td><span style="font-weight:600;">${r.creator_name || '-'}</span></td><td>${r.cutoff_label}</td><td style="font-size:10px;">${r.last_updated}</td><td style="text-align:right;"><button class="btn-primary" style="font-size:10px; height:26px; padding:0 10px;" onclick="reviewBatch(${r.dept_id}, '${r.range_value}')">Review</button></td></tr>`;
             });
         }
         $('#approval_list').html(html);
     }).fail(function() {
         showToast('Network error — could not load approvals queue. Check your connection.', 'error');
-        $('#approval_list').html('<tr><td colspan="4" style="text-align:center; padding:40px; color:var(--red);">Failed to load approvals queue.</td></tr>');
+        $('#approval_list').html('<tr><td colspan="5" style="text-align:center; padding:40px; color:var(--red);">Failed to load approvals queue.</td></tr>');
     });
 }
 
