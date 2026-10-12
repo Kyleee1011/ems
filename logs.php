@@ -1,9 +1,9 @@
 <?php
 // --- CONFIGURATION ---
-$db_host = '192.168.21.55';
-$db_name = 'biometric_logs';
-$db_user = 'dev';
-$db_pass = 'Azzurro2025';
+$db_host = '';
+$db_name = '';
+$db_user = '';
+$db_pass = '';
 
 // --- DATABASE CONNECTION ---
 try {
