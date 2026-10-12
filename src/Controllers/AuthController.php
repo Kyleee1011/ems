@@ -96,14 +96,26 @@ require_once dirname(dirname(__DIR__)) . '/config_session.php';
                         }
 
                         // Redirect based on role
+                        \App\Services\AuditService::log(
+                            \App\Services\AuditActions::LOGIN_SUCCESS,
+                            'auth',
+                            (string)$row['emp_id'],
+                            null,
+                            ['ac_no' => $row['ac_no']],
+                            (int)$row['emp_id'],
+                            $_SESSION['role']
+                        );
+
                         header("Location: " . baseUrl('home'));
                         exit;
                     }
                 } else {
                     $error = "Invalid Password.";
+                    \App\Services\AuditService::log(\App\Services\AuditActions::LOGIN_FAILED, 'auth', $ac_no, null, ['reason' => 'Invalid Password', 'ac_no' => $ac_no]);
                 }
             } else {
                 $error = "Account not found.";
+                \App\Services\AuditService::log(\App\Services\AuditActions::LOGIN_FAILED, 'auth', $ac_no, null, ['reason' => 'Account not found', 'ac_no' => $ac_no]);
             }
         } catch(PDOException $e) {
             $error = "Database Error: Could not connect."; // Don't expose detailed error

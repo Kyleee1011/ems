@@ -288,11 +288,15 @@ body {
     flex-direction: column;
     overflow-y: auto;
     overflow-x: hidden;
-    transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1), flex-basis 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    contain: layout;
+    transform: translateZ(0);
+    will-change: width, flex-basis;
+    transition: width 0.2s cubic-bezier(0.4, 0, 0.2, 1), flex-basis 0.2s cubic-bezier(0.4, 0, 0.2, 1);
     z-index: 50;
 }
 
-.sidebar:hover {
+.sidebar:hover,
+.sidebar.pinned {
     width: 240px !important;
     flex: 0 0 240px !important;
 }
@@ -310,18 +314,32 @@ body {
     font-weight: 700;
     letter-spacing: -0.025em;
     color: var(--ink-1);
-    transition: opacity 0.2s;
+    transition: opacity 0.15s;
 }
 
-.sidebar:not(:hover) .sidebar-logo,
-.sidebar:not(:hover) .sidebar-tagline,
-.sidebar:not(:hover) .nav-label,
-.sidebar:not(:hover) .nav-item span,
-.sidebar:not(:hover) .nav-caret,
-.sidebar:not(:hover) .nav-sub,
-.sidebar:not(:hover) .sf-info,
-.sidebar:not(:hover) .logout-btn {
+.sidebar:not(:hover):not(.pinned) .sidebar-logo,
+.sidebar:not(:hover):not(.pinned) .sidebar-tagline,
+.sidebar:not(:hover):not(.pinned) .nav-label,
+.sidebar:not(:hover):not(.pinned) .nav-item span,
+.sidebar:not(:hover):not(.pinned) .nav-caret,
+.sidebar:not(:hover):not(.pinned) .nav-sub,
+.sidebar:not(:hover):not(.pinned) .sf-info,
+.sidebar:not(:hover):not(.pinned) .logout-btn {
     display: none !important;
+}
+
+/* Low-spec / reduced-motion hardware optimization */
+@media (prefers-reduced-motion: reduce) {
+    .sidebar,
+    .nav-item,
+    .nav-ico,
+    .nav-sub-item,
+    .main {
+        transition: none !important;
+        animation: none !important;
+        transform: none !important;
+        will-change: auto !important;
+    }
 }
 
 .sidebar-tagline {

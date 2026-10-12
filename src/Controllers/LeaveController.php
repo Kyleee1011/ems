@@ -127,6 +127,20 @@ class LeaveController
             switch ($action) {
                 case 'apply_leave':
                     $this->model->applyLeave($this->currentUserId, $_POST['leave_type'], $_POST['start_date'], $_POST['end_date'], $_POST['reason']);
+                    \App\Services\AuditService::log(
+                        \App\Services\AuditActions::LEAVE_APPLIED,
+                        'leave',
+                        null,
+                        null,
+                        ['leave_type' => $_POST['leave_type'], 'start_date' => $_POST['start_date'], 'end_date' => $_POST['end_date'], 'reason' => $_POST['reason']]
+                    );
+                    \App\Services\NotificationService::notifyRole(
+                        'HR',
+                        \App\Services\NotificationTypes::LEAVE_APPLIED,
+                        'New Leave Application',
+                        ($_SESSION['full_name'] ?? 'An employee') . " submitted a leave application for {$_POST['start_date']} to {$_POST['end_date']}.",
+                        'leave'
+                    );
                     $this->setFlash("Leave application submitted successfully!", "success");
                     break;
 
@@ -137,6 +151,20 @@ class LeaveController
                     if (empty($emps)) throw new Exception("Select employees.");
                     
                     $res = $this->model->applyOvertime($emps, $_POST['ot_date'], $_POST['ot_hours'], $_POST['reason']);
+                    \App\Services\AuditService::log(
+                        \App\Services\AuditActions::OVERTIME_APPLIED,
+                        'overtime',
+                        null,
+                        null,
+                        ['employees' => $emps, 'ot_date' => $_POST['ot_date'], 'ot_hours' => $_POST['ot_hours'], 'reason' => $_POST['reason']]
+                    );
+                    \App\Services\NotificationService::notifyRole(
+                        'HR',
+                        \App\Services\NotificationTypes::OVERTIME_APPLIED,
+                        'Overtime Application Submitted',
+                        "Overtime for {$res['added']} employee(s) on {$_POST['ot_date']} was submitted by " . ($_SESSION['full_name'] ?? 'Supervisor') . ".",
+                        'overtime'
+                    );
                     $msg = "Overtime submitted for {$res['added']} employee(s).";
                     if ($res['dupes'] > 0) $msg .= " Skipped {$res['dupes']} duplicates.";
                     $this->setFlash($msg, $res['dupes'] > 0 ? "warning" : "success");
@@ -145,27 +173,94 @@ class LeaveController
                 case 'apply_change_sched':
                     $redirect = 'changesched';
                     $this->model->applyScheduleChange($this->currentUserId, $_POST['sched_date'], $_POST['new_shift_code'], $_POST['reason']);
+                    \App\Services\NotificationService::notifyRole(
+                        'HR',
+                        \App\Services\NotificationTypes::SCHEDULE_SUBMITTED,
+                        'Schedule Change Request',
+                        ($_SESSION['full_name'] ?? 'An employee') . " requested schedule shift to {$_POST['new_shift_code']} on {$_POST['sched_date']}.",
+                        'changesched'
+                    );
                     $this->setFlash("Schedule change request submitted!", "success");
                     break;
 
                 case 'update_leave_status':
                     if (!$this->isHr) throw new Exception("Unauthorized.");
-                    $this->model->updateLeaveStatus($_POST['leave_id'], $_POST['status'], $this->currentUserId);
-                    $this->setFlash("Leave " . strtolower($_POST['status']), "success");
+                    $leaveId = (int)$_POST['leave_id'];
+                    $status = $_POST['status'];
+                    
+                    // Fetch leave details to notify applicant
+                    $gStmt = $this->model->getPdo()->prepare("SELECT emp_id, leave_type, start_date, end_date FROM leave_applications WHERE leave_id = ?");
+                    $gStmt->execute([$leaveId]);
+                    $leaveRow = $gStmt->fetch(PDO::FETCH_ASSOC);
+
+                    $this->model->updateLeaveStatus($leaveId, $status, $this->currentUserId);
+
+                    $auditAction = ($status === 'Approved') ? \App\Services\AuditActions::LEAVE_APPROVED : \App\Services\AuditActions::LEAVE_REJECTED;
+                    \App\Services\AuditService::log($auditAction, 'leave', (string)$leaveId, null, ['status' => $status]);
+
+                    if ($leaveRow && !empty($leaveRow['emp_id'])) {
+                        $notifType = ($status === 'Approved') ? \App\Services\NotificationTypes::LEAVE_APPROVED : \App\Services\NotificationTypes::LEAVE_REJECTED;
+                        \App\Services\NotificationService::notify(
+                            (int)$leaveRow['emp_id'],
+                            $notifType,
+                            "Leave Application " . $status,
+                            "Your {$leaveRow['leave_type']} ({$leaveRow['start_date']} to {$leaveRow['end_date']}) has been {$status}.",
+                            'leave'
+                        );
+                    }
+                    $this->setFlash("Leave " . strtolower($status), "success");
                     break;
 
                 case 'update_ot_status':
                     $redirect = 'overtime';
                     if (!$this->isHr) throw new Exception("Unauthorized.");
-                    $this->model->updateOvertimeStatus($_POST['ot_id'], $_POST['status'], $this->currentUserId);
-                    $this->setFlash("Overtime " . strtolower($_POST['status']), "success");
+                    $otId = (int)$_POST['ot_id'];
+                    $status = $_POST['status'];
+
+                    $gStmt = $this->model->getPdo()->prepare("SELECT emp_id, ot_date, ot_hours FROM overtime_applications WHERE ot_id = ?");
+                    $gStmt->execute([$otId]);
+                    $otRow = $gStmt->fetch(PDO::FETCH_ASSOC);
+
+                    $this->model->updateOvertimeStatus($otId, $status, $this->currentUserId);
+
+                    $auditAction = ($status === 'Approved') ? \App\Services\AuditActions::OVERTIME_APPROVED : \App\Services\AuditActions::OVERTIME_REJECTED;
+                    \App\Services\AuditService::log($auditAction, 'overtime', (string)$otId, null, ['status' => $status]);
+
+                    if ($otRow && !empty($otRow['emp_id'])) {
+                        $notifType = ($status === 'Approved') ? \App\Services\NotificationTypes::OVERTIME_APPROVED : \App\Services\NotificationTypes::OVERTIME_REJECTED;
+                        \App\Services\NotificationService::notify(
+                            (int)$otRow['emp_id'],
+                            $notifType,
+                            "Overtime " . $status,
+                            "Your overtime request for {$otRow['ot_date']} ({$otRow['ot_hours']} hrs) has been {$status}.",
+                            'overtime'
+                        );
+                    }
+                    $this->setFlash("Overtime " . strtolower($status), "success");
                     break;
 
                 case 'update_change_status':
                     $redirect = 'changesched';
                     if (!$this->isHr) throw new Exception("Unauthorized.");
-                    $this->model->updateScheduleChangeStatus($_POST['req_id'], $_POST['status'], $this->currentUserId);
-                    $this->setFlash("Schedule change " . strtolower($_POST['status']), "success");
+                    $reqId = (int)$_POST['req_id'];
+                    $status = $_POST['status'];
+
+                    $gStmt = $this->model->getPdo()->prepare("SELECT emp_id, schedule_date, new_shift_code FROM schedule_change_requests WHERE id = ?");
+                    $gStmt->execute([$reqId]);
+                    $reqRow = $gStmt->fetch(PDO::FETCH_ASSOC);
+
+                    $this->model->updateScheduleChangeStatus($reqId, $status, $this->currentUserId);
+
+                    if ($reqRow && !empty($reqRow['emp_id'])) {
+                        \App\Services\NotificationService::notify(
+                            (int)$reqRow['emp_id'],
+                            \App\Services\NotificationTypes::SCHEDULE_APPROVED,
+                            "Schedule Change " . $status,
+                            "Your schedule change request for {$reqRow['schedule_date']} has been {$status}.",
+                            'changesched'
+                        );
+                    }
+                    $this->setFlash("Schedule change " . strtolower($status), "success");
                     break;
             }
         } catch (Exception $e) {

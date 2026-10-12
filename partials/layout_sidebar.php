@@ -85,6 +85,20 @@ $uri = $_SERVER['REQUEST_URI'];
                 <span>Employee Directory</span>
             </a>
 
+            <a href="<?php echo baseUrl('orgchart'); ?>"
+                class="nav-item <?php echo (strpos($uri, '/orgchart') !== false) ? 'active' : ''; ?>"
+                title="Organization Chart">
+                <div class="nav-ico"><i class="fa-solid fa-sitemap"></i></div>
+                <span>Org Chart</span>
+            </a>
+
+            <a href="<?php echo baseUrl('audit-logs'); ?>"
+                class="nav-item <?php echo (strpos($uri, '/audit-logs') !== false) ? 'active' : ''; ?>"
+                title="Audit Trail">
+                <div class="nav-ico"><i class="fa-solid fa-shield-halved"></i></div>
+                <span>Audit Trail</span>
+            </a>
+
             <div class="nav-item has-sub" onclick="this.nextElementSibling.classList.toggle('open')"
                 title="Payroll & Benefits">
                 <div class="nav-ico"><i class="fa-solid fa-coins"></i></div>

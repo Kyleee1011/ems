@@ -68,6 +68,30 @@ class PayslipController
         $selectedCutoff = $_GET['cutoff'] ?? $cutoffs[0]['val'];
         list($startDate, $endDate) = explode('|', $selectedCutoff);
 
+        // Batch Print Action (HR / CEO)
+        if (isset($_GET['action']) && $_GET['action'] === 'batch_print') {
+            if (!$isHr && (strcasecmp($userRole, 'CEO') !== 0)) {
+                header("Location: " . baseUrl('payslip'));
+                exit;
+            }
+            $this->handleBatchPrint($startDate, $endDate, $selectedCutoff);
+            return;
+        }
+
+        // Publish & Notify Action
+        if (isset($_POST['action']) && $_POST['action'] === 'publish_payroll') {
+            if (!\App\Utils\AppHelpers::validateCsrfToken($_POST['csrf_token'] ?? null)) {
+                $_SESSION['flash_message'] = "Invalid CSRF token.";
+                $_SESSION['flash_type'] = "error";
+            } elseif ($isHr) {
+                $count = $this->publishAndNotify($startDate, $endDate, $selectedCutoff);
+                $_SESSION['flash_message'] = "Payroll published! {$count} employees notified.";
+                $_SESSION['flash_type'] = "success";
+            }
+            header("Location: " . baseUrl('payslip?cutoff=' . urlencode($selectedCutoff)));
+            exit;
+        }
+
         // 3. Target Employee
         $targetAcNo = $myAcNo;
         if ($isHr && isset($_GET['search_ac']) && !empty($_GET['search_ac'])) {
@@ -77,7 +101,7 @@ class PayslipController
         // 4. Employee List for HR dropdown (This is UI-specific, so it can stay in the controller)
         $empList = [];
         if ($isHr) {
-            $stmt = $this->pdo->query("SELECT ac_no, first_name, last_name, job_title FROM employees ORDER BY last_name");
+            $stmt = $this->pdo->query("SELECT ac_no, first_name, last_name, job_title FROM employees WHERE IsActive = 1 ORDER BY last_name");
             $empList = $stmt->fetchAll(PDO::FETCH_ASSOC);
         }
 
@@ -172,5 +196,104 @@ class PayslipController
         return \App\Utils\AppHelpers::generateCutoffPeriods($this->pdo, null, null, 3, -2);
     }
 
+    private function handleBatchPrint(string $startDate, string $endDate, string $selectedCutoff): void
+    {
+        // 1. Fetch all active employees
+        $deptFilter = $_GET['dept'] ?? null;
+        $sql = "SELECT e.*, d.dept_name 
+                FROM employees e 
+                LEFT JOIN departments d ON e.dept_id = d.dept_id 
+                WHERE e.IsActive = 1 AND e.employee_status = 'Active'";
+        $params = [];
+        if (!empty($deptFilter)) {
+            $sql .= " AND e.dept_id = :dept_id";
+            $params[':dept_id'] = $deptFilter;
+        }
+        $sql .= " ORDER BY d.dept_name, e.last_name";
 
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute($params);
+        $employees = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        $payslips = [];
+        $startDay = (int)date('d', strtotime($startDate));
+        $cutoffPeriodType = ($startDay >= 23 || $startDay <= 7) ? 'sss' : 'phpi';
+
+        foreach ($employees as $emp) {
+            $acNo = $emp['ac_no'];
+            $empId = $emp['emp_id'];
+
+            $dtrData = $this->timecardModel->generateDtr($acNo, $startDate, $endDate);
+            $breakdown = $this->model->calculateBreakdown($emp, $startDate, $endDate, $dtrData);
+            $allowances = $this->model->getCalculatedAllowances($empId, $breakdown, $startDate);
+            $loans = $this->model->getActiveLoans($empId, $startDate);
+
+            $totalAllowance = array_sum(array_column($allowances, 'amount'));
+            $totalLoanDeductions = array_sum(array_column($loans, 'amount'));
+
+            $rawGross = $breakdown['pay_basic'] + $breakdown['pay_holiday'] + $breakdown['pay_overtime'] + 
+                        $breakdown['pay_nightdiff'] + $breakdown['credits_adj'] + $breakdown['tax_refund'] + $totalAllowance;
+            $grossPay = round($rawGross, 2);
+
+            $monthlyAllowances = $totalAllowance * 2;
+            $govDeductions = $this->model->calculateGovernmentDeductions((float)$emp['salary_rate'], $grossPay, $cutoffPeriodType, $monthlyAllowances);
+
+            $totalTardiness = round($breakdown['deduct_late'] + $breakdown['deduct_ut'] + ($breakdown['deduct_absent'] ?? 0), 2);
+            $totalGov = round(array_sum($govDeductions), 2);
+            $totalDeductions = round($totalGov + $totalTardiness + $totalLoanDeductions, 2);
+            $netPay = round($grossPay - $totalDeductions, 2);
+
+            $payslips[] = [
+                'employee'         => $emp,
+                'breakdown'        => $breakdown,
+                'allowances'       => $allowances,
+                'loans'            => $loans,
+                'gross_pay'        => $grossPay,
+                'gov_deductions'   => $govDeductions,
+                'total_deductions' => $totalDeductions,
+                'net_pay'          => $netPay
+            ];
+        }
+
+        // Log audit
+        \App\Services\AuditService::log(
+            \App\Services\AuditActions::PAYSLIP_BATCH_GENERATED,
+            'payslip_batch',
+            $selectedCutoff,
+            null,
+            ['count' => count($payslips), 'start' => $startDate, 'end' => $endDate]
+        );
+
+        // Render batch print view
+        require BASE_PATH . '/src/Views/payslip_batch_view.php';
+        exit;
+    }
+
+    private function publishAndNotify(string $startDate, string $endDate, string $selectedCutoff): int
+    {
+        $stmt = $this->pdo->query("SELECT emp_id, full_name FROM employees WHERE IsActive = 1 AND employee_status = 'Active'");
+        $emps = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        $notified = 0;
+        foreach ($emps as $e) {
+            $ok = \App\Services\NotificationService::notify(
+                (int)$e['emp_id'],
+                \App\Services\NotificationTypes::PAYSLIP_READY,
+                'Payslip Available',
+                "Your payslip for {$startDate} to {$endDate} is now available in your portal.",
+                'payslip?cutoff=' . urlencode($selectedCutoff)
+            );
+            if ($ok) $notified++;
+        }
+
+        \App\Services\AuditService::log(
+            \App\Services\AuditActions::PAYSLIP_PUBLISHED,
+            'payslip_cutoff',
+            $selectedCutoff,
+            null,
+            ['notified_employees' => $notified]
+        );
+
+        return $notified;
+    }
 }

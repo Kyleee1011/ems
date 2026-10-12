@@ -16,6 +16,11 @@ class Leave
         $this->pdo = $pdo;
     }
 
+    public function getPdo(): PDO
+    {
+        return $this->pdo;
+    }
+
     public function getCredits($empId) {
         $stmt = $this->pdo->prepare("SELECT sil_credits FROM employees WHERE emp_id = ?");
         $stmt->execute([$empId]);

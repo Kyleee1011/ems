@@ -108,9 +108,24 @@ $totalDeductionsRequested = $govTotal + $loanTotal;
         <h1 class="page-title"><i class="fa-solid fa-file-invoice-dollar"></i> Payslip Generator</h1>
         <p class="page-sub">Official statement of earnings and deductions</p>
     </div>
-    <div class="header-actions">
+    <div class="header-actions" style="display:flex; gap:10px; align-items:center;">
+        <?php if ($is_hr): ?>
+            <a href="<?php echo baseUrl('payslip?action=batch_print&cutoff=' . urlencode($sel_cutoff)); ?>" 
+               target="_blank" class="btn btn-secondary" style="font-size:12px; height:36px; padding:0 14px; display:inline-flex; align-items:center; gap:6px;">
+                <i class="fa-solid fa-file-pdf" style="color:var(--teal);"></i> Batch Print All (PDF)
+            </a>
+            
+            <form method="POST" action="<?php echo baseUrl('payslip?cutoff=' . urlencode($sel_cutoff)); ?>" style="display:inline;" onsubmit="return confirm('Notify all active employees that their payslips for this period are available?');">
+                <?= csrfField() ?>
+                <input type="hidden" name="action" value="publish_payroll">
+                <button type="submit" class="btn btn-ghost" style="font-size:12px; height:36px; padding:0 14px; display:inline-flex; align-items:center; gap:6px; border:1px solid var(--border-color, #ccc);">
+                    <i class="fa-solid fa-paper-plane" style="color:#007bff;"></i> Publish & Notify
+                </button>
+            </form>
+        <?php endif; ?>
+
         <?php if(!$access_denied): ?>
-        <button onclick="window.print()" class="btn-primary"><i class="fa-solid fa-print"></i> Print (A4)</button>
+        <button onclick="window.print()" class="btn-primary" style="height:36px; padding:0 16px;"><i class="fa-solid fa-print"></i> Print (A4)</button>
         <?php endif; ?>
     </div>
 </div>

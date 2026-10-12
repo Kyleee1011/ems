@@ -47,7 +47,16 @@ $dispatcher = FastRoute\simpleDispatcher(function(FastRoute\RouteCollector $r) {
     $r->addRoute('GET', '/login', ['App\Controllers\AuthController', 'showLoginForm']);
     $r->addRoute('POST', '/login', ['App\Controllers\AuthController', 'login']);
     $r->addRoute('GET', '/logout', function() {
-require_once dirname(__DIR__) . '/session_config.php';
+        require_once dirname(__DIR__) . '/session_config.php';
+        if (isset($_SESSION['user_id'])) {
+            \App\Services\AuditService::log(
+                \App\Services\AuditActions::LOGOUT,
+                'auth',
+                (string)$_SESSION['user_id'],
+                null,
+                ['ac_no' => $_SESSION['ac_no'] ?? null]
+            );
+        }
         session_destroy();
         $cookiePath = $_ENV['SESSION_COOKIE_PATH'] ?? '/';
         setcookie(session_name(), '', time() - 3600, $cookiePath);
@@ -92,8 +101,14 @@ require_once dirname(__DIR__) . '/session_config.php';
     $r->addRoute('GET', '/schedule', ['App\Controllers\ScheduleController', 'index']);
     $r->addRoute(['GET', 'POST'], '/schedule/api', ['App\Controllers\ScheduleController', 'handleApi']);
 
-    // Schedule routes (Using DashboardController or specific ScheduleController if strictly needed, but dashboard seems to handle global schedule)
-    //$r->addRoute(['GET', 'POST'], '/schedule', ['App\Controllers\DashboardController', 'index']); // Mapping to dashboard for now as schedule is part of it usually, or create ScheduleController later if needed.
+    // Notification routes
+    $r->addRoute(['GET', 'POST'], '/notifications', ['App\Controllers\NotificationController', 'index']);
+
+    // Organization Chart route
+    $r->addRoute(['GET', 'POST'], '/orgchart', ['App\Controllers\OrgChartController', 'index']);
+
+    // Audit Log routes
+    $r->addRoute(['GET', 'POST'], '/audit-logs', ['App\Controllers\AuditLogController', 'index']);
 });
 
 // Fetch method and URI from somewhere

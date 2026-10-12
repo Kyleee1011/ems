@@ -16,6 +16,10 @@
             <span>Dark</span>
         </button>
 
+        <?php if (isset($_SESSION['user_id'])): ?>
+            <?php require BASE_PATH . '/partials/notification_bell.php'; ?>
+        <?php endif; ?>
+
         <div class="user-pill" onclick="window.location.href='<?php echo baseUrl('home'); ?>'">
             <div class="avatar">
                 <?php 

@@ -216,19 +216,75 @@ require_once dirname(dirname(__DIR__)) . '/config_session.php';
                 'work_days_mode' => $getPost('work_days_mode', '6')
             ];
 
-            if($action=='add_employee') $this->employeeModel->addEmployee($d, $s, $p, $this->currentUser);
-            else $this->employeeModel->updateEmployee($emp_id, $d, $s, $p, $this->currentUser);
+            if ($action == 'add_employee') {
+                $newId = $this->employeeModel->addEmployee($d, $s, $p, $this->currentUser);
+                \App\Services\AuditService::log(
+                    \App\Services\AuditActions::EMPLOYEE_CREATED,
+                    'employee',
+                    (string)($newId ?: $ac_no),
+                    null,
+                    $d
+                );
+            } else {
+                $beforeDetails = null;
+                try {
+                    $beforeDetails = $this->employeeModel->getEmployeeFullDetails($emp_id);
+                } catch (\Throwable $t) {}
+
+                $this->employeeModel->updateEmployee($emp_id, $d, $s, $p, $this->currentUser);
+
+                \App\Services\AuditService::log(
+                    \App\Services\AuditActions::EMPLOYEE_UPDATED,
+                    'employee',
+                    (string)$emp_id,
+                    $beforeDetails ?: [],
+                    $d
+                );
+
+                // Notify the employee that their profile was updated
+                if (!empty($emp_id)) {
+                    \App\Services\NotificationService::notify(
+                        (int)$emp_id,
+                        \App\Services\NotificationTypes::PROFILE_UPDATED_BY_HR,
+                        'Profile Information Updated',
+                        'Your profile details have been updated by ' . htmlspecialchars($this->currentUser ?? 'HR') . '.',
+                        'employee'
+                    );
+                }
+            }
             $message = "Saved successfully!"; $messageType = "success";
         } elseif ($action == 'upload_document') {
             if (isset($_FILES['doc_file']) && $_FILES['doc_file']['error'] === UPLOAD_ERR_OK) {
                 $fp = FileUploadService::handleFileUpload($_FILES['doc_file'], $_POST['ac_no'].'_'.$_POST['doc_name'], 'documents');
-                if ($fp) { $this->employeeModel->uploadDocument($_POST['emp_id'], $_POST['doc_name'], $fp); $message = "Uploaded!"; $messageType = "success"; } else { $message = "Upload failed."; $messageType = "error"; }
+                if ($fp) { 
+                    $this->employeeModel->uploadDocument($_POST['emp_id'], $_POST['doc_name'], $fp); 
+                    \App\Services\AuditService::log(
+                        \App\Services\AuditActions::DOCUMENT_UPLOADED,
+                        'document',
+                        (string)$_POST['emp_id'],
+                        null,
+                        ['doc_name' => $_POST['doc_name'], 'file_path' => $fp]
+                    );
+                    $message = "Uploaded!"; $messageType = "success"; 
+                } else { $message = "Upload failed."; $messageType = "error"; }
             } else { $message = "No file."; $messageType = "error"; }
         } elseif (in_array($action, ['soft_delete', 'restore', 'hard_delete', 'delete_document'])) {
-            if($action=='delete_document') $this->employeeModel->deleteDocument($_POST['doc_id']);
-            if($action=='soft_delete') $this->employeeModel->softDeleteEmployee($_POST['emp_id']);
-            if($action=='restore') $this->employeeModel->restoreEmployee($_POST['emp_id']);
-            if($action=='hard_delete') $this->employeeModel->hardDeleteEmployee($_POST['emp_id']);
+            if($action=='delete_document') {
+                $this->employeeModel->deleteDocument($_POST['doc_id']);
+                \App\Services\AuditService::log(\App\Services\AuditActions::DOCUMENT_DELETED, 'document', (string)$_POST['doc_id']);
+            }
+            if($action=='soft_delete') {
+                $this->employeeModel->softDeleteEmployee($_POST['emp_id']);
+                \App\Services\AuditService::log(\App\Services\AuditActions::EMPLOYEE_DELETED, 'employee', (string)$_POST['emp_id']);
+            }
+            if($action=='restore') {
+                $this->employeeModel->restoreEmployee($_POST['emp_id']);
+                \App\Services\AuditService::log(\App\Services\AuditActions::EMPLOYEE_RESTORED, 'employee', (string)$_POST['emp_id']);
+            }
+            if($action=='hard_delete') {
+                $this->employeeModel->hardDeleteEmployee($_POST['emp_id']);
+                \App\Services\AuditService::log(\App\Services\AuditActions::EMPLOYEE_HARD_DELETED, 'employee', (string)$_POST['emp_id']);
+            }
             $message = "Action completed."; $messageType = "success";
         }
     }

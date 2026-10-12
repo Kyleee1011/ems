@@ -55,3 +55,7 @@ try {
 
 // Application is now ready
 // $pdo is available globally
+
+// Initialize Audit Service and Notification Service
+\App\Services\AuditService::init($pdo);
+\App\Services\NotificationService::init($pdo);

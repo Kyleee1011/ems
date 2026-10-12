@@ -414,7 +414,63 @@ require_once dirname(dirname(__DIR__)) . '/config_session.php';
                             }
                 
                             $actionLabel = ($new_status == 'Pending HR') ? 'Submitted' : $new_status;
-                            $this->logHistory($batch_id, $actionLabel, $this->currentUser['name'], $this->currentUser['role'], $comments);
+                            
+                            // Generate cryptographic verification seal for e-signature
+                            $sigHash = hash('sha256', "batch:{$batch_id}|actor:{$this->currentUser['id']}|status:{$new_status}|time:" . microtime(true));
+                            $shortSeal = strtoupper(substr($sigHash, 0, 12));
+                            $fullComment = $comments ? $comments . " [Seal: #{$shortSeal}]" : "[Verification Seal: #{$shortSeal}]";
+
+                            $this->logHistory($batch_id, $actionLabel, $this->currentUser['name'], $this->currentUser['role'], $fullComment);
+
+                            // Audit Log & Notifications
+                            $auditAction = \App\Services\AuditActions::SCHEDULE_SUBMITTED;
+                            if ($new_status === 'Approved') $auditAction = \App\Services\AuditActions::SCHEDULE_APPROVED;
+                            elseif ($new_status === 'Rejected') $auditAction = \App\Services\AuditActions::SCHEDULE_REJECTED;
+
+                            \App\Services\AuditService::log(
+                                $auditAction,
+                                'schedule_batch',
+                                (string)$batch_id,
+                                null,
+                                ['status' => $new_status, 'dept_id' => $dept_id, 'cutoff_start' => $start, 'cutoff_end' => $end, 'comments' => $comments]
+                            );
+
+                            if ($new_status === 'Pending HR') {
+                                \App\Services\NotificationService::notifyRole(
+                                    'HR',
+                                    \App\Services\NotificationTypes::SCHEDULE_SUBMITTED,
+                                    'Schedule Submitted for Approval',
+                                    "A department schedule for {$start} to {$end} was submitted by {$this->currentUser['name']}.",
+                                    'schedule'
+                                );
+                            } elseif ($new_status === 'Approved') {
+                                // Notify creator
+                                $cIdStmt = $this->pdo->prepare("SELECT created_by FROM schedule_batches WHERE batch_id = ?");
+                                $cIdStmt->execute([$batch_id]);
+                                $creatorId = $cIdStmt->fetchColumn();
+                                if ($creatorId) {
+                                    \App\Services\NotificationService::notify(
+                                        (int)$creatorId,
+                                        \App\Services\NotificationTypes::SCHEDULE_APPROVED,
+                                        'Schedule Approved',
+                                        "Your department schedule for {$start} to {$end} has been approved by HR.",
+                                        'schedule'
+                                    );
+                                }
+                            } elseif ($new_status === 'Rejected') {
+                                $cIdStmt = $this->pdo->prepare("SELECT created_by FROM schedule_batches WHERE batch_id = ?");
+                                $cIdStmt->execute([$batch_id]);
+                                $creatorId = $cIdStmt->fetchColumn();
+                                if ($creatorId) {
+                                    \App\Services\NotificationService::notify(
+                                        (int)$creatorId,
+                                        \App\Services\NotificationTypes::SCHEDULE_REJECTED,
+                                        'Schedule Returned / Rejected',
+                                        "Your department schedule for {$start} to {$end} was returned. Reason: {$comments}",
+                                        'schedule'
+                                    );
+                                }
+                            }
 
                             $this->pdo->commit();
                         } catch (\Exception $e) {

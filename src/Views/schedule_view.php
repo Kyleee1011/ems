@@ -475,7 +475,11 @@ function updateStatus(status) {
     if(status === 'Draft') msg = "WARNING: This will unlock the matrix and CLEAR any finalized entries for this period so you can resubmit. Continue?";
     
     if(!confirm(msg)) return;
-    const comments = prompt("Optional comments:");
+    const comments = prompt("Optional comments:") || '';
+
+    // Disable all action buttons to prevent duplicate submission
+    const $actionBtns = $('#workflow_actions button, #btn_submit, #btn_approve_hr');
+    $actionBtns.prop('disabled', true).css('opacity', '0.6');
 
     $.post('<?php echo baseUrl('schedule/api'); ?>', { 
         action: 'update_status', 
@@ -484,6 +488,7 @@ function updateStatus(status) {
         status: status,
         comments: comments
     }, function(res) { 
+        $actionBtns.prop('disabled', false).css('opacity', '1');
         if (typeof res === 'string') {
             try { res = JSON.parse(res); } catch(e) {}
         }
@@ -498,6 +503,7 @@ function updateStatus(status) {
             setTimeout(function() { switchTab('dashboard'); }, 1200);
         }
     }).fail(function() {
+        $actionBtns.prop('disabled', false).css('opacity', '1');
         showToast('Network error — status update failed. Please try again.', 'error');
     });
 }
