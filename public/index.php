@@ -104,8 +104,14 @@ $dispatcher = FastRoute\simpleDispatcher(function(FastRoute\RouteCollector $r) {
     // Notification routes
     $r->addRoute(['GET', 'POST'], '/notifications', ['App\Controllers\NotificationController', 'index']);
 
-    // Organization Chart route
+    // Organization Chart routes
     $r->addRoute(['GET', 'POST'], '/orgchart', ['App\Controllers\OrgChartController', 'index']);
+    $r->addRoute(['GET', 'POST'], '/org-chart', ['App\Controllers\OrgChartController', 'index']);
+    $r->addRoute('GET', '/orgchart/department/{dept_id:\d+}', ['App\Controllers\OrgChartController', 'departmentView']);
+    $r->addRoute('GET', '/org-chart/department/{dept_id:\d+}', ['App\Controllers\OrgChartController', 'departmentView']);
+    $r->addRoute('GET', '/orgchart/api/tree', ['App\Controllers\OrgChartController', 'apiTree']);
+    $r->addRoute('GET', '/orgchart/api/department/{dept_id:\d+}', ['App\Controllers\OrgChartController', 'apiDepartment']);
+    $r->addRoute('POST', '/orgchart/color', ['App\Controllers\OrgChartController', 'updateColor']);
 
     // Audit Log routes
     $r->addRoute(['GET', 'POST'], '/audit-logs', ['App\Controllers\AuditLogController', 'index']);

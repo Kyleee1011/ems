@@ -182,6 +182,30 @@ class Employee
                 $data['hourly_rate'] = $data['hourly_rate'] ?: $rates['hourly'];
             }
 
+            // Auto-assign supervisor_id for organizational chart if not explicitly provided
+            if (empty($data['supervisor_id'])) {
+                $role = $data['approval_role'] ?? 'Employee';
+                if ($role === 'CEO') {
+                    $data['supervisor_id'] = null;
+                } elseif (in_array($role, ['DeptHead', 'Dept Head'])) {
+                    $ceoStmt = $this->pdo->query("SELECT emp_id FROM employees WHERE IsActive = 1 AND employee_status = 'Active' AND (approval_role = 'CEO' OR dept_id = 10) LIMIT 1");
+                    $data['supervisor_id'] = $ceoStmt->fetchColumn() ?: null;
+                } else {
+                    $deptId = $data['dept_id'] ?? null;
+                    if ($deptId) {
+                        $headStmt = $this->pdo->prepare("SELECT emp_id FROM employees WHERE dept_id = ? AND IsActive = 1 AND employee_status = 'Active' AND approval_role IN ('DeptHead', 'Dept Head') ORDER BY emp_id ASC LIMIT 1");
+                        $headStmt->execute([$deptId]);
+                        $headId = $headStmt->fetchColumn();
+                        if ($headId) {
+                            $data['supervisor_id'] = (int)$headId;
+                        } else {
+                            $ceoStmt = $this->pdo->query("SELECT emp_id FROM employees WHERE IsActive = 1 AND employee_status = 'Active' AND (approval_role = 'CEO' OR dept_id = 10) LIMIT 1");
+                            $data['supervisor_id'] = $ceoStmt->fetchColumn() ?: null;
+                        }
+                    }
+                }
+            }
+
             $sql = "INSERT INTO employees (
                 ac_no, last_name, first_name, middle_name, date_of_birth, gender,
                 address, contact_number, email_address, civil_status, nationality,

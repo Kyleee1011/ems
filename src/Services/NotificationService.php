@@ -94,9 +94,9 @@ class NotificationService
             if (!$pdo) return 0;
 
             $sql = "SELECT emp_id FROM employees 
-                    WHERE (approval_role = :role OR (:role = 'HR' AND dept_id = 5))
+                    WHERE (approval_role = :role1 OR (:role2 = 'HR' AND dept_id = 5))
                       AND IsActive = 1 AND employee_status = 'Active'";
-            $params = [':role' => $role];
+            $params = [':role1' => $role, ':role2' => $role];
 
             if ($deptId !== null) {
                 $sql .= " AND dept_id = :dept_id";

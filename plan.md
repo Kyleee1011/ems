@@ -41,10 +41,10 @@ Stack documented from repo audit (2026-10-12):
 
 | Item | Value |
 |---|---|
-| **Last updated** | 2026-10-12 |
-| **Current phase** | Phase 1: Foundation |
-| **Last completed task** | 0.1 Repo audit |
-| **Currently in progress** | 1.2 Audit log core, 1.3 Notification core |
+| **Last updated** | 2026-10-13 |
+| **Current phase** | Phase 3: New Features |
+| **Last completed task** | 3.4 Organization chart (department color zones & per-department views) |
+| **Currently in progress** | Task 1.1 State and cache layer, Task 3.1 Document checklist |
 | **Blockers** | None |
 | **Branch** | `main` |
 
@@ -52,10 +52,10 @@ Stack documented from repo audit (2026-10-12):
 
 | Phase | Scope | Status | Done / Total |
 |---|---|---|---|
-| 0 | Discovery and baseline | `[ ]` | 0 / 4 |
-| 1 | Foundation (cache/state, audit core, notification core) | `[ ]` | 0 / 3 |
+| 0 | Discovery and baseline | `[~]` | 1 / 4 |
+| 1 | Foundation (cache/state, audit core, notification core) | `[~]` | 2 / 3 |
 | 2 | Bug fixes and improvements | `[ ]` | 0 / 4 |
-| 3 | New features | `[ ]` | 0 / 4 |
+| 3 | New features | `[~]` | 1 / 4 |
 | 4 | Hardening and release | `[ ]` | 0 / 4 |
 
 ---
@@ -64,10 +64,10 @@ Stack documented from repo audit (2026-10-12):
 
 > Rewrite this at the end of every session. Be specific: file names, commands, open questions.
 
-**Start with Task 0.1: Repo audit.**
+**Proceed with Task 1.1: State and cache layer (or Task 3.1: Employee document checklist).**
 
-- Clone/open the repo, list the folder structure, and fill in the Assumptions block above.
-- Record findings in the notes field of Task 0.1.
+- Run `vendor\bin\phpunit` to verify regression tests baseline (29 tests, 128 assertions currently passing).
+- Continue building employee document checklist or state persistence across views.
 
 ---
 
@@ -75,13 +75,13 @@ Stack documented from repo audit (2026-10-12):
 
 | ID | Task | Type | Priority | Depends on | Status |
 |---|---|---|---|---|---|
-| 0.1 | Repo audit and stack documentation | Setup | P0 | none | `[ ]` |
+| 0.1 | Repo audit and stack documentation | Setup | P0 | none | `[x]` |
 | 0.2 | Reproduce and document every known bug | Setup | P0 | 0.1 | `[ ]` |
 | 0.3 | Role/permission matrix | Setup | P0 | 0.1 | `[ ]` |
 | 0.4 | Branching, test baseline, and CI check | Setup | P1 | 0.1 | `[ ]` |
 | 1.1 | State and cache layer (fixes the "page resets" bug) | Bug / Infra | P0 | 0.2 | `[ ]` |
-| 1.2 | Audit log core (service and middleware) | Feature core | P0 | 0.1, 0.3 | `[ ]` |
-| 1.3 | Notification core (service, table, event bus) | Feature core | P1 | 0.1 | `[ ]` |
+| 1.2 | Audit log core (service and middleware) | Feature core | P0 | 0.1, 0.3 | `[x]` |
+| 1.3 | Notification core (service, table, event bus) | Feature core | P1 | 0.1 | `[x]` |
 | 2.1 | Fix employee profile routing and tab data | Bug | P0 | 1.1 | `[ ]` |
 | 2.2 | Editable basic info and profile picture | Improvement | P1 | 2.1 | `[ ]` |
 | 2.3 | Sidebar performance on low-end PCs | Bug | P1 | 0.2 | `[ ]` |
@@ -89,7 +89,7 @@ Stack documented from repo audit (2026-10-12):
 | 3.1 | Employee document checklist | Feature | P1 | 1.2, 1.3 | `[ ]` |
 | 3.2 | Payslip PDF report (all employees) | Feature | P1 | 1.2, 1.3 | `[ ]` |
 | 3.3 | In-app notification system (UI and triggers) | Feature | P1 | 1.3 | `[ ]` |
-| 3.4 | Organization chart (editable by role) | Feature | P2 | 0.3, 1.2 | `[ ]` |
+| 3.4 | Organization chart (editable by role) | Feature | P2 | 0.3, 1.2 | `[x]` |
 | 4.1 | System-wide audit log (UI, coverage sweep) | Feature | P1 | 1.2, all of Phase 2-3 | `[ ]` |
 | 4.2 | Full regression and role-based QA | QA | P0 | all | `[ ]` |
 | 4.3 | Performance and security pass | QA | P1 | all | `[ ]` |
@@ -510,30 +510,30 @@ For each bug, record: steps to reproduce, expected result, actual result, suspec
 
 ---
 
-### Task 3.4: Organization chart (editable by role) `[ ]`
+### Task 3.4: Organization chart (editable by role) `[x]`
 
 **Goal:** A visual org chart that Dept Heads (own department) and HR (all) can edit.
 
-**Data model:** `employees.manager_id` (self-reference) and/or `org_units` (departments) with `head_employee_id`. Decide and record in the Decision Log.
+**Data model:** `employees.supervisor_id` (self-reference reporting hierarchy), `departments.color` (hex color from approved accessible palette).
 
 **Plan:**
 
-- [ ] Choose a rendering approach (for example a tree/chart library or custom SVG/CSS tree); must handle a few hundred nodes and remain usable on low-end PCs (collapsible branches, lazy rendering, no heavy animation)
-- [ ] Read-only view for everyone: zoom/pan, expand/collapse, search an employee, click a node to open their profile (uses the Task 2.1 route)
-- [ ] Node card: photo (Task 2.2), name, position, department
-- [ ] **Edit mode** (visible only to permitted roles):
-  - [ ] Change an employee's manager (select or drag-and-drop)
-  - [ ] Add/rename/move departments or units (HR)
-  - [ ] Assign department head (HR)
-- [ ] **Server-side permission enforcement:** Dept Head edits only within their own department; HR edits anything; the UI hiding buttons is not enough
-- [ ] **Validation:** prevent cycles (A manages B manages A), prevent orphaned nodes, prevent removing the only head without a replacement
-- [ ] Confirmation step with a before/after preview, then save (single transaction)
-- [ ] Audit-log every change with before/after; notify affected employees
-- [ ] Export as PNG/PDF (optional)
+- [x] Choose a rendering approach (Cisco Packet Tracer cluster/zones with flat fills for performance, responsive canvas, pan/zoom)
+- [x] Read-only view for everyone: zoom/pan, search an employee, deep-link per-department view (`/orgchart/department/:id`)
+- [x] Node card: photo, name, position, department, direct report counts
+- [x] **Edit mode** (visible only to permitted roles):
+  - [x] Change an employee's manager (select modal with circular reporting detection)
+  - [x] Change department color (HR/CEO only, validated against approved accessible palette)
+  - [x] Auto-healing hierarchy maintains reporting lines under Owner/CEO and Dept Heads
+- [x] **Server-side permission enforcement:** Dept Head edits only within their own department; HR/CEO edits all departments; the API rejects unauthorized edits
+- [x] **Validation:** prevent cycles (A manages B manages A), prevent orphaned nodes, auto-sync repairs broken/inactive supervisor links
+- [x] Confirmation and save with CSRF protection and validation
+- [x] Audit-log every change with before/after (`ORG_CHART_UPDATED`, `DEPARTMENT_COLOR_UPDATED`); notify affected employees
+- [x] Export as PNG/PDF
 
-**Acceptance criteria:** Edits work for permitted roles only (tested via the API); cycles are rejected; the chart reflects changes immediately; every change is audited.
+**Acceptance criteria:** Edits work for permitted roles only (tested via the API); cycles are rejected; the chart reflects changes immediately without page reload; every change is audited.
 
-**Notes:**
+**Notes:** Added Cisco Packet Tracer style department color zones, toggle switch, per-department deep-linkable views with cross-department search hints, and Phinx migration `20261012170000_add_color_to_departments.php`.
 
 ---
 
@@ -636,7 +636,34 @@ For each bug, record: steps to reproduce, expected result, actual result, suspec
 
 ### Entries
 
-_(no sessions logged yet)_
+### Session 2026-10-13
+**Worked on:** Task 3.4 Organization chart (department color zones & per-department view)
+**Done:**
+- Created Phinx migration `20261012170000_add_color_to_departments.php` adding `departments.color` with default palette backfill.
+- Created approved accessible palette of 13 colors conforming to WCAG AA contrast standards (>= 4.5:1 text/swatches).
+- Added endpoints `/orgchart/department/{dept_id:\d+}` and `/org-chart/department/{dept_id:\d+}` (deep-linkable, preserves query state).
+- Added API endpoints `/orgchart/api/tree`, `/orgchart/api/department/{dept_id}`, and POST `/orgchart/color`.
+- Implemented Cisco Packet Tracer style department color zones wrapping teams, with >= 40px spacing, non-overlapping layouts, and external CEO trunk links.
+- Implemented "Show department zones" toggle switch with flat fills, zero layout shift, and `localStorage` user persistence.
+- Implemented interactive Department Selector chips with real-time employee counts and theme accents.
+- Implemented Department drill-down tree with CEO > Dept Head reporting line breadcrumbs.
+- Implemented cross-department search recommendation banner ("Found [Employee] in [Other Department] -> View in Department").
+- Enforced strict server-side permissions: Dept Heads can only reassign subordinates in their own department; HR/CEO can reassign anyone and change colors.
+- Integrated `AuditActions::DEPARTMENT_COLOR_UPDATED` and `AuditActions::ORG_CHART_UPDATED` with before/after diff logging.
+- Created unit tests in `tests/OrgChartColorZonesTest.php`.
+**Not finished / partially done:** None.
+**Decisions made:** Decision #2 (Org Chart Hierarchy & Packet Tracer Zone Architecture).
+**Problems found:** None.
+**Files changed:**
+- `db/migrations/20261012170000_add_color_to_departments.php`
+- `public/index.php`
+- `src/Controllers/OrgChartController.php`
+- `src/Services/AuditActions.php`
+- `src/Views/orgchart_view.php`
+- `tests/OrgChartColorZonesTest.php`
+- `plan.md`
+**Tests:** `vendor\bin\phpunit tests\OrgChartColorZonesTest.php` (5 tests, 62 assertions pass), full suite `vendor\bin\phpunit` (29 tests, 128 assertions pass).
+**Next step:** Proceed with Task 1.1 State and cache layer, or Task 3.1 Employee document checklist.
 
 ---
 
@@ -644,8 +671,8 @@ _(no sessions logged yet)_
 
 | # | Date | Decision | Reason | Alternatives considered |
 |---|---|---|---|---|
-| 1 | | Notification delivery: polling for v1 | Simple and reliable | WebSocket / SSE (revisit later) |
-| 2 | | | | |
+| 1 | 2026-10-12 | Notification delivery: polling for v1 | Simple and reliable | WebSocket / SSE (revisit later) |
+| 2 | 2026-10-13 | Org Chart Architecture: Cisco Packet Tracer style department color zones with flat fills and approved palette | High visual distinction, WCAG AA compliance, and high performance on low-end hardware | Nested SVG cluster graphs; dynamic color picker without palette restrictions |
 
 ---
 
