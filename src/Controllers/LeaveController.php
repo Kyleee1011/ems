@@ -118,7 +118,16 @@ class LeaveController
     {
         $this->loadSharedData();
         
-        $deptEmployees = $this->isManager ? $this->model->getEmployeesByDept($this->userDept) : [];
+        if ($this->isManager) {
+            $deptEmployees = $this->userDept ? $this->model->getEmployeesByDept($this->userDept) : [];
+            if (empty($deptEmployees)) {
+                $stmt = $this->model->getPdo()->query("SELECT emp_id, first_name, last_name FROM employees WHERE employee_status = 'Active' ORDER BY last_name ASC");
+                $deptEmployees = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            }
+        } else {
+            $deptEmployees = [];
+        }
+
         $overtimes = $this->model->getOvertimeHistory($this->isManager ? null : $this->currentUserId, $this->isManager ? $this->userDept : null);
         $hrOts = $this->isHr ? $this->model->getPendingOvertimes() : [];
 
@@ -256,28 +265,61 @@ class LeaveController
 
                 case 'apply_ot':
                     $redirect = 'overtime';
-                    if (!$this->isManager) throw new Exception("Unauthorized.");
-                    $emps = isset($_POST['ot_employees']) ? array_unique($_POST['ot_employees']) : [];
-                    if (empty($emps)) throw new Exception("Select employees.");
-                    
-                    $res = $this->model->applyOvertime($emps, $_POST['ot_date'], $_POST['ot_hours'], $_POST['reason']);
+                    $otDate = trim($_POST['ot_date'] ?? '');
+                    $otHours = (float)($_POST['ot_hours'] ?? 0);
+                    $reason = trim($_POST['reason'] ?? '');
+
+                    if (empty($otDate)) throw new Exception("Work date is required.");
+                    if ($otHours <= 0) throw new Exception("Overtime hours must be greater than zero.");
+                    if ($otHours > 16) throw new Exception("Overtime hours cannot exceed 16 hours in a single day.");
+                    if (empty($reason)) throw new Exception("Reason / task details are required.");
+
+                    if ($this->isManager) {
+                        $emps = isset($_POST['ot_employees']) ? array_values(array_filter(array_unique((array)$_POST['ot_employees']))) : [];
+                        if (empty($emps)) {
+                            // If manager did not pick anyone, default to self
+                            $emps = [$this->currentUserId];
+                        }
+                    } else {
+                        // Regular employee applying for themselves
+                        $emps = [$this->currentUserId];
+                    }
+
+                    $res = $this->model->applyOvertime($emps, $otDate, $otHours, $reason);
+
                     \App\Services\AuditService::log(
                         \App\Services\AuditActions::OVERTIME_APPLIED,
                         'overtime',
                         null,
                         null,
-                        ['employees' => $emps, 'ot_date' => $_POST['ot_date'], 'ot_hours' => $_POST['ot_hours'], 'reason' => $_POST['reason']]
+                        ['employees' => $emps, 'ot_date' => $otDate, 'ot_hours' => $otHours, 'reason' => $reason]
                     );
-                    \App\Services\NotificationService::notifyRole(
-                        'HR',
-                        \App\Services\NotificationTypes::OVERTIME_APPLIED,
-                        'Overtime Application Submitted',
-                        "Overtime for {$res['added']} employee(s) on {$_POST['ot_date']} was submitted by " . ($_SESSION['full_name'] ?? 'Supervisor') . ".",
-                        'overtime'
-                    );
-                    $msg = "Overtime submitted for {$res['added']} employee(s).";
-                    if ($res['dupes'] > 0) $msg .= " Skipped {$res['dupes']} duplicates.";
-                    $this->setFlash($msg, $res['dupes'] > 0 ? "warning" : "success");
+
+                    $applicantName = $_SESSION['full_name'] ?? 'Employee';
+                    if (count($emps) === 1 && $emps[0] == $this->currentUserId) {
+                        if ($res['added'] === 0 && $res['dupes'] > 0) {
+                            throw new Exception("You already have a pending or approved overtime request for {$otDate}.");
+                        }
+                        \App\Services\NotificationService::notifyRole(
+                            'HR',
+                            \App\Services\NotificationTypes::OVERTIME_APPLIED,
+                            'Overtime Application Submitted',
+                            "{$applicantName} submitted an overtime request for {$otDate} ({$otHours} hrs).",
+                            'overtime'
+                        );
+                        $this->setFlash("Overtime request for {$otDate} ({$otHours} hrs) submitted successfully!", "success");
+                    } else {
+                        \App\Services\NotificationService::notifyRole(
+                            'HR',
+                            \App\Services\NotificationTypes::OVERTIME_APPLIED,
+                            'Overtime Application Submitted',
+                            "Overtime for {$res['added']} employee(s) on {$otDate} was submitted by {$applicantName}.",
+                            'overtime'
+                        );
+                        $msg = "Overtime submitted for {$res['added']} employee(s).";
+                        if ($res['dupes'] > 0) $msg .= " Skipped {$res['dupes']} duplicate(s).";
+                        $this->setFlash($msg, $res['dupes'] > 0 ? "warning" : "success");
+                    }
                     break;
 
                 case 'apply_change_sched':

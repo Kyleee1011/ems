@@ -170,14 +170,18 @@ class Timecard
             'special_holiday_ot_hrs'       => 0,
             'double_holiday_hrs'           => 0,
             'double_holiday_ot_hrs'        => 0,
+            'rest_day_regular_holiday_hrs' => 0,
+            'rest_day_regular_holiday_ot_hrs' => 0,
+            'rest_day_special_holiday_hrs' => 0,
+            'rest_day_special_holiday_ot_hrs' => 0,
+            'rest_day_double_holiday_hrs'  => 0,
+            'rest_day_double_holiday_ot_hrs' => 0,
             'nd_regular_holiday_hrs'       => 0,
             'nd_special_holiday_hrs'       => 0,
             'nd_double_holiday_hrs'        => 0,
             'nd_rest_day_hrs'              => 0,
             'nd_rest_day_regular_holiday_hrs' => 0,
             'nd_rest_day_special_holiday_hrs' => 0,
-            'rest_day_regular_holiday_hrs' => 0,
-            'rest_day_special_holiday_hrs' => 0,
             'day_type'                     => 'REGULAR_DAY',
             'is_rest_day'                  => false,
         ];
@@ -201,14 +205,17 @@ class Timecard
         // Determine which bucket to place hours in
         if ($isRestDay && $dayType !== HolidayCalculator::DAY_TYPE_ORDINARY) {
             // Rest day + holiday combo
-            $key = match($dayType) {
-                HolidayCalculator::DAY_TYPE_REGULAR_HOLIDAY => 'rest_day_regular_holiday',
-                HolidayCalculator::DAY_TYPE_SPECIAL_HOLIDAY => 'rest_day_special_holiday',
-                default => 'rest_day',
-            };
-            $cls[$key . '_hrs'] = round($regularHours, 2);
-            if ($otHours > 0) {
-                // OT goes to rest_day_ot for combined scenarios
+            if ($dayType === HolidayCalculator::DAY_TYPE_REGULAR_HOLIDAY) {
+                $cls['rest_day_regular_holiday_hrs'] = round($regularHours, 2);
+                $cls['rest_day_regular_holiday_ot_hrs'] = round($otHours, 2);
+            } elseif ($dayType === HolidayCalculator::DAY_TYPE_SPECIAL_HOLIDAY) {
+                $cls['rest_day_special_holiday_hrs'] = round($regularHours, 2);
+                $cls['rest_day_special_holiday_ot_hrs'] = round($otHours, 2);
+            } elseif ($dayType === HolidayCalculator::DAY_TYPE_DOUBLE_HOLIDAY) {
+                $cls['rest_day_double_holiday_hrs'] = round($regularHours, 2);
+                $cls['rest_day_double_holiday_ot_hrs'] = round($otHours, 2);
+            } else {
+                $cls['rest_day_hrs'] = round($regularHours, 2);
                 $cls['rest_day_ot_hrs'] = round($otHours, 2);
             }
         } elseif ($isRestDay) {
@@ -331,15 +338,21 @@ class Timecard
             $segReg = round($segTotal - $segOt, 2);
             $segND = $seg['night_hours'];
 
-            // Map to buckets (Simplified version of classifyHours logic)
+            // Map to buckets (Matching classifyHours logic)
             if ($isRestDay && $dayType !== HolidayCalculator::DAY_TYPE_ORDINARY) {
-                $key = match($dayType) {
-                    HolidayCalculator::DAY_TYPE_REGULAR_HOLIDAY => 'rest_day_regular_holiday',
-                    HolidayCalculator::DAY_TYPE_SPECIAL_HOLIDAY => 'rest_day_special_holiday',
-                    default => 'rest_day',
-                };
-                $merged[$key . '_hrs'] += $segReg;
-                $merged['rest_day_ot_hrs'] += $segOt;
+                if ($dayType === HolidayCalculator::DAY_TYPE_REGULAR_HOLIDAY) {
+                    $merged['rest_day_regular_holiday_hrs'] += $segReg;
+                    $merged['rest_day_regular_holiday_ot_hrs'] += $segOt;
+                } elseif ($dayType === HolidayCalculator::DAY_TYPE_SPECIAL_HOLIDAY) {
+                    $merged['rest_day_special_holiday_hrs'] += $segReg;
+                    $merged['rest_day_special_holiday_ot_hrs'] += $segOt;
+                } elseif ($dayType === HolidayCalculator::DAY_TYPE_DOUBLE_HOLIDAY) {
+                    $merged['rest_day_double_holiday_hrs'] += $segReg;
+                    $merged['rest_day_double_holiday_ot_hrs'] += $segOt;
+                } else {
+                    $merged['rest_day_hrs'] += $segReg;
+                    $merged['rest_day_ot_hrs'] += $segOt;
+                }
             } elseif ($isRestDay) {
                 $merged['rest_day_hrs'] += $segReg;
                 $merged['rest_day_ot_hrs'] += $segOt;
@@ -594,6 +607,28 @@ class Timecard
                         $totalPaid = $paidBase + (float)$day['ot_hours'];
                         
                         $day['hours'] = number_format($totalPaid, 2);
+                    } else {
+                        // OFF day / Rest Day / Holiday Off work
+                        $rawGross = ($tsOut - $tsIn) / 3600;
+                        $maxApprovedOT = $approvedOT[$dStr] ?? 0;
+
+                        // 1 hour break for shifts > 5 hours
+                        $breakHrs = ($rawGross > 5) ? 1.0 : 0.0;
+                        $netWorkHours = max(0, $rawGross - $breakHrs);
+
+                        // Under labor code, first 8 hours on rest day/holiday are regular hours for that day.
+                        // Work beyond 8 hours is overtime.
+                        if ($netWorkHours > 8.0) {
+                            $rawOT = $netWorkHours - 8.0;
+                            $appliedOT = ($maxApprovedOT > 0) ? min($rawOT, $maxApprovedOT) : 0;
+                            $day['ot_hours'] = number_format($appliedOT, 2);
+                            $day['ot_status'] = ($maxApprovedOT > 0) ? 'approved' : 'unapproved';
+                        } else {
+                            $day['ot_hours'] = 0;
+                            $day['ot_status'] = 'none';
+                        }
+
+                        $day['hours'] = number_format($rawGross, 2);
                     }
 
                     // ---------------------------------------------------------

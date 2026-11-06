@@ -454,7 +454,8 @@ class Leave
              $stmt = $this->pdo->prepare($sql);
              $stmt->execute([$deptId]);
         } else {
-             $stmt = $this->pdo->prepare("SELECT * FROM overtime_applications WHERE emp_id = ? ORDER BY created_at DESC");
+             $sql = "SELECT ot.*, e.first_name, e.last_name FROM overtime_applications ot JOIN employees e ON ot.emp_id = e.emp_id WHERE ot.emp_id = ? ORDER BY ot.created_at DESC";
+             $stmt = $this->pdo->prepare($sql);
              $stmt->execute([$empId]);
         }
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -471,16 +472,7 @@ class Leave
             $stmt = $this->pdo->prepare($sql);
             $stmt->execute([$status, $approverId, $otId]);
 
-            if ($stmt->rowCount() > 0 && $status === 'Approved') {
-                $getOT = $this->pdo->prepare("SELECT ot.ot_date, ot.ot_hours, e.ac_no FROM overtime_applications ot JOIN employees e ON ot.emp_id = e.emp_id WHERE ot.ot_id = ?");
-                $getOT->execute([$otId]);
-                $otData = $getOT->fetch(PDO::FETCH_ASSOC);
-
-                if ($otData) {
-                    $minutes = (int)((float)$otData['ot_hours'] * 60);
-                    $this->pdo->prepare("UPDATE finalized_schedule SET time_out = ADDTIME(time_out, SEC_TO_TIME(? * 60)) WHERE ac_no = ? AND schedule_date = ? AND time_out IS NOT NULL")->execute([$minutes, $otData['ac_no'], $otData['ot_date']]);
-                }
-            } elseif ($stmt->rowCount() == 0) {
+            if ($stmt->rowCount() == 0) {
                 if ($this->pdo->inTransaction()) $this->pdo->rollBack();
                 throw new Exception("Request already processed.");
             }

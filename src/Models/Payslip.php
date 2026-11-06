@@ -323,7 +323,7 @@ class Payslip
                 
                 // 2. OVERTIME (Ordinary)
                 $breakdown['hrs_reg_ot'] += $day['regular_ot_hrs'];
-                $breakdown['pay_reg_ot'] += $day['regular_ot_hrs'] * $hourly_rate * 1.25;
+                $breakdown['pay_reg_ot'] += $this->overtimeCalculator->calculate($day['regular_ot_hrs'], $hourly_rate, HolidayCalculator::DAY_TYPE_ORDINARY, false);
                 
                 $breakdown['hrs_nd'] += $day['nd_ot_hrs'];
                 $breakdown['pay_nd'] += $day['nd_ot_hrs'] * $hourly_rate * 1.25 * 0.10;
@@ -333,14 +333,14 @@ class Payslip
                 $breakdown['pay_rd'] += $day['rest_day_hrs'] * $hourly_rate * (1.3 - $holidaySubtrahend);
                 
                 $breakdown['hrs_rd_sh_ot'] += $day['rest_day_ot_hrs'];
-                $breakdown['pay_rd_sh_ot'] += $day['rest_day_ot_hrs'] * $hourly_rate * 1.69;
+                $breakdown['pay_rd_sh_ot'] += $this->overtimeCalculator->calculate($day['rest_day_ot_hrs'], $hourly_rate, HolidayCalculator::DAY_TYPE_ORDINARY, true); // 1.69
 
                 // 4. REGULAR HOLIDAY (Multiplier 2.0)
                 $breakdown['hrs_rh'] += $day['regular_holiday_hrs'];
                 $breakdown['pay_rh'] += $day['regular_holiday_hrs'] * $hourly_rate * (2.0 - $holidaySubtrahend);
                 
                 $breakdown['hrs_rh_ot'] += $day['regular_holiday_ot_hrs'];
-                $breakdown['pay_rh_ot'] += $day['regular_holiday_ot_hrs'] * $hourly_rate * 2.60;
+                $breakdown['pay_rh_ot'] += $this->overtimeCalculator->calculate($day['regular_holiday_ot_hrs'], $hourly_rate, HolidayCalculator::DAY_TYPE_REGULAR_HOLIDAY, false); // 2.60
                 
                 $breakdown['hrs_rh_nd'] += $day['nd_regular_holiday_hrs'];
                 $breakdown['pay_rh_nd'] += $day['nd_regular_holiday_hrs'] * $hourly_rate * 2.0 * 0.10;
@@ -350,7 +350,7 @@ class Payslip
                 $breakdown['pay_sh'] += $day['special_holiday_hrs'] * $hourly_rate * (1.3 - $holidaySubtrahend);
                 
                 $breakdown['hrs_rd_sh_ot'] += $day['special_holiday_ot_hrs'];
-                $breakdown['pay_rd_sh_ot'] += $day['special_holiday_ot_hrs'] * $hourly_rate * 1.69;
+                $breakdown['pay_rd_sh_ot'] += $this->overtimeCalculator->calculate($day['special_holiday_ot_hrs'], $hourly_rate, HolidayCalculator::DAY_TYPE_SPECIAL_HOLIDAY, false); // 1.69
                 
                 $breakdown['hrs_sh_nd'] += $day['nd_special_holiday_hrs'];
                 $breakdown['pay_sh_nd'] += $day['nd_special_holiday_hrs'] * $hourly_rate * 1.3 * 0.10;
@@ -360,7 +360,7 @@ class Payslip
                 $breakdown['pay_rh'] += $day['double_holiday_hrs'] * $hourly_rate * (3.0 - $holidaySubtrahend);
                 
                 $breakdown['hrs_rh_ot'] += $day['double_holiday_ot_hrs'];
-                $breakdown['pay_rh_ot'] += $day['double_holiday_ot_hrs'] * $hourly_rate * 3.90;
+                $breakdown['pay_rh_ot'] += $this->overtimeCalculator->calculate($day['double_holiday_ot_hrs'], $hourly_rate, HolidayCalculator::DAY_TYPE_DOUBLE_HOLIDAY, false); // 3.90
                 
                 $breakdown['hrs_rh_nd'] += $day['nd_double_holiday_hrs'];
                 $breakdown['pay_rh_nd'] += $day['nd_double_holiday_hrs'] * $hourly_rate * 3.0 * 0.10;
@@ -369,12 +369,29 @@ class Payslip
                 $breakdown['hrs_rh'] += $day['rest_day_regular_holiday_hrs'];
                 $breakdown['pay_rh'] += $day['rest_day_regular_holiday_hrs'] * $hourly_rate * (2.6 - $holidaySubtrahend);
                 
+                // Rest Day + Regular Holiday OT (Multiplier 3.38)
+                $rdRhOt = (float)($day['rest_day_regular_holiday_ot_hrs'] ?? 0);
+                $breakdown['hrs_rh_ot'] += $rdRhOt;
+                $breakdown['pay_rh_ot'] += $this->overtimeCalculator->calculate($rdRhOt, $hourly_rate, HolidayCalculator::DAY_TYPE_REGULAR_HOLIDAY, true); // 3.38
+
                 $breakdown['hrs_rd_rh_nd'] += $day['nd_rest_day_regular_holiday_hrs'];
                 $breakdown['pay_rd_rh_nd'] += $day['nd_rest_day_regular_holiday_hrs'] * $hourly_rate * 2.6 * 0.10;
                 
                 // 8. REST DAY + SPECIAL HOLIDAY (Multiplier 1.5)
                 $breakdown['hrs_rd_sh'] += $day['rest_day_special_holiday_hrs'];
                 $breakdown['pay_rd_sh'] += $day['rest_day_special_holiday_hrs'] * $hourly_rate * (1.5 - $holidaySubtrahend);
+
+                // Rest Day + Special Holiday OT (Multiplier 1.95)
+                $rdShOt = (float)($day['rest_day_special_holiday_ot_hrs'] ?? 0);
+                $breakdown['hrs_rd_sh_ot'] += $rdShOt;
+                $breakdown['pay_rd_sh_ot'] += $this->overtimeCalculator->calculate($rdShOt, $hourly_rate, HolidayCalculator::DAY_TYPE_SPECIAL_HOLIDAY, true); // 1.95
+
+                // Rest Day + Double Holiday OT (Multiplier 5.07)
+                $rdDhOt = (float)($day['rest_day_double_holiday_ot_hrs'] ?? 0);
+                if ($rdDhOt > 0) {
+                    $breakdown['hrs_rh_ot'] += $rdDhOt;
+                    $breakdown['pay_rh_ot'] += $this->overtimeCalculator->calculate($rdDhOt, $hourly_rate, HolidayCalculator::DAY_TYPE_DOUBLE_HOLIDAY, true); // 5.07
+                }
 
                 $breakdown['hrs_rd_sh_nd'] += $day['nd_rest_day_special_holiday_hrs'];
                 $breakdown['pay_rd_sh_nd'] += $day['nd_rest_day_special_holiday_hrs'] * $hourly_rate * 1.5 * 0.10;
