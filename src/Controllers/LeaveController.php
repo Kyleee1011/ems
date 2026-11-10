@@ -34,19 +34,13 @@ class LeaveController
         $hrLeaves = $this->isHr ? $this->model->getPendingLeaves() : [];
         
         $leaveTypes = [
-            'Service Incentive Leave',
-            'Vacation Leave',
+            'Off',
             'Sick Leave',
-            'Bereavement (Immediate Family)',
-            'Bereavement (Extended Family)',
+            'Vacation Leave',
+            'Solo Parent Leave',
+            'Maternity Leave',
             'Paternity Leave',
-            'Maternity Leave (105 Days Unpaid)',
-            'Emergency Leave',
-            'Leave With Pay',
-            'Leave Without Pay',
-            'DAYOFF',
-            'FLEX',
-            'HOLIDAY OFF'
+            'Bereavement Leave'
         ];
 
         $allEmployeesCredits = [];
@@ -118,23 +112,40 @@ class LeaveController
     {
         $this->loadSharedData();
         
-        if ($this->isManager) {
-            $deptEmployees = $this->userDept ? $this->model->getEmployeesByDept($this->userDept) : [];
-            if (empty($deptEmployees)) {
-                $stmt = $this->model->getPdo()->query("SELECT emp_id, first_name, last_name FROM employees WHERE employee_status = 'Active' ORDER BY last_name ASC");
-                $deptEmployees = $stmt->fetchAll(PDO::FETCH_ASSOC);
-            }
+        // Fetch active employees for the OT application dropdown
+        // Priority order: user's department first, then alphabetical by department and name
+        $userDeptId = (int)$this->userDept;
+        $sql = "SELECT e.emp_id, e.ac_no, e.first_name, e.last_name, e.dept_id, COALESCE(d.dept_name, 'Unassigned') as dept_name 
+                FROM employees e 
+                LEFT JOIN departments d ON e.dept_id = d.dept_id 
+                WHERE e.employee_status = 'Active'
+                ORDER BY (e.dept_id = :user_dept) DESC, d.dept_name ASC, e.last_name ASC, e.first_name ASC";
+        $stmt = $this->model->getPdo()->prepare($sql);
+        $stmt->execute([':user_dept' => $userDeptId]);
+        $deptEmployees = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        // Overtime history: HR/CEO see recent company OT, managers see their department & self, employees see their own
+        if ($this->isHr || strcasecmp($this->userRole, 'CEO') === 0 || strcasecmp($_SESSION['role'] ?? '', 'CEO') === 0) {
+            $overtimes = $this->model->getPdo()->query(
+                "SELECT ot.*, e.first_name, e.last_name, d.dept_name 
+                 FROM overtime_applications ot 
+                 JOIN employees e ON ot.emp_id = e.emp_id 
+                 LEFT JOIN departments d ON e.dept_id = d.dept_id 
+                 ORDER BY ot.created_at DESC LIMIT 100"
+            )->fetchAll(PDO::FETCH_ASSOC);
+        } elseif ($this->isManager) {
+            $overtimes = $this->model->getOvertimeHistory($this->currentUserId, $this->userDept);
         } else {
-            $deptEmployees = [];
+            $overtimes = $this->model->getOvertimeHistory($this->currentUserId, null);
         }
 
-        $overtimes = $this->model->getOvertimeHistory($this->isManager ? null : $this->currentUserId, $this->isManager ? $this->userDept : null);
         $hrOts = $this->isHr ? $this->model->getPendingOvertimes() : [];
 
         $vars = array_merge($this->sharedVars, [
             'deptEmployees' => $deptEmployees,
             'overtimes' => $overtimes,
-            'hr_ots' => $hrOts
+            'hr_ots' => $hrOts,
+            'currentUserId' => $this->currentUserId
         ]);
 
         extract($vars);
@@ -147,8 +158,15 @@ class LeaveController
 
     private function loadSharedData()
     {
-        $this->isManager = ($this->userRole === 'DeptHead' || $this->userRole === 'Manager' || $this->userRole === 'CEO');
-        $this->isHr = ($this->userRole === 'HR');
+        $roleClean = strtolower(str_replace([' ', '_'], '', trim($this->userRole ?? '')));
+        $displayRoleClean = strtolower(str_replace([' ', '_'], '', trim($_SESSION['role'] ?? '')));
+
+        $this->isManager = in_array($roleClean, ['depthead', 'manager', 'ceo', 'admin']) 
+                        || in_array($displayRoleClean, ['depthead', 'manager', 'ceo', 'admin']);
+
+        $this->isHr = in_array($roleClean, ['hr', 'admin']) 
+                   || in_array($displayRoleClean, ['hr', 'admin']) 
+                   || ((int)$this->userDept === 5);
 
         $message = $_SESSION['flash_message'] ?? '';
         $messageType = $_SESSION['flash_type'] ?? '';
@@ -158,7 +176,9 @@ class LeaveController
             'message' => $message,
             'messageType' => $messageType,
             'is_manager' => $this->isManager,
-            'is_hr' => $this->isHr
+            'is_hr' => $this->isHr,
+            'userRole' => $this->userRole,
+            'userDept' => $this->userDept,
         ];
         
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -274,15 +294,18 @@ class LeaveController
                     if ($otHours > 16) throw new Exception("Overtime hours cannot exceed 16 hours in a single day.");
                     if (empty($reason)) throw new Exception("Reason / task details are required.");
 
-                    if ($this->isManager) {
+                    if ($this->isManager || $this->isHr) {
                         $emps = isset($_POST['ot_employees']) ? array_values(array_filter(array_unique((array)$_POST['ot_employees']))) : [];
                         if (empty($emps)) {
-                            // If manager did not pick anyone, default to self
+                            // If manager/HR did not pick anyone, default to self
                             $emps = [$this->currentUserId];
                         }
                     } else {
-                        // Regular employee applying for themselves
-                        $emps = [$this->currentUserId];
+                        // Regular employee applying for themselves (or teammates if selected)
+                        $emps = isset($_POST['ot_employees']) ? array_values(array_filter(array_unique((array)$_POST['ot_employees']))) : [$this->currentUserId];
+                        if (empty($emps)) {
+                            $emps = [$this->currentUserId];
+                        }
                     }
 
                     $res = $this->model->applyOvertime($emps, $otDate, $otHours, $reason);
@@ -371,13 +394,13 @@ class LeaveController
                     if (!$targetEmpId) throw new Exception("Employee ID is required.");
 
                     $creditsData = [
-                        'sil_credits' => (float)($_POST['sil_credits'] ?? 0),
                         'vl_credits' => (float)($_POST['vl_credits'] ?? 0),
                         'sl_credits' => (float)($_POST['sl_credits'] ?? 0),
+                        'solo_parent_credits' => (float)($_POST['solo_parent_credits'] ?? 7),
                         'paternity_credits' => (float)($_POST['paternity_credits'] ?? 7),
                         'maternity_credits' => (float)($_POST['maternity_credits'] ?? 105),
                         'bereavement_immediate_credits' => (float)($_POST['bereavement_immediate_credits'] ?? 5),
-                        'bereavement_extended_credits' => (float)($_POST['bereavement_extended_credits'] ?? 3),
+                        'sil_credits' => (float)($_POST['sil_credits'] ?? 0),
                     ];
 
                     $this->model->updateEmployeeCredits($targetEmpId, $creditsData);

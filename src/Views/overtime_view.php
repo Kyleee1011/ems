@@ -5,27 +5,64 @@ require BASE_PATH . '/partials/layout_topbar.php';
 require BASE_PATH . '/partials/layout_sidebar.php';
 ?>
 
-<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
 <style>
+    .select2-container {
+        width: 100% !important;
+    }
     .select2-container--default .select2-selection--multiple {
         border-color: var(--border);
         border-radius: var(--r-sm);
-        min-height: 38px;
+        min-height: 42px;
         background: var(--bg-card);
+        padding: 3px 6px;
+    }
+    .select2-container--default.select2-container--focus .select2-selection--multiple {
+        border-color: var(--teal);
     }
     .select2-container--default .select2-selection--multiple .select2-selection__choice {
         background-color: var(--teal-bg);
         border-color: var(--teal-border);
         color: var(--teal-deep);
-        font-size: 11px;
+        font-size: 12px;
         font-weight: 600;
+        padding: 2px 8px;
+        border-radius: 4px;
+        margin-top: 5px;
+    }
+    .select2-container--default .select2-selection--multiple .select2-selection__choice__remove {
+        color: var(--teal-deep);
+        margin-right: 5px;
+    }
+    .select2-dropdown {
+        border-color: var(--border);
+        background: var(--bg-card);
+        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+        z-index: 9999;
+    }
+    .select2-results__option {
+        padding: 8px 12px;
+        font-size: 13px;
+        color: var(--ink-1);
+    }
+    .select2-container--default .select2-results__option--highlighted[aria-selected] {
+        background-color: var(--teal);
+        color: white;
+    }
+    #ot_employees {
+        border: 1px solid var(--border);
+        border-radius: var(--r-sm);
+        min-height: 42px;
+        background: var(--bg-card);
+        color: var(--ink-1);
+        padding: 6px 10px;
+        font-size: 13px;
     }
 </style>
 
 <div class="page-header">
     <div>
         <h1 class="page-title"><i class="fa-solid fa-business-time"></i> Overtime Request</h1>
-        <p class="page-sub"><?php echo $is_manager ? 'Submit and manage departmental overtime applications' : 'File and track your overtime requests'; ?></p>
+        <p class="page-sub"><?php echo ($is_manager || $is_hr) ? 'Submit and manage company/departmental overtime applications' : 'File and track your overtime applications'; ?></p>
     </div>
 </div>
 
@@ -38,53 +75,100 @@ require BASE_PATH . '/partials/layout_sidebar.php';
     </div>
 <?php endif; ?>
 
-<div class="grid-2" style="grid-template-columns: 360px 1fr; gap: 25px; align-items: start;">
-    <!-- REQUEST FORM (Accessible to both Managers and Employees) -->
+<div class="grid-2" style="grid-template-columns: 380px 1fr; gap: 25px; align-items: start;">
+    <!-- REQUEST FORM -->
     <div class="card">
         <div class="card-head">
-            <div class="card-title"><?php echo $is_manager ? 'New OT Application (Batch/Self)' : 'Apply for Overtime'; ?></div>
+            <div class="card-title">New OT Application</div>
+            <span class="tag tag-teal"><?php echo count($deptEmployees); ?> Available</span>
         </div>
         <div class="card-body">
             <form method="POST" id="form-ot">
                 <?= csrfField() ?>
                 <input type="hidden" name="action" value="apply_ot">
                 
-                <?php if ($is_manager): ?>
-                    <div class="form-group">
-                        <label class="form-label">Select Employee(s)</label>
-                        <select name="ot_employees[]" id="ot_employees" multiple required style="width: 100%;">
-                            <?php foreach ($deptEmployees as $emp): ?>
-                                <option value="<?php echo $emp['emp_id']; ?>" <?php echo ($emp['emp_id'] == ($_SESSION['user_id'] ?? 0)) ? 'selected' : ''; ?>>
-                                    <?php echo htmlspecialchars($emp['last_name'] . ', ' . $emp['first_name']); ?>
-                                </option>
-                            <?php endforeach; ?>
-                        </select>
-                        <small style="font-size: 11px; color: var(--ink-4); display: block; margin-top: 4px;">Leave blank or keep yourself selected to apply for yourself.</small>
-                    </div>
-                <?php else: ?>
-                    <div class="form-group">
-                        <label class="form-label">Applicant</label>
-                        <input type="text" class="input-field" value="<?php echo htmlspecialchars($_SESSION['full_name'] ?? 'Me'); ?>" readonly style="background: var(--bg-raised); cursor: not-allowed;">
-                    </div>
-                <?php endif; ?>
+                <div class="form-group">
+                    <label class="form-label" style="display: flex; justify-content: space-between; align-items: center;">
+                        <span>Select Employee(s) <span style="color: var(--red);">*</span></span>
+                        <?php if (!$is_manager && !$is_hr): ?>
+                            <span style="font-size: 11px; font-weight: normal; color: var(--teal-deep);">(You are pre-selected)</span>
+                        <?php endif; ?>
+                    </label>
+                    <select name="ot_employees[]" id="ot_employees" class="select2" multiple required style="width: 100%;">
+                        <?php 
+                            $loggedId = $currentUserId ?? ($_SESSION['user_id'] ?? 0);
+                            $userDeptId = $userDept ?? ($_SESSION['dept_id'] ?? 0);
+
+                            // Partition into user's department vs other departments
+                            $myDeptEmployees = [];
+                            $otherDeptEmployees = [];
+
+                            foreach ($deptEmployees as $emp) {
+                                if (!empty($userDeptId) && $emp['dept_id'] == $userDeptId) {
+                                    $myDeptEmployees[] = $emp;
+                                } else {
+                                    $dName = !empty($emp['dept_name']) ? $emp['dept_name'] : 'Other Departments';
+                                    $otherDeptEmployees[$dName][] = $emp;
+                                }
+                            }
+                        ?>
+
+                        <?php if (!empty($myDeptEmployees)): ?>
+                            <?php 
+                                $myDeptName = $myDeptEmployees[0]['dept_name'] ?? 'My Department';
+                                $groupLabel = ($is_manager || $is_hr) ? "My Department ({$myDeptName})" : "Department ({$myDeptName})";
+                            ?>
+                            <optgroup label="<?php echo htmlspecialchars($groupLabel); ?>">
+                                <?php foreach ($myDeptEmployees as $emp): 
+                                    $isSelf = ($emp['emp_id'] == $loggedId);
+                                    $selected = ($isSelf && !$is_manager && !$is_hr) ? 'selected' : '';
+                                ?>
+                                    <option value="<?php echo $emp['emp_id']; ?>" <?php echo $selected; ?>>
+                                        <?php echo htmlspecialchars($emp['last_name'] . ', ' . $emp['first_name'] . ' (#' . $emp['ac_no'] . ')'); ?>
+                                    </option>
+                                <?php endforeach; ?>
+                            </optgroup>
+                        <?php endif; ?>
+
+                        <?php foreach ($otherDeptEmployees as $deptName => $emps): ?>
+                            <optgroup label="<?php echo htmlspecialchars($deptName); ?>">
+                                <?php foreach ($emps as $emp): 
+                                    $isSelf = ($emp['emp_id'] == $loggedId);
+                                    $selected = ($isSelf && !$is_manager && !$is_hr) ? 'selected' : '';
+                                ?>
+                                    <option value="<?php echo $emp['emp_id']; ?>" <?php echo $selected; ?>>
+                                        <?php echo htmlspecialchars($emp['last_name'] . ', ' . $emp['first_name'] . ' (#' . $emp['ac_no'] . ')'); ?>
+                                    </option>
+                                <?php endforeach; ?>
+                            </optgroup>
+                        <?php endforeach; ?>
+                    </select>
+                    <small style="font-size: 11px; color: var(--ink-4); display: block; margin-top: 4px;">
+                        <?php if ($is_manager || $is_hr): ?>
+                            Search and select one or more employees to file overtime for.
+                        <?php else: ?>
+                            Your name is selected. You may add team members if filing jointly.
+                        <?php endif; ?>
+                    </small>
+                </div>
 
                 <div class="grid-2" style="gap: 12px;">
                     <div class="form-group">
-                        <label class="form-label">Work Date</label>
+                        <label class="form-label">Work Date <span style="color: var(--red);">*</span></label>
                         <input type="date" name="ot_date" required class="input-field" value="<?php echo date('Y-m-d'); ?>">
                     </div>
                     <div class="form-group">
-                        <label class="form-label">Est. Hours</label>
+                        <label class="form-label">Est. Hours <span style="color: var(--red);">*</span></label>
                         <input type="number" name="ot_hours" step="0.5" min="0.5" max="16" required class="input-field" placeholder="0.0">
                     </div>
                 </div>
 
                 <div class="form-group">
-                    <label class="form-label">Reason / Task Details</label>
-                    <textarea name="reason" rows="4" required placeholder="Describe the specific tasks or project justification..." class="input-field" style="min-height: 100px;"></textarea>
+                    <label class="form-label">Reason / Task Details <span style="color: var(--red);">*</span></label>
+                    <textarea name="reason" rows="4" required placeholder="Describe the required tasks or project justification..." class="input-field" style="min-height: 100px;"></textarea>
                 </div>
 
-                <button type="submit" class="btn-primary" style="width: 100%; justify-content: center; height: 40px;">
+                <button type="submit" class="btn-primary" style="width: 100%; justify-content: center; height: 42px;">
                     <i class="fa-solid fa-paper-plane" style="margin-right: 6px;"></i> Submit OT Request
                 </button>
             </form>
@@ -94,7 +178,7 @@ require BASE_PATH . '/partials/layout_sidebar.php';
     <!-- HISTORY -->
     <div class="card">
         <div class="card-head">
-            <div class="card-title"><?php echo $is_manager ? 'Department OT History' : 'My Overtime History'; ?></div>
+            <div class="card-title"><?php echo ($is_hr || ($userRole ?? '') === 'CEO') ? 'Recent Overtime Records' : ($is_manager ? 'Department OT History' : 'My Overtime History'); ?></div>
             <span class="tag tag-teal"><?php echo count($overtimes); ?> Records</span>
         </div>
         <div class="card-body" style="padding: 0;">
@@ -116,6 +200,9 @@ require BASE_PATH . '/partials/layout_sidebar.php';
                                 <?php 
                                     $empName = trim(($ot['first_name'] ?? '') . ' ' . ($ot['last_name'] ?? ''));
                                     echo htmlspecialchars($empName ?: ($_SESSION['full_name'] ?? 'Employee')); 
+                                    if (!empty($ot['dept_name'])) {
+                                        echo ' <span style="font-size: 10px; color: var(--ink-4); font-weight: normal;">(' . htmlspecialchars($ot['dept_name']) . ')</span>';
+                                    }
                                 ?>
                             </td>
                             <td style="font-size: 11px; color: var(--ink-4); white-space: nowrap;"><?php echo date('M d, Y', strtotime($ot['ot_date'])); ?></td>
@@ -190,13 +277,20 @@ require BASE_PATH . '/partials/layout_sidebar.php';
 </div>
 <?php endif; ?>
 
-<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+<?php require BASE_PATH . '/partials/layout_footer.php'; ?>
+
 <script>
     $(document).ready(function() {
-        if ($('#ot_employees').length) {
-            $('#ot_employees').select2({ placeholder: "Select employees...", width: '100%' });
+        if ($('#ot_employees').length && typeof $.fn.select2 !== 'undefined') {
+            if ($('#ot_employees').hasClass('select2-hidden-accessible')) {
+                $('#ot_employees').select2('destroy');
+            }
+            $('#ot_employees').select2({ 
+                placeholder: "Search or select employee(s)...", 
+                width: '100%',
+                closeOnSelect: false,
+                allowClear: true
+            });
         }
     });
 </script>
-
-<?php require BASE_PATH . '/partials/layout_footer.php'; ?>

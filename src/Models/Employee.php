@@ -169,6 +169,16 @@ class Employee
         try {
             $this->pdo->beginTransaction();
 
+            // Pre-check for duplicate ac_no to provide clear, actionable guidance
+            $stmtCheckAc = $this->pdo->prepare("SELECT emp_id, full_name, employee_status, IsActive FROM employees WHERE ac_no = ?");
+            $stmtCheckAc->execute([$data['ac_no']]);
+            if ($existingEmp = $stmtCheckAc->fetch(PDO::FETCH_ASSOC)) {
+                $statusText = ($existingEmp['IsActive'] == 0 || $existingEmp['employee_status'] === 'Inactive') 
+                    ? " (currently marked as Inactive in the Inactive Employees List)" 
+                    : "";
+                throw new \Exception("Duplicate AC Number: An employee with AC No. '{$data['ac_no']}' already exists: {$existingEmp['full_name']}{$statusText}. If this employee was previously deactivated, you can reactivate them from the Inactive Employees tab.");
+            }
+
             // Generate default password hash using AC No
             $defaultPasswordHash = password_hash($data['ac_no'], PASSWORD_DEFAULT);
             
@@ -214,7 +224,7 @@ class Employee
                 employment_type, work_schedule, work_days_mode, salary_rate, daily_rate, hourly_rate, payroll_group,
                 tin_number, sss_number, philhealth_number, pagibig_number, bank_account_number,
                 date_hired, date_deployed, contract_start_date, contract_end_date, employee_status,
-                approval_role, sil_credits, vl_credits, sl_credits, paternity_credits, maternity_credits, bereavement_immediate_credits, bereavement_extended_credits,
+                approval_role, sil_credits, vl_credits, sl_credits, solo_parent_credits, paternity_credits, maternity_credits, bereavement_immediate_credits, bereavement_extended_credits,
                 IsActive, signature_path, profile_picture, password_hash
             ) VALUES (
                 :ac_no, :last_name, :first_name, :middle_name, :date_of_birth, :gender,
@@ -224,7 +234,7 @@ class Employee
                 :employment_type, :work_schedule, :work_days_mode, :salary_rate, :daily_rate, :hourly_rate, :payroll_group,
                 :tin_number, :sss_number, :philhealth_number, :pagibig_number, :bank_account_number,
                 :date_hired, :date_deployed, :contract_start_date, :contract_end_date, :employee_status,
-                :approval_role, :sil_credits, :vl_credits, :sl_credits, :paternity_credits, :maternity_credits, :bereavement_immediate_credits, :bereavement_extended_credits,
+                :approval_role, :sil_credits, :vl_credits, :sl_credits, :solo_parent_credits, :paternity_credits, :maternity_credits, :bereavement_immediate_credits, :bereavement_extended_credits,
                 1, :signature_path, :profile_picture, :password_hash
             )";
             $stmt = $this->pdo->prepare($sql);
@@ -273,6 +283,8 @@ class Employee
             $stmt->bindParam(':vl_credits', $vlCredits);
             $slCredits = $data['sl_credits'] ?? 0;
             $stmt->bindParam(':sl_credits', $slCredits);
+            $soloParentCredits = $data['solo_parent_credits'] ?? 7;
+            $stmt->bindParam(':solo_parent_credits', $soloParentCredits);
             $paternityCredits = $data['paternity_credits'] ?? 7;
             $stmt->bindParam(':paternity_credits', $paternityCredits);
             $maternityCredits = $data['maternity_credits'] ?? 105;
@@ -363,6 +375,7 @@ class Employee
             contract_start_date = :contract_start_date, contract_end_date = :contract_end_date,
             approval_role = :approval_role, sil_credits = :sil_credits, 
             vl_credits = :vl_credits, sl_credits = :sl_credits,
+            solo_parent_credits = :solo_parent_credits,
             paternity_credits = :paternity_credits, maternity_credits = :maternity_credits,
             bereavement_immediate_credits = :bereavement_immediate_credits, bereavement_extended_credits = :bereavement_extended_credits,
             employee_status = :employee_status, IsActive = :is_active,
@@ -419,6 +432,8 @@ class Employee
         $stmt->bindParam(':vl_credits', $vlCredits);
         $slCredits = $data['sl_credits'] ?? 0;
         $stmt->bindParam(':sl_credits', $slCredits);
+        $soloParentCredits = $data['solo_parent_credits'] ?? 7;
+        $stmt->bindParam(':solo_parent_credits', $soloParentCredits);
         $paternityCredits = $data['paternity_credits'] ?? 7;
         $stmt->bindParam(':paternity_credits', $paternityCredits);
         $maternityCredits = $data['maternity_credits'] ?? 105;

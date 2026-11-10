@@ -89,7 +89,7 @@ class LeaveModel
 
                     $timeIn = null;
                     $timeOut = null;
-                    if (!in_array($newCode, ['OFF', 'FLEX', 'HOLIDAY OFF', 'LWOP', 'LWP']) && $shift['time_in'] !== null) {
+                    if (!in_array($newCode, ['OFF', 'SL', 'VL', 'SPL', 'ML', 'PL', 'BL']) && $shift['time_in'] !== null) {
                         $timeIn = date('Y-m-d H:i:s', strtotime("$date {$shift['time_in']}"));
                         $timeOutRaw = strtotime("$date {$shift['time_out']}");
                         if (strtotime($shift['time_out']) < strtotime($shift['time_in'])) {

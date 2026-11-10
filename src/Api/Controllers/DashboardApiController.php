@@ -65,7 +65,7 @@ class DashboardApiController extends BaseApiController
             $displayTime = ($tIn && $tOut) ? $tIn->format('H:i') . '-' . $tOut->format('H:i') : '-';
             
             $code = $r['shift_code'] ?? $r['Shift_code'] ?? '-';
-            if(in_array($code, ['OFF','FLEX','HOLIDAY OFF','LWOP','LWP'])) {
+            if(in_array($code, ['OFF', 'SL', 'VL', 'SPL', 'ML', 'PL', 'BL'])) {
                 $displayTime = $code; 
             }
 

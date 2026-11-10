@@ -327,16 +327,26 @@ class Timecard
         $types = [];
 
         // 2. Aggregate each segment into the correct Timecard buckets
-        foreach ($shiftResult['segments'] as $seg) {
+        // Overtime is work performed beyond regular hours at the tail end of the shift.
+        // Allocate OT from the last segment backwards.
+        $remainingOt = $otHours;
+        $segOtAlloc = [];
+        for ($i = count($shiftResult['segments']) - 1; $i >= 0; $i--) {
+            $segH = (float)$shiftResult['segments'][$i]['hours'];
+            $ot = min($segH, $remainingOt);
+            $segOtAlloc[$i] = round($ot, 2);
+            $remainingOt = max(0, $remainingOt - $ot);
+        }
+        ksort($segOtAlloc);
+
+        foreach ($shiftResult['segments'] as $i => $seg) {
             $dayType = $seg['holiday_type'];
             $types[] = $dayType;
             
-            $segTotal = $seg['hours'];
-            // OT handling: For cross-day, OT is usually the tail end.
-            // Distribute OT from the end backwards if needed, or just use the same ratio.
-            $segOt = round($otHours * ($segTotal / $totalHours), 2);
+            $segTotal = (float)$seg['hours'];
+            $segOt = $segOtAlloc[$i] ?? 0.0;
             $segReg = round($segTotal - $segOt, 2);
-            $segND = $seg['night_hours'];
+            $segND = (float)$seg['night_hours'];
 
             // Map to buckets (Matching classifyHours logic)
             if ($isRestDay && $dayType !== HolidayCalculator::DAY_TYPE_ORDINARY) {
@@ -589,24 +599,43 @@ class Timecard
                         // Note: actual_in is capped by effectiveTsIn for paid time, 
                         // but OT is usually based on staying LATER than sched_out.
                         $maxApprovedOT = $approvedOT[$dStr] ?? 0;
+                        $scheduledOtGross = max(0, $expectedGross - 9.0);
                         
-                        if ($tsOut > $tsSchedOutActual) {
-                            $rawOT = ($tsOut - $tsSchedOutActual) / 3600;
-                            $appliedOT = min($rawOT, $maxApprovedOT);
+                        if ($scheduledOtGross > 0) {
+                            // Scheduled shift duration exceeds standard 8h work + 1h break (e.g. 14:00 - 03:00)
+                            $expectedRegularGross = 9.0;
+                            $actualGrossWorked = max(0, min($tsOut, $tsSchedOutActual) - $tsIn) / 3600;
+                            $otWithinSched = max(0, $actualGrossWorked - 9.0);
+                            $otBeyondSched = ($tsOut > $tsSchedOutActual) ? ($tsOut - $tsSchedOutActual) / 3600 : 0;
+                            
+                            $rawOT = $otWithinSched + $otBeyondSched;
+                            $appliedOT = ($maxApprovedOT > 0) ? min($rawOT, $maxApprovedOT) : 0;
+
                             $day['ot_hours'] = number_format($appliedOT, 2);
                             $day['ot_status'] = ($maxApprovedOT > 0) ? 'approved' : 'unapproved';
-                        } else {
-                            $day['ot_hours'] = 0;
-                            $day['ot_status'] = 'none';
-                        }
 
-                        // Final Paid Hours = (Expected Gross - Late - UT) + Approved OT
-                        // Convert mins to hours
-                        $deductions = ($day['late_mins'] + $day['ut_mins']) / 60;
-                        $paidBase = max(0, $expectedGross - $deductions);
-                        $totalPaid = $paidBase + (float)$day['ot_hours'];
-                        
-                        $day['hours'] = number_format($totalPaid, 2);
+                            $deductions = ($day['late_mins'] + $day['ut_mins']) / 60;
+                            $paidBase = max(0, $expectedRegularGross - $deductions);
+                            $totalPaid = $paidBase + (float)$day['ot_hours'];
+                            $day['hours'] = number_format($totalPaid, 2);
+                        } else {
+                            if ($tsOut > $tsSchedOutActual) {
+                                $rawOT = ($tsOut - $tsSchedOutActual) / 3600;
+                                $appliedOT = min($rawOT, $maxApprovedOT);
+                                $day['ot_hours'] = number_format($appliedOT, 2);
+                                $day['ot_status'] = ($maxApprovedOT > 0) ? 'approved' : 'unapproved';
+                            } else {
+                                $day['ot_hours'] = 0;
+                                $day['ot_status'] = 'none';
+                            }
+
+                            // Final Paid Hours = (Expected Gross - Late - UT) + Approved OT
+                            // Convert mins to hours
+                            $deductions = ($day['late_mins'] + $day['ut_mins']) / 60;
+                            $paidBase = max(0, $expectedGross - $deductions);
+                            $totalPaid = $paidBase + (float)$day['ot_hours'];
+                            $day['hours'] = number_format($totalPaid, 2);
+                        }
                     } else {
                         // OFF day / Rest Day / Holiday Off work
                         $rawGross = ($tsOut - $tsIn) / 3600;
@@ -657,19 +686,23 @@ class Timecard
                             $classifyTsOut += 86400;
                         }
 
-                        // Store original schedule boundaries for ND restriction
+                        // Store original schedule start for ND restriction
                         $ndLimitTsIn = $classifyTsIn;
-                        $ndLimitTsOut = $classifyTsOut;
 
-                        // Extend classification window by approved OT (beyond sched_out)
+                        // Extend classification window by approved OT (beyond sched_out) if not already inside schedule
                         $approvedOTHours = (float)$day['ot_hours'];
-                        if ($approvedOTHours > 0) {
+                        $scheduledOtGross = max(0, (($classifyTsOut - $classifyTsIn) / 3600) - 9.0);
+                        if ($approvedOTHours > 0 && $scheduledOtGross == 0) {
                             $classifyTsOut += (int)($approvedOTHours * 3600);
                         }
+                        // Night diff limit covers the authorized work window (schedule + approved OT)
+                        $ndLimitTsOut = $classifyTsOut;
                     } else {
                         // OFF day or no schedule: fall back to actual punches
                         $classifyTsIn = $tsIn;
                         $classifyTsOut = $tsOut;
+                        $ndLimitTsIn = $tsIn;
+                        $ndLimitTsOut = $tsOut;
                     }
 
                     $effectiveStart = new DateTime("@$classifyTsIn");

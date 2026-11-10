@@ -301,7 +301,7 @@ require_once dirname(dirname(__DIR__)) . '/config_session.php';
                         $holidays[$h['holiday_date']] = ['name' => $h['holiday_name'], 'type' => $h['holiday_type']];
                     }
 
-                    $specialCodes = ['OFF', 'FLEX', 'HOLIDAY OFF', 'HOLIDAY-OFF', 'LWOP', 'LWP', 'RD', 'SL', 'VL', 'EL', 'ML', 'PL'];
+                    $specialCodes = ['OFF', 'SL', 'VL', 'SPL', 'ML', 'PL', 'BL'];
 
                     while ($row = $stmtSched->fetch(PDO::FETCH_ASSOC)) {
                         $dateKey = $row['schedule_date'];
@@ -553,8 +553,6 @@ require_once dirname(dirname(__DIR__)) . '/config_session.php';
                 else $grouped['Graveyard Shifts (18:00+)'][] = $s;
             }
         }
-        $specials = ['OFF', 'FLEX', 'HOLIDAY OFF', 'LWOP', 'LWP'];
-        foreach($specials as $c) $grouped['Leaves / Special'][] = ['shift_code'=>$c, 'shift_name'=>$c, 'time_in'=>null, 'time_out'=>null];
 
         return $grouped;
     }

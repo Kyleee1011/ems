@@ -376,7 +376,7 @@ function renderDocTable(employees, schedules, range) {
             const s = (schedules[emp.id] && schedules[emp.id][dStr]) ? schedules[emp.id][dStr] : {code:'', time:''};
             
             let display = '-';
-            if (['OFF', 'HOLIDAY OFF', 'FLEX', 'LWOP', 'LWP'].includes(s.code)) {
+            if (['OFF', 'SL', 'VL', 'SPL', 'ML', 'PL', 'BL'].includes(s.code)) {
                 display = `<b style="color:var(--red);">${s.code}</b>`;
             } else if (s.time && s.time !== '-') {
                 display = `<div style="font-size: 7px; line-height: 1;">${s.time}</div>`;

@@ -284,4 +284,99 @@ class OvertimeIntegrationTest extends TestCase
         // Total OT hours = 2 + 2 = 4.0
         $this->assertEquals(4.0, $breakdown['hours_ot']);
     }
+
+    public function testDeptHeadCanViewAllActiveEmployeesWithOwnDepartmentFirst(): void
+    {
+        $userDeptId = 2; // MIS
+        $sql = "SELECT e.emp_id, e.ac_no, e.first_name, e.last_name, e.dept_id, COALESCE(d.dept_name, 'Unassigned') as dept_name 
+                FROM employees e 
+                LEFT JOIN departments d ON e.dept_id = d.dept_id 
+                WHERE e.employee_status = 'Active'
+                ORDER BY (e.dept_id = :user_dept) DESC, d.dept_name ASC, e.last_name ASC, e.first_name ASC";
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute([':user_dept' => $userDeptId]);
+        $employees = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        $this->assertNotEmpty($employees);
+        $this->assertGreaterThanOrEqual(10, count($employees));
+        
+        // First employee must belong to user's department
+        $this->assertEquals($userDeptId, (int)$employees[0]['dept_id']);
+
+        // Check department name is joined
+        $this->assertNotEmpty($employees[0]['dept_name']);
+    }
+
+    public function testDeptHeadCanApplyOvertimeForSubordinatesAndInspectHistory(): void
+    {
+        $date = '2099-07-15';
+        $hours = 3.0;
+        $reason = 'Database and system upgrade deployment';
+
+        // Apply OT for two employees
+        $res = $this->leaveModel->applyOvertime([$this->testEmpId1, $this->testEmpId2], $date, $hours, $reason);
+        $this->assertSame(2, $res['added']);
+
+        // Dept Head retrieves history for employee 1
+        $history = $this->leaveModel->getOvertimeHistory($this->testEmpId1, null);
+        $this->assertNotEmpty($history);
+        $this->assertSame($this->testEmpId1, (int)$history[0]['emp_id']);
+        $this->assertNotEmpty($history[0]['first_name']);
+        $this->assertArrayHasKey('dept_name', $history[0]);
+    }
+
+    public function testCrossDayShiftNightDiffAndOtDistribution(): void
+    {
+        $timecard = new \App\Models\Timecard($this->pdo);
+        $reflector = new \ReflectionClass($timecard);
+        $m = $reflector->getMethod('classifyHoursCrossDay');
+        $m->setAccessible(true);
+
+        $dStr = '2099-10-23';
+        $tsIn = strtotime("$dStr 14:00:00");
+        $tsOut = strtotime("$dStr +1 day 03:00:00");
+        $ndLimitTsIn = $tsIn;
+        $ndLimitTsOut = $tsOut;
+
+        // Shift 14:00 to 03:00 (13h elapsed, 1h break = 12h paid, 4h OT)
+        $res = $m->invoke($timecard, $tsIn, $tsOut, 12.0, 4.0, $dStr, false, $ndLimitTsIn, $ndLimitTsOut, 0);
+
+        // 8 regular hours, 4 overtime hours
+        $this->assertEquals(8.0, $res['regular_hrs']);
+        $this->assertEquals(4.0, $res['regular_ot_hrs']);
+
+        // Total night diff is 5.0 hours (300 minutes, from 22:00 to 03:00)
+        $this->assertEquals(300, $res['night_diff_mins']);
+
+        // Regular ND is 1.0 hour (22:00 to 23:00 within regular shift)
+        $this->assertEquals(1.0, $res['nd_hrs']);
+
+        // Overtime ND is 4.0 hours (23:00 to 03:00 during overtime)
+        $this->assertEquals(4.0, $res['nd_ot_hrs']);
+    }
+
+    public function testCrossDayEveningShiftNightDiff(): void
+    {
+        $timecard = new \App\Models\Timecard($this->pdo);
+        $reflector = new \ReflectionClass($timecard);
+        $m = $reflector->getMethod('classifyHoursCrossDay');
+        $m->setAccessible(true);
+
+        $dStr = '2099-10-24';
+        $tsIn = strtotime("$dStr 17:00:00");
+        $tsOut = strtotime("$dStr +1 day 04:00:00");
+        $ndLimitTsIn = $tsIn;
+        $ndLimitTsOut = $tsOut;
+
+        // Shift 17:00 to 04:00 (11h elapsed, 1h break = 10h paid, 2h OT)
+        $res = $m->invoke($timecard, $tsIn, $tsOut, 10.0, 2.0, $dStr, false, $ndLimitTsIn, $ndLimitTsOut, 0);
+
+        $this->assertEquals(8.0, $res['regular_hrs']);
+        $this->assertEquals(2.0, $res['regular_ot_hrs']);
+        $this->assertEquals(360, $res['night_diff_mins']);
+        // 4 hours regular ND (22:00 - 02:00)
+        $this->assertEquals(4.0, $res['nd_hrs']);
+        // 2 hours OT ND (02:00 - 04:00)
+        $this->assertEquals(2.0, $res['nd_ot_hrs']);
+    }
 }

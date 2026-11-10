@@ -21,30 +21,40 @@ class Leave
         return $this->pdo;
     }
 
-    public function getCredits($empId, $leaveType = 'Service Incentive Leave') {
+    public function getCredits($empId, $leaveType = 'Vacation Leave') {
         $credits = $this->getAllCredits($empId);
         switch ($leaveType) {
-            case 'Service Incentive Leave':
-                return (float)($credits['sil_credits'] ?? 0.0);
             case 'Vacation Leave':
+            case 'VL':
                 return (float)($credits['vl_credits'] ?? 0.0);
             case 'Sick Leave':
+            case 'SL':
                 return (float)($credits['sl_credits'] ?? 0.0);
+            case 'Solo Parent Leave':
+            case 'SPL':
+                return (float)($credits['solo_parent_credits'] ?? 7.0);
+            case 'Bereavement Leave':
+            case 'BL':
             case 'Bereavement (Immediate Family)':
                 return (float)($credits['bereavement_immediate_credits'] ?? 5.0);
             case 'Bereavement (Extended Family)':
                 return (float)($credits['bereavement_extended_credits'] ?? 3.0);
             case 'Paternity Leave':
+            case 'PL':
                 return (float)($credits['paternity_credits'] ?? 7.0);
             case 'Maternity Leave':
+            case 'ML':
+            case 'Maternity Leave (105 Days Unpaid)':
                 return (float)($credits['maternity_credits'] ?? 105.0);
+            case 'Service Incentive Leave':
+                return (float)($credits['sil_credits'] ?? 0.0);
             default:
                 return null;
         }
     }
 
     public function getAllCredits($empId) {
-        $stmt = $this->pdo->prepare("SELECT sil_credits, vl_credits, sl_credits, paternity_credits, maternity_credits, bereavement_immediate_credits, bereavement_extended_credits FROM employees WHERE emp_id = ?");
+        $stmt = $this->pdo->prepare("SELECT sil_credits, vl_credits, sl_credits, solo_parent_credits, paternity_credits, maternity_credits, bereavement_immediate_credits, bereavement_extended_credits FROM employees WHERE emp_id = ?");
         $stmt->execute([$empId]);
         $row = $stmt->fetch(PDO::FETCH_ASSOC);
         if (!$row) {
@@ -52,6 +62,7 @@ class Leave
                 'sil_credits' => 0.0,
                 'vl_credits' => 0.0,
                 'sl_credits' => 0.0,
+                'solo_parent_credits' => 7.0,
                 'paternity_credits' => 7.0,
                 'maternity_credits' => 105.0,
                 'bereavement_immediate_credits' => 5.0,
@@ -66,28 +77,28 @@ class Leave
      */
     public function updateEmployeeCredits($empId, array $credits) {
         $sql = "UPDATE employees SET 
-                sil_credits = ?,
                 vl_credits = ?,
                 sl_credits = ?,
+                solo_parent_credits = ?,
                 paternity_credits = ?,
                 maternity_credits = ?,
                 bereavement_immediate_credits = ?,
-                bereavement_extended_credits = ?
+                sil_credits = ?
                 WHERE emp_id = ?";
         return $this->pdo->prepare($sql)->execute([
-            (float)($credits['sil_credits'] ?? 0),
             (float)($credits['vl_credits'] ?? 0),
             (float)($credits['sl_credits'] ?? 0),
+            (float)($credits['solo_parent_credits'] ?? 7),
             (float)($credits['paternity_credits'] ?? 7),
             (float)($credits['maternity_credits'] ?? 105),
             (float)($credits['bereavement_immediate_credits'] ?? 5),
-            (float)($credits['bereavement_extended_credits'] ?? 3),
+            (float)($credits['sil_credits'] ?? 0),
             $empId
         ]);
     }
 
     public function getAllEmployeesWithCredits() {
-        return $this->pdo->query("SELECT emp_id, first_name, last_name, ac_no, dept_id, sil_credits, vl_credits, sl_credits, paternity_credits, maternity_credits, bereavement_immediate_credits, bereavement_extended_credits FROM employees WHERE employee_status = 'Active' ORDER BY last_name ASC")->fetchAll(PDO::FETCH_ASSOC);
+        return $this->pdo->query("SELECT emp_id, first_name, last_name, ac_no, dept_id, sil_credits, vl_credits, sl_credits, solo_parent_credits, paternity_credits, maternity_credits, bereavement_immediate_credits, bereavement_extended_credits FROM employees WHERE employee_status = 'Active' ORDER BY last_name ASC")->fetchAll(PDO::FETCH_ASSOC);
     }
 
     public function getDepartments() {
@@ -120,7 +131,7 @@ class Leave
         $totalRecords = (int)($countStmt->fetch(PDO::FETCH_ASSOC)['total'] ?? 0);
 
         $sql = "SELECT e.emp_id, e.first_name, e.last_name, e.full_name, e.ac_no, e.dept_id, d.dept_name,
-                       e.sil_credits, e.vl_credits, e.sl_credits, e.paternity_credits, e.maternity_credits,
+                       e.sil_credits, e.vl_credits, e.sl_credits, e.solo_parent_credits, e.paternity_credits, e.maternity_credits,
                        e.bereavement_immediate_credits, e.bereavement_extended_credits
                 " . $baseFrom . $whereSQL . "
                 ORDER BY e.last_name ASC, e.first_name ASC
@@ -145,40 +156,53 @@ class Leave
     }
 
     public function validateLeaveCredits($empId, $type, $days) {
-        if ($type === 'Service Incentive Leave') {
+        if ($type === 'Vacation Leave' || $type === 'VL') {
+            $credits = $this->getCredits($empId, 'Vacation Leave');
+            if ($credits <= 0) {
+                throw new Exception("You have 0 Vacation Leave (VL) credits allocated. Please contact HR to allocate VL credits.");
+            }
+            if ($credits < $days) {
+                throw new Exception("Insufficient Vacation Leave credits. Available: " . number_format($credits, 1) . " day(s), Requested: {$days} day(s).");
+            }
+        } elseif ($type === 'Sick Leave' || $type === 'SL') {
+            $credits = $this->getCredits($empId, 'Sick Leave');
+            if ($credits <= 0) {
+                throw new Exception("You have 0 Sick Leave (SL) credits allocated. Please contact HR to allocate SL credits.");
+            }
+            if ($credits < $days) {
+                throw new Exception("Insufficient Sick Leave credits. Available: " . number_format($credits, 1) . " day(s), Requested: {$days} day(s).");
+            }
+        } elseif ($type === 'Solo Parent Leave' || $type === 'SPL') {
+            $credits = $this->getCredits($empId, 'Solo Parent Leave');
+            if ($credits <= 0) {
+                throw new Exception("You have 0 Solo Parent Leave credits available.");
+            }
+            if ($days > $credits) {
+                throw new Exception("Solo Parent Leave request exceeds available credits (" . number_format($credits, 1) . " day(s) available, max 7 days under RA 8972/11861).");
+            }
+        } elseif ($type === 'Bereavement Leave' || $type === 'BL' || $type === 'Bereavement (Immediate Family)') {
+            if ($days > 5) {
+                throw new Exception("Bereavement leave is capped at maximum 5 days under standard policy.");
+            }
+        } elseif ($type === 'Bereavement (Extended Family)') {
+            if ($days > 3) {
+                throw new Exception("Bereavement leave for extended family is capped at maximum 3 days.");
+            }
+        } elseif ($type === 'Paternity Leave' || $type === 'PL') {
+            if ($days > 7) {
+                throw new Exception("Paternity leave is capped at maximum 7 days under Republic Act 8187.");
+            }
+        } elseif ($type === 'Maternity Leave' || $type === 'ML' || $type === 'Maternity Leave (105 Days Unpaid)') {
+            if ($days > 105) {
+                throw new Exception("Maternity leave is capped at maximum 105 days under Republic Act 11210.");
+            }
+        } elseif ($type === 'Service Incentive Leave') {
             $credits = $this->getCredits($empId, $type);
             if ($credits <= 0) {
                 throw new Exception("SIL cannot be selected without SIL credits (Insufficient SIL Credits).");
             }
             if ($credits < $days) {
                 throw new Exception("Insufficient SIL credits for this duration. Available: " . number_format($credits, 1) . " day(s), Requested: {$days} day(s).");
-            }
-        } elseif ($type === 'Vacation Leave') {
-            $credits = $this->getCredits($empId, $type);
-            // If employee has a credit pool, validate against it
-            if ($credits > 0 && $credits < $days) {
-                throw new Exception("Insufficient Vacation Leave credits. Available: " . number_format($credits, 1) . " day(s), Requested: {$days} day(s).");
-            }
-        } elseif ($type === 'Sick Leave') {
-            $credits = $this->getCredits($empId, $type);
-            if ($credits > 0 && $credits < $days) {
-                throw new Exception("Insufficient Sick Leave credits. Available: " . number_format($credits, 1) . " day(s), Requested: {$days} day(s).");
-            }
-        } elseif ($type === 'Bereavement (Immediate Family)') {
-            if ($days > 5) {
-                throw new Exception("Bereavement leave for immediate family is capped at maximum 5 days under Philippine standard.");
-            }
-        } elseif ($type === 'Bereavement (Extended Family)') {
-            if ($days > 3) {
-                throw new Exception("Bereavement leave for extended family is capped at maximum 3 days.");
-            }
-        } elseif ($type === 'Paternity Leave') {
-            if ($days > 7) {
-                throw new Exception("Paternity leave is capped at maximum 7 days under Republic Act 8187.");
-            }
-        } elseif ($type === 'Maternity Leave') {
-            if ($days > 105) {
-                throw new Exception("Maternity leave is capped at maximum 105 days under Republic Act 11210.");
             }
         }
     }
@@ -353,7 +377,7 @@ class Leave
     }
 
     public function getPendingLeaves() {
-         $sql = "SELECT l.*, e.first_name, e.last_name, d.dept_name, e.sil_credits, e.vl_credits, e.sl_credits, e.paternity_credits, e.maternity_credits, e.bereavement_immediate_credits, e.bereavement_extended_credits
+         $sql = "SELECT l.*, e.first_name, e.last_name, d.dept_name, e.sil_credits, e.vl_credits, e.sl_credits, e.solo_parent_credits, e.paternity_credits, e.maternity_credits, e.bereavement_immediate_credits, e.bereavement_extended_credits
                FROM leave_applications l
                JOIN employees e ON l.emp_id = e.emp_id
                LEFT JOIN departments d ON e.dept_id = d.dept_id
@@ -372,8 +396,8 @@ class Leave
             if ($stmt->rowCount() > 0 && $status === 'Approved') {
                 $this->processApprovedLeave($leaveId);
             } elseif ($stmt->rowCount() == 0) {
-                 if ($this->pdo->inTransaction()) $this->pdo->rollBack();
-                 throw new Exception("Request already processed.");
+                if ($this->pdo->inTransaction()) $this->pdo->rollBack();
+                throw new Exception("Request already processed.");
             }
             $this->pdo->commit(); 
         } catch (Exception $e) {
@@ -392,20 +416,23 @@ class Leave
             $end = new DateTime($leaveData['end_date']);
 
             $daysCount = $start->diff($end)->days + 1;
-            if ($leaveData['leave_type'] === 'Service Incentive Leave') {
-                $this->pdo->prepare("UPDATE employees SET sil_credits = GREATEST(0, sil_credits - ?) WHERE emp_id = ?")->execute([$daysCount, $leaveData['emp_id']]);
-            } elseif ($leaveData['leave_type'] === 'Vacation Leave') {
+            $type = $leaveData['leave_type'];
+            if ($type === 'Vacation Leave' || $type === 'VL') {
                 $this->pdo->prepare("UPDATE employees SET vl_credits = GREATEST(0, vl_credits - ?) WHERE emp_id = ?")->execute([$daysCount, $leaveData['emp_id']]);
-            } elseif ($leaveData['leave_type'] === 'Sick Leave') {
+            } elseif ($type === 'Sick Leave' || $type === 'SL') {
                 $this->pdo->prepare("UPDATE employees SET sl_credits = GREATEST(0, sl_credits - ?) WHERE emp_id = ?")->execute([$daysCount, $leaveData['emp_id']]);
-            } elseif ($leaveData['leave_type'] === 'Bereavement (Immediate Family)') {
+            } elseif ($type === 'Solo Parent Leave' || $type === 'SPL') {
+                $this->pdo->prepare("UPDATE employees SET solo_parent_credits = GREATEST(0, solo_parent_credits - ?) WHERE emp_id = ?")->execute([$daysCount, $leaveData['emp_id']]);
+            } elseif ($type === 'Bereavement Leave' || $type === 'BL' || $type === 'Bereavement (Immediate Family)') {
                 $this->pdo->prepare("UPDATE employees SET bereavement_immediate_credits = GREATEST(0, bereavement_immediate_credits - ?) WHERE emp_id = ?")->execute([$daysCount, $leaveData['emp_id']]);
-            } elseif ($leaveData['leave_type'] === 'Bereavement (Extended Family)') {
+            } elseif ($type === 'Bereavement (Extended Family)') {
                 $this->pdo->prepare("UPDATE employees SET bereavement_extended_credits = GREATEST(0, bereavement_extended_credits - ?) WHERE emp_id = ?")->execute([$daysCount, $leaveData['emp_id']]);
-            } elseif ($leaveData['leave_type'] === 'Paternity Leave') {
+            } elseif ($type === 'Paternity Leave' || $type === 'PL') {
                 $this->pdo->prepare("UPDATE employees SET paternity_credits = GREATEST(0, paternity_credits - ?) WHERE emp_id = ?")->execute([$daysCount, $leaveData['emp_id']]);
-            } elseif ($leaveData['leave_type'] === 'Maternity Leave (105 Days Unpaid)' || $leaveData['leave_type'] === 'Maternity Leave') {
+            } elseif ($type === 'Maternity Leave (105 Days Unpaid)' || $type === 'Maternity Leave' || $type === 'ML') {
                 $this->pdo->prepare("UPDATE employees SET maternity_credits = GREATEST(0, maternity_credits - ?) WHERE emp_id = ?")->execute([$daysCount, $leaveData['emp_id']]);
+            } elseif ($type === 'Service Incentive Leave') {
+                $this->pdo->prepare("UPDATE employees SET sil_credits = GREATEST(0, sil_credits - ?) WHERE emp_id = ?")->execute([$daysCount, $leaveData['emp_id']]);
             }
 
             // Map Code
@@ -449,12 +476,31 @@ class Leave
     }
 
     public function getOvertimeHistory($empId = null, $deptId = null) {
-        if ($deptId) {
-             $sql = "SELECT ot.*, e.first_name, e.last_name FROM overtime_applications ot JOIN employees e ON ot.emp_id = e.emp_id WHERE e.dept_id = ? ORDER BY ot.created_at DESC";
+        if ($deptId && $empId) {
+             $sql = "SELECT ot.*, e.first_name, e.last_name, d.dept_name 
+                     FROM overtime_applications ot 
+                     JOIN employees e ON ot.emp_id = e.emp_id 
+                     LEFT JOIN departments d ON e.dept_id = d.dept_id 
+                     WHERE (e.dept_id = ? OR ot.emp_id = ?) 
+                     ORDER BY ot.created_at DESC";
+             $stmt = $this->pdo->prepare($sql);
+             $stmt->execute([$deptId, $empId]);
+        } elseif ($deptId) {
+             $sql = "SELECT ot.*, e.first_name, e.last_name, d.dept_name 
+                     FROM overtime_applications ot 
+                     JOIN employees e ON ot.emp_id = e.emp_id 
+                     LEFT JOIN departments d ON e.dept_id = d.dept_id 
+                     WHERE e.dept_id = ? 
+                     ORDER BY ot.created_at DESC";
              $stmt = $this->pdo->prepare($sql);
              $stmt->execute([$deptId]);
         } else {
-             $sql = "SELECT ot.*, e.first_name, e.last_name FROM overtime_applications ot JOIN employees e ON ot.emp_id = e.emp_id WHERE ot.emp_id = ? ORDER BY ot.created_at DESC";
+             $sql = "SELECT ot.*, e.first_name, e.last_name, d.dept_name 
+                     FROM overtime_applications ot 
+                     JOIN employees e ON ot.emp_id = e.emp_id 
+                     LEFT JOIN departments d ON e.dept_id = d.dept_id 
+                     WHERE ot.emp_id = ? 
+                     ORDER BY ot.created_at DESC";
              $stmt = $this->pdo->prepare($sql);
              $stmt->execute([$empId]);
         }
@@ -549,7 +595,7 @@ class Leave
         $timeIn = null;
         $timeOut = null;
 
-        if (!in_array($newCode, ['OFF', 'FLEX', 'HOLIDAY OFF', 'LWOP', 'LWP'])) {
+        if (!in_array($newCode, ['OFF', 'SL', 'VL', 'SPL', 'ML', 'PL', 'BL'])) {
             $shiftStmt = $this->pdo->prepare("SELECT time_in, time_out FROM shift_types WHERE shift_code = ?");
             $shiftStmt->execute([$newCode]);
             $shift = $shiftStmt->fetch(PDO::FETCH_ASSOC);
@@ -592,17 +638,16 @@ class Leave
 
     private function mapShiftCode($type) {
         $map = [
-            'DAYOFF' => 'OFF', 'FLEX' => 'FLEX', 'HOLIDAY OFF' => 'HOLIDAY OFF',
-            'Leave Without Pay' => 'LWOP', 'Leave With Pay' => 'LWP',
-            'Vacation Leave' => 'VL', 'Sick Leave' => 'SL',
-            'Service Incentive Leave' => 'SIL',
+            'Off' => 'OFF', 'OFF' => 'OFF', 'DAYOFF' => 'OFF',
+            'Sick Leave' => 'SL', 'SL' => 'SL',
+            'Vacation Leave' => 'VL', 'VL' => 'VL',
+            'Solo Parent Leave' => 'SPL', 'SPL' => 'SPL',
+            'Maternity Leave' => 'ML', 'ML' => 'ML', 'Maternity Leave (105 Days Unpaid)' => 'ML',
+            'Paternity Leave' => 'PL', 'PL' => 'PL',
+            'Bereavement Leave' => 'BL', 'BL' => 'BL',
             'Bereavement (Immediate Family)' => 'BL',
             'Bereavement (Extended Family)' => 'BL',
-            'Bereavement' => 'BL',
-            'Paternity Leave' => 'PL',
-            'Maternity Leave (105 Days Unpaid)' => 'ML',
-            'Maternity Leave' => 'ML',
-            'Emergency Leave' => 'EL'
+            'Bereavement' => 'BL'
         ];
         return $map[$type] ?? $type;
     }

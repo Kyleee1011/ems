@@ -214,6 +214,7 @@ require_once dirname(dirname(__DIR__)) . '/config_session.php';
                 'sil_credits' => AppHelpers::cleanNum($getPost('sil_credits')),
                 'vl_credits' => AppHelpers::cleanNum($getPost('vl_credits')),
                 'sl_credits' => AppHelpers::cleanNum($getPost('sl_credits')),
+                'solo_parent_credits' => AppHelpers::cleanNum($getPost('solo_parent_credits', 7)),
                 'paternity_credits' => AppHelpers::cleanNum($getPost('paternity_credits', 7)),
                 'maternity_credits' => AppHelpers::cleanNum($getPost('maternity_credits', 105)),
                 'bereavement_immediate_credits' => AppHelpers::cleanNum($getPost('bereavement_immediate_credits', 5)),

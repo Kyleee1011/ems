@@ -119,7 +119,7 @@ require BASE_PATH . '/partials/layout_sidebar.php';
             
             // Payroll & Leave Credits
             setVal('edit_salary_rate', emp.salary_rate); 
-            setVal('edit_sil_credits', emp.sil_credits);
+            setVal('edit_solo_parent_credits', emp.solo_parent_credits !== undefined ? emp.solo_parent_credits : '7');
             setVal('edit_vl_credits', emp.vl_credits !== undefined ? emp.vl_credits : '0.0');
             setVal('edit_sl_credits', emp.sl_credits !== undefined ? emp.sl_credits : '0.0');
             setVal('edit_paternity_credits', emp.paternity_credits !== undefined ? emp.paternity_credits : '7');

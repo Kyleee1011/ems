@@ -66,7 +66,7 @@ class ScheduleBatch
                 $tIn = ($tInObj instanceof DateTime) ? $tInObj->format('H:i') : (string)$tInObj;
                 $tOut = ($tOutObj instanceof DateTime) ? $tOutObj->format('H:i') : (string)$tOutObj;
                 $displayTime = ($tIn && $tOut) ? substr($tIn,0,5) . '-' . substr($tOut,0,5) : '-';
-                if(in_array($code, ['OFF','FLEX','HOLIDAY OFF','LWOP','LWP'])) $displayTime = $code;
+                if(in_array($code, ['OFF', 'SL', 'VL', 'SPL', 'ML', 'PL', 'BL'])) $displayTime = $code;
 
                 $schedules[$row['employee_id']][$date] = ['code' => $code, 'time' => $displayTime];
             }

@@ -5,13 +5,12 @@ require BASE_PATH . '/partials/layout_topbar.php';
 require BASE_PATH . '/partials/layout_sidebar.php';
 
 $creditsMap = [
-    'sil' => (float)($my_all_credits['sil_credits'] ?? 0.0),
     'vl' => (float)($my_all_credits['vl_credits'] ?? 0.0),
     'sl' => (float)($my_all_credits['sl_credits'] ?? 0.0),
+    'solo_parent' => (float)($my_all_credits['solo_parent_credits'] ?? 7.0),
     'paternity' => (float)($my_all_credits['paternity_credits'] ?? 7.0),
     'maternity' => (float)($my_all_credits['maternity_credits'] ?? 105.0),
-    'bereavement_imm' => (float)($my_all_credits['bereavement_immediate_credits'] ?? 5.0),
-    'bereavement_ext' => (float)($my_all_credits['bereavement_extended_credits'] ?? 3.0),
+    'bereavement' => (float)($my_all_credits['bereavement_immediate_credits'] ?? 5.0),
 ];
 ?>
 
@@ -21,19 +20,22 @@ $creditsMap = [
         <p class="page-sub">Philippine Standard Leave Benefits & Workforce Approvals</p>
     </div>
     <div class="header-actions" style="display: flex; gap: 8px; flex-wrap: wrap;">
-        <div class="pill-btn" style="background: var(--amber-bg); color: var(--amber); border-color: var(--amber-bdr);" title="Service Incentive Leave Credits">
-            SIL: <?php echo number_format($creditsMap['sil'], 1); ?>d
-        </div>
-        <div class="pill-btn" style="background: var(--teal-bg); color: var(--teal); border-color: var(--teal-border);" title="Vacation Leave Credits">
+        <div class="pill-btn" style="background: var(--teal-bg); color: var(--teal); border-color: var(--teal-border);" title="Vacation Leave Credits (Allocated by HR)">
             VL: <?php echo number_format($creditsMap['vl'], 1); ?>d
         </div>
-        <div class="pill-btn" style="background: var(--blue-bg, #eff6ff); color: var(--blue, #2563eb); border-color: var(--blue-border, #bfdbfe);" title="Sick Leave Credits">
+        <div class="pill-btn" style="background: var(--blue-bg, #eff6ff); color: var(--blue, #2563eb); border-color: var(--blue-border, #bfdbfe);" title="Sick Leave Credits (Allocated by HR)">
             SL: <?php echo number_format($creditsMap['sl'], 1); ?>d
+        </div>
+        <div class="pill-btn" style="background: #fef3c7; color: #d97706; border-color: #fde68a;" title="Solo Parent Leave Credits">
+            Solo Parent: <?php echo number_format($creditsMap['solo_parent'], 0); ?>d
+        </div>
+        <div class="pill-btn" style="background: #f5f3ff; color: #7c3aed; border-color: #ddd6fe;" title="Bereavement Leave Credits">
+            Bereavement: <?php echo number_format($creditsMap['bereavement'], 0); ?>d
         </div>
         <div class="pill-btn" style="background: #fdf2f8; color: #db2777; border-color: #fbcfe8;" title="Maternity Leave Credits">
             ML: <?php echo number_format($creditsMap['maternity'], 0); ?>d
         </div>
-        <div class="pill-btn" style="background: #f5f3ff; color: #7c3aed; border-color: #ddd6fe;" title="Paternity Leave Credits">
+        <div class="pill-btn" style="background: #ecfdf5; color: #059669; border-color: #a7f3d0;" title="Paternity Leave Credits">
             PL: <?php echo number_format($creditsMap['paternity'], 0); ?>d
         </div>
     </div>
@@ -80,25 +82,30 @@ $creditsMap = [
                                 <?php foreach($leaveTypes as $type): 
                                     $disabled = false;
                                     $extraText = '';
-                                    if ($type === 'Service Incentive Leave') {
-                                        if ($creditsMap['sil'] <= 0) {
+                                    if ($type === 'Vacation Leave') {
+                                        if ($creditsMap['vl'] <= 0) {
                                             $disabled = true;
-                                            $extraText = ' (0 credit available - Cannot select)';
+                                            $extraText = ' (0 credit allocated by HR - Cannot select)';
                                         } else {
-                                            $extraText = ' (' . number_format($creditsMap['sil'], 1) . ' credits)';
+                                            $extraText = ' (' . number_format($creditsMap['vl'], 1) . ' credits allocated - 3 days notice)';
                                         }
-                                    } elseif ($type === 'Vacation Leave') {
-                                        $extraText = ' (' . number_format($creditsMap['vl'], 1) . ' credits - 3 days notice)';
                                     } elseif ($type === 'Sick Leave') {
-                                        $extraText = ' (' . number_format($creditsMap['sl'], 1) . ' credits - 2 hrs notice)';
-                                    } elseif ($type === 'Bereavement (Immediate Family)') {
-                                        $extraText = ' (Max 5 Days - Immediate Family)';
-                                    } elseif ($type === 'Bereavement (Extended Family)') {
-                                        $extraText = ' (Max 3 Days - Extended Family)';
+                                        if ($creditsMap['sl'] <= 0) {
+                                            $disabled = true;
+                                            $extraText = ' (0 credit allocated by HR - Cannot select)';
+                                        } else {
+                                            $extraText = ' (' . number_format($creditsMap['sl'], 1) . ' credits allocated - 2 hrs notice)';
+                                        }
+                                    } elseif ($type === 'Solo Parent Leave') {
+                                        $extraText = ' (' . number_format($creditsMap['solo_parent'], 0) . ' Days - RA 8972/11861)';
+                                    } elseif ($type === 'Bereavement Leave') {
+                                        $extraText = ' (' . number_format($creditsMap['bereavement'], 0) . ' Days)';
                                     } elseif ($type === 'Paternity Leave') {
                                         $extraText = ' (7 Days RA 8187)';
-                                    } elseif ($type === 'Maternity Leave (105 Days Unpaid)') {
-                                        $extraText = ' (105 Days RA 11210 Unpaid)';
+                                    } elseif ($type === 'Maternity Leave') {
+                                        $extraText = ' (105 Days RA 11210)';
+                                    } elseif ($type === 'Off') {
+                                        $extraText = ' (Rest Day)';
                                     }
                                 ?>
                                     <option value="<?php echo htmlspecialchars($type); ?>" <?php echo $disabled ? 'disabled style="color:var(--ink-4);"' : ''; ?>>
@@ -281,13 +288,12 @@ $creditsMap = [
 
                             // Compute remaining credit for the requested type
                             $relCredit = null;
-                            if ($l['leave_type'] === 'Service Incentive Leave') $relCredit = $l['sil_credits'];
-                            elseif ($l['leave_type'] === 'Vacation Leave') $relCredit = $l['vl_credits'] ?? 0;
-                            elseif ($l['leave_type'] === 'Sick Leave') $relCredit = $l['sl_credits'] ?? 0;
-                            elseif ($l['leave_type'] === 'Paternity Leave') $relCredit = $l['paternity_credits'] ?? 7;
-                            elseif (strpos($l['leave_type'], 'Maternity') !== false) $relCredit = $l['maternity_credits'] ?? 105;
-                            elseif ($l['leave_type'] === 'Bereavement (Immediate Family)') $relCredit = $l['bereavement_immediate_credits'] ?? 5;
-                            elseif ($l['leave_type'] === 'Bereavement (Extended Family)') $relCredit = $l['bereavement_extended_credits'] ?? 3;
+                            if ($l['leave_type'] === 'Vacation Leave' || $l['leave_type'] === 'VL') $relCredit = $l['vl_credits'] ?? 0;
+                            elseif ($l['leave_type'] === 'Sick Leave' || $l['leave_type'] === 'SL') $relCredit = $l['sl_credits'] ?? 0;
+                            elseif ($l['leave_type'] === 'Solo Parent Leave' || $l['leave_type'] === 'SPL') $relCredit = $l['solo_parent_credits'] ?? 7;
+                            elseif ($l['leave_type'] === 'Paternity Leave' || $l['leave_type'] === 'PL') $relCredit = $l['paternity_credits'] ?? 7;
+                            elseif (strpos($l['leave_type'], 'Maternity') !== false || $l['leave_type'] === 'ML') $relCredit = $l['maternity_credits'] ?? 105;
+                            elseif (strpos($l['leave_type'], 'Bereavement') !== false || $l['leave_type'] === 'BL') $relCredit = $l['bereavement_immediate_credits'] ?? 5;
                         ?>
                         <tr style="<?php echo $isAppeal ? 'background: var(--amber-bg);' : ''; ?>">
                             <td>
@@ -389,12 +395,12 @@ $creditsMap = [
                         <tr>
                             <th>Employee</th>
                             <th>Department</th>
-                            <th style="text-align: center;">SIL</th>
-                            <th style="text-align: center;">VL</th>
-                            <th style="text-align: center;">SL</th>
+                            <th style="text-align: center;">VL (HR Set)</th>
+                            <th style="text-align: center;">SL (HR Set)</th>
+                            <th style="text-align: center;">Solo Parent</th>
                             <th style="text-align: center;">Paternity</th>
                             <th style="text-align: center;">Maternity</th>
-                            <th style="text-align: center;">Bereavement (Imm/Ext)</th>
+                            <th style="text-align: center;">Bereavement</th>
                             <th style="text-align: right;">Action</th>
                         </tr>
                     </thead>
@@ -410,15 +416,13 @@ $creditsMap = [
                                     <span style="font-size: 11px; color: var(--ink-3);"><?php echo htmlspecialchars($ec['dept_name'] ?? 'General'); ?></span>
                                 </td>
                                 <td style="text-align: center; font-weight: 700; font-family: 'DM Mono';">
-                                    <span class="tag <?php echo ((float)$ec['sil_credits'] > 0) ? 'tag-green' : 'tag-amber'; ?>">
-                                        <?php echo number_format((float)$ec['sil_credits'], 1); ?>d
-                                    </span>
-                                </td>
-                                <td style="text-align: center; font-weight: 700; font-family: 'DM Mono';">
                                     <span class="tag tag-teal"><?php echo number_format((float)($ec['vl_credits'] ?? 0), 1); ?>d</span>
                                 </td>
                                 <td style="text-align: center; font-weight: 700; font-family: 'DM Mono';">
                                     <span class="tag tag-blue"><?php echo number_format((float)($ec['sl_credits'] ?? 0), 1); ?>d</span>
+                                </td>
+                                <td style="text-align: center; font-weight: 700; font-family: 'DM Mono'; font-size: 11px;">
+                                    <?php echo number_format((float)($ec['solo_parent_credits'] ?? 7), 0); ?>d
                                 </td>
                                 <td style="text-align: center; font-weight: 700; font-family: 'DM Mono'; font-size: 11px;">
                                     <?php echo number_format((float)($ec['paternity_credits'] ?? 7), 0); ?>d
@@ -427,7 +431,7 @@ $creditsMap = [
                                     <?php echo number_format((float)($ec['maternity_credits'] ?? 105), 0); ?>d
                                 </td>
                                 <td style="text-align: center; font-size: 11px; font-weight: 700; font-family: 'DM Mono';">
-                                    <?php echo number_format((float)($ec['bereavement_immediate_credits'] ?? 5), 0); ?>d / <?php echo number_format((float)($ec['bereavement_extended_credits'] ?? 3), 0); ?>d
+                                    <?php echo number_format((float)($ec['bereavement_immediate_credits'] ?? 5), 0); ?>d
                                 </td>
                                 <td style="text-align: right;">
                                     <button type="button" class="btn-primary" style="font-size: 10px; height: 26px; padding: 0 10px;" 
@@ -481,16 +485,16 @@ $creditsMap = [
 
             <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
                 <div class="form-group">
-                    <label class="form-label" style="color:var(--amber); font-weight:700;">SIL Credits</label>
-                    <input type="number" step="0.5" name="sil_credits" id="cm_sil_credits" class="input-field" required>
-                </div>
-                <div class="form-group">
-                    <label class="form-label">Vacation Leave (VL)</label>
+                    <label class="form-label" style="color:var(--teal); font-weight:700;">Vacation Leave (VL) Credits</label>
                     <input type="number" step="0.5" name="vl_credits" id="cm_vl_credits" class="input-field" required>
                 </div>
                 <div class="form-group">
-                    <label class="form-label">Sick Leave (SL)</label>
+                    <label class="form-label" style="color:var(--blue); font-weight:700;">Sick Leave (SL) Credits</label>
                     <input type="number" step="0.5" name="sl_credits" id="cm_sl_credits" class="input-field" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Solo Parent Leave (Days)</label>
+                    <input type="number" step="1" name="solo_parent_credits" id="cm_solo_parent_credits" class="input-field" required>
                 </div>
                 <div class="form-group">
                     <label class="form-label">Paternity (Days)</label>
@@ -501,12 +505,8 @@ $creditsMap = [
                     <input type="number" step="1" name="maternity_credits" id="cm_maternity_credits" class="input-field" required>
                 </div>
                 <div class="form-group">
-                    <label class="form-label">Bereavement Immediate</label>
+                    <label class="form-label">Bereavement Leave (Days)</label>
                     <input type="number" step="1" name="bereavement_immediate_credits" id="cm_bereav_imm" class="input-field" required>
-                </div>
-                <div class="form-group" style="grid-column: span 2;">
-                    <label class="form-label">Bereavement Extended</label>
-                    <input type="number" step="1" name="bereavement_extended_credits" id="cm_bereav_ext" class="input-field" required>
                 </div>
             </div>
 
@@ -555,8 +555,12 @@ $creditsMap = [
             return false;
         }
 
-        if (leaveType === 'Service Incentive Leave' && userCredits.sil <= 0) {
-            alert('Insufficient SIL Credits: SIL cannot be selected without available SIL credits.');
+        if (leaveType === 'Vacation Leave' && userCredits.vl <= 0) {
+            alert('Insufficient VL Credits: Vacation Leave cannot be selected without available VL credits allocated by HR.');
+            return false;
+        }
+        if (leaveType === 'Sick Leave' && userCredits.sl <= 0) {
+            alert('Insufficient SL Credits: Sick Leave cannot be selected without available SL credits allocated by HR.');
             return false;
         }
 
@@ -569,16 +573,20 @@ $creditsMap = [
             }
             const days = Math.floor((e - s) / (1000 * 60 * 60 * 24)) + 1;
 
-            if (leaveType === 'Service Incentive Leave' && days > userCredits.sil) {
-                alert('Insufficient SIL credits for this requested duration (' + days + ' days requested, ' + userCredits.sil + ' available).');
+            if (leaveType === 'Vacation Leave' && days > userCredits.vl) {
+                alert('Insufficient VL credits for this requested duration (' + days + ' days requested, ' + userCredits.vl + ' allocated by HR).');
                 return false;
             }
-            if (leaveType === 'Bereavement (Immediate Family)' && days > 5) {
-                alert('Bereavement leave for immediate family is capped at maximum 5 days under Philippine standard.');
+            if (leaveType === 'Sick Leave' && days > userCredits.sl) {
+                alert('Insufficient SL credits for this requested duration (' + days + ' days requested, ' + userCredits.sl + ' allocated by HR).');
                 return false;
             }
-            if (leaveType === 'Bereavement (Extended Family)' && days > 3) {
-                alert('Bereavement leave for extended family is capped at maximum 3 days.');
+            if (leaveType === 'Solo Parent Leave' && days > userCredits.solo_parent) {
+                alert('Solo Parent Leave request exceeds available credits (' + days + ' days requested, ' + userCredits.solo_parent + ' available).');
+                return false;
+            }
+            if (leaveType === 'Bereavement Leave' && days > 5) {
+                alert('Bereavement leave is capped at maximum 5 days under company policy.');
                 return false;
             }
             if (leaveType === 'Paternity Leave' && days > 7) {
@@ -611,31 +619,31 @@ $creditsMap = [
             if (leaveType === 'Vacation Leave') {
                 noticeBox.style.background = 'var(--teal-bg)';
                 noticeBox.style.color = 'var(--teal-deep)';
-                noticeBox.innerHTML = '<strong><i class="fa-solid fa-circle-info"></i> Notice:</strong> Vacation leave must be filed at least <strong>3 days in advance</strong>. If filing within 3 days, an appeal is required.';
+                noticeBox.innerHTML = '<strong><i class="fa-solid fa-circle-info"></i> Notice:</strong> Vacation leave must be filed at least <strong>3 days in advance</strong>. Available HR-allocated credits: <strong>' + userCredits.vl.toFixed(1) + ' day(s)</strong>. If filing within 3 days, an appeal is required.';
             } else if (leaveType === 'Sick Leave') {
                 noticeBox.style.background = '#eff6ff';
                 noticeBox.style.color = '#1e40af';
-                noticeBox.innerHTML = '<strong><i class="fa-solid fa-circle-info"></i> Notice:</strong> Sick leave must be filed at least <strong>2 hours before duty start</strong>. Otherwise, submit an appeal justification below.';
-            } else if (leaveType === 'Bereavement (Immediate Family)') {
+                noticeBox.innerHTML = '<strong><i class="fa-solid fa-circle-info"></i> Notice:</strong> Sick leave must be filed at least <strong>2 hours before duty start</strong>. Available HR-allocated credits: <strong>' + userCredits.sl.toFixed(1) + ' day(s)</strong>. Otherwise, submit an appeal justification below.';
+            } else if (leaveType === 'Solo Parent Leave') {
+                noticeBox.style.background = '#fef3c7';
+                noticeBox.style.color = '#92400e';
+                noticeBox.innerHTML = '<strong><i class="fa-solid fa-person-breastfeeding"></i> Republic Act 8972/11861:</strong> <strong>7 Days</strong> paid parental leave for certified solo parents. Available: <strong>' + userCredits.solo_parent.toFixed(0) + ' day(s)</strong>.';
+            } else if (leaveType === 'Bereavement Leave') {
                 noticeBox.style.background = '#f5f3ff';
                 noticeBox.style.color = '#5b21b6';
-                noticeBox.innerHTML = '<strong><i class="fa-solid fa-cross"></i> Bereavement (Immediate):</strong> Covers spouse, children, parents, siblings (<strong>Maximum 5 Days</strong>).';
-            } else if (leaveType === 'Bereavement (Extended Family)') {
-                noticeBox.style.background = '#f5f3ff';
-                noticeBox.style.color = '#5b21b6';
-                noticeBox.innerHTML = '<strong><i class="fa-solid fa-cross"></i> Bereavement (Extended):</strong> Covers grandparents, in-laws, cousins, aunts/uncles (<strong>Maximum 3 Days</strong>).';
+                noticeBox.innerHTML = '<strong><i class="fa-solid fa-cross"></i> Bereavement Leave:</strong> Covers loss of immediate family members (<strong>Maximum 5 Days</strong>).';
             } else if (leaveType === 'Paternity Leave') {
-                noticeBox.style.background = '#f0fdf4';
-                noticeBox.style.color = '#166534';
+                noticeBox.style.background = '#ecfdf5';
+                noticeBox.style.color = '#065f46';
                 noticeBox.innerHTML = '<strong><i class="fa-solid fa-baby"></i> Republic Act 8187:</strong> <strong>7 Days</strong> with full pay for legitimate married spouses.';
             } else if (leaveType.indexOf('Maternity') !== -1) {
                 noticeBox.style.background = '#fdf2f8';
                 noticeBox.style.color = '#9d174d';
-                noticeBox.innerHTML = '<strong><i class="fa-solid fa-baby-carriage"></i> Republic Act 11210:</strong> <strong>105 Days</strong> maternity benefit (company unpaid leave code).';
-            } else if (leaveType === 'Service Incentive Leave') {
-                noticeBox.style.background = 'var(--amber-bg)';
-                noticeBox.style.color = 'var(--amber)';
-                noticeBox.innerHTML = '<strong><i class="fa-solid fa-coins"></i> Labor Code Art. 95:</strong> Available credits: <strong>' + userCredits.sil.toFixed(1) + ' day(s)</strong>.';
+                noticeBox.innerHTML = '<strong><i class="fa-solid fa-baby-carriage"></i> Republic Act 11210:</strong> <strong>105 Days</strong> maternity benefit.';
+            } else if (leaveType === 'Off') {
+                noticeBox.style.background = 'var(--bg-subtle)';
+                noticeBox.style.color = 'var(--ink-2)';
+                noticeBox.innerHTML = '<strong><i class="fa-solid fa-calendar-day"></i> Scheduled Rest Day (Off):</strong> Regular day off from scheduled work.';
             } else {
                 noticeBox.style.display = 'none';
             }
@@ -702,13 +710,12 @@ $creditsMap = [
     function openCreditEditModal(emp) {
         document.getElementById('credit_modal_emp_id').value = emp.emp_id;
         document.getElementById('credit_modal_emp_name').textContent = (emp.first_name || '') + ' ' + (emp.last_name || '') + ' (AC: ' + (emp.ac_no || '-') + ')';
-        document.getElementById('cm_sil_credits').value = emp.sil_credits !== null ? emp.sil_credits : '0.0';
         document.getElementById('cm_vl_credits').value = emp.vl_credits !== null ? emp.vl_credits : '0.0';
         document.getElementById('cm_sl_credits').value = emp.sl_credits !== null ? emp.sl_credits : '0.0';
+        document.getElementById('cm_solo_parent_credits').value = emp.solo_parent_credits !== null ? emp.solo_parent_credits : '7';
         document.getElementById('cm_paternity_credits').value = emp.paternity_credits !== null ? emp.paternity_credits : '7';
         document.getElementById('cm_maternity_credits').value = emp.maternity_credits !== null ? emp.maternity_credits : '105';
         document.getElementById('cm_bereav_imm').value = emp.bereavement_immediate_credits !== null ? emp.bereavement_immediate_credits : '5';
-        document.getElementById('cm_bereav_ext').value = emp.bereavement_extended_credits !== null ? emp.bereavement_extended_credits : '3';
         document.getElementById('creditEditModal').style.display = 'flex';
     }
 
