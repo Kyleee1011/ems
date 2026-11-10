@@ -1,11 +1,11 @@
 <div class="card" style="border:none; box-shadow:none; margin-bottom:0;">
-    <div class="card-head" style="background:var(--bg-card); border-bottom:1px solid var(--border-lt); padding:15px 20px;">
+    <div class="card-head" style="background:var(--bg-card); border-bottom:1px solid var(--border-lt); padding:15px 20px; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:12px;">
         <div class="flex-row">
             <span class="tag tag-teal"><?php echo $totalRecords; ?> Total</span>
         </div>
-        <form method="GET" action="" id="searchForm" class="flex-row">
+        <form method="GET" action="" id="searchForm" class="flex-row" style="flex-wrap:wrap; gap:10px;">
             <input type="hidden" name="tab" value="directory">
-            <select name="dept" id="deptFilter" onchange="this.form.submit()" class="input-field" style="width:180px; height:32px; font-size:11px;">
+            <select name="dept" id="deptFilter" onchange="this.form.submit()" class="input-field" style="width:250px; min-width:250px; flex-shrink:0; height:34px; font-size:12px;" title="Filter by Department">
                 <option value="">All Departments</option>
                 <?php foreach($depts as $d): ?>
                     <option value="<?php echo $d['dept_id']; ?>" <?php echo ($filterDept == $d['dept_id']) ? 'selected' : ''; ?>>
@@ -13,12 +13,12 @@
                     </option>
                 <?php endforeach; ?>
             </select>
-            <div style="position:relative;">
-                <i class="fa-solid fa-search" style="position:absolute; left:10px; top:10px; font-size:10px; color:var(--ink-4);"></i>
-                <input type="text" name="search" id="directorySearch" autocomplete="off" placeholder="Search name, AC, or dept..." value="<?php echo htmlspecialchars($searchTerm); ?>" class="input-field" style="padding-left:30px; width:220px; height:32px; font-size:11px;">
+            <div style="position:relative; flex-shrink:0;">
+                <i class="fa-solid fa-search" style="position:absolute; left:10px; top:11px; font-size:11px; color:var(--ink-4);"></i>
+                <input type="text" name="search" id="directorySearch" autocomplete="off" placeholder="Search name, AC, or dept..." value="<?php echo htmlspecialchars($searchTerm); ?>" class="input-field" style="padding-left:30px; width:220px; height:34px; font-size:12px;">
                 <div id="searchSuggestions" class="card" style="position:absolute; top:100%; left:0; right:0; z-index:1000; display:none; margin-top:5px; max-height:300px; overflow-y:auto; border-radius:var(--r-sm); box-shadow:var(--sh-lg);"></div>
             </div>
-            <button type="submit" class="btn-primary" style="height:32px; padding:0 15px;">Search</button>
+            <button type="submit" class="btn-primary" style="height:34px; padding:0 16px; font-size:12px; flex-shrink:0;">Search</button>
         </form>
     </div>
 

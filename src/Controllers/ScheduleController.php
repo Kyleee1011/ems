@@ -531,10 +531,10 @@ require_once dirname(dirname(__DIR__)) . '/config_session.php';
 
     private function getReferencedShifts() {
         $grouped = [
-            'AM Shifts (05:00 - 09:59)' => [],
-            'Mid Shifts (10:00 - 13:59)' => [],
-            'PM Shifts (14:00 - 17:59)' => [],
-            'Graveyard Shifts (18:00+)' => [],
+            'AM Shifts (5:00 AM - 9:59 AM)' => [],
+            'Mid Shifts (10:00 AM - 1:59 PM)' => [],
+            'PM Shifts (2:00 PM - 5:59 PM)' => [],
+            'Graveyard Shifts (6:00 PM+)' => [],
             'Leaves / Special' => []
         ];
         
@@ -547,10 +547,10 @@ require_once dirname(dirname(__DIR__)) . '/config_session.php';
                 $grouped['Leaves / Special'][] = $s;
             } else if ($s['time_in'] instanceof DateTime) {
                 $H = (int)$s['time_in']->format('G');
-                if ($H >= 5 && $H < 10) $grouped['AM Shifts (05:00 - 09:59)'][] = $s;
-                else if ($H >= 10 && $H < 14) $grouped['Mid Shifts (10:00 - 13:59)'][] = $s;
-                else if ($H >= 14 && $H < 18) $grouped['PM Shifts (14:00 - 17:59)'][] = $s;
-                else $grouped['Graveyard Shifts (18:00+)'][] = $s;
+                if ($H >= 5 && $H < 10) $grouped['AM Shifts (5:00 AM - 9:59 AM)'][] = $s;
+                else if ($H >= 10 && $H < 14) $grouped['Mid Shifts (10:00 AM - 1:59 PM)'][] = $s;
+                else if ($H >= 14 && $H < 18) $grouped['PM Shifts (2:00 PM - 5:59 PM)'][] = $s;
+                else $grouped['Graveyard Shifts (6:00 PM+)'][] = $s;
             }
         }
 

@@ -61,16 +61,25 @@ require BASE_PATH . '/partials/layout_sidebar.php';
                         <select name="new_shift_code" required class="input-field select2">
                             <option value="">Select New Shift...</option>
                             <optgroup label="Regular Shifts">
-                                <?php foreach($shifts as $s): ?>
-                                    <option value="<?php echo $s['shift_code']; ?>"><?php echo htmlspecialchars($s['shift_name']); ?> (<?php echo substr($s['time_in'], 0, 5) . '-' . substr($s['time_out'], 0, 5); ?>)</option>
+                                <?php foreach($shifts as $s): 
+                                    $time12 = '';
+                                    if (!empty($s['time_in']) && !empty($s['time_out'])) {
+                                        $tIn12 = date('g:i A', strtotime($s['time_in']));
+                                        $tOut12 = date('g:i A', strtotime($s['time_out']));
+                                        $time12 = " ({$tIn12} - {$tOut12})";
+                                    }
+                                ?>
+                                    <option value="<?php echo $s['shift_code']; ?>"><?php echo htmlspecialchars($s['shift_name']); ?><?php echo $time12; ?></option>
                                 <?php endforeach; ?>
                             </optgroup>
-                            <optgroup label="Special / Off">
-                                <option value="OFF">OFF</option>
-                                <option value="FLEX">FLEX</option>
-                                <option value="HOLIDAY OFF">HOLIDAY OFF</option>
-                                <option value="LWOP">Leave Without Pay</option>
-                                <option value="LWP">Leave With Pay</option>
+                            <optgroup label="Leaves / Special">
+                                <option value="OFF">OFF (Day Off)</option>
+                                <option value="SL">SL (Sick Leave)</option>
+                                <option value="VL">VL (Vacation Leave)</option>
+                                <option value="SPL">Solo Parent Leave</option>
+                                <option value="ML">Maternity Leave</option>
+                                <option value="PL">Paternity Leave</option>
+                                <option value="BL">Bereavement Leave</option>
                             </optgroup>
                         </select>
                     </div>

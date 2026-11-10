@@ -208,7 +208,7 @@ $can_set_colors = ($is_dept_head || $is_hr || $is_ceo);
 
 <!-- SHIFT MODAL -->
 <div id="modalBackdrop" class="modal-overlay" style="position:fixed; inset:0; background:rgba(0,0,0,0.5); backdrop-filter:blur(4px); z-index:100; display:none;" onclick="closeShiftModal()"></div>
-<div id="shiftModal" class="modal-container" style="position:fixed; top:50%; left:50%; transform:translate(-50%, -50%); width:650px; background:var(--bg-card); border-radius:16px; border:1px solid var(--border); box-shadow:var(--sh-lg); z-index:101; display:none; flex-direction:column; max-height:85vh;">
+<div id="shiftModal" class="modal-container" style="position:fixed; top:50%; left:50%; transform:translate(-50%, -50%); width:720px; max-width:95vw; background:var(--bg-card); border-radius:16px; border:1px solid var(--border); box-shadow:var(--sh-lg); z-index:101; display:none; flex-direction:column; max-height:85vh;">
     <div class="modal-header" style="padding:15px 20px; border-bottom:1px solid var(--border-lt); display:flex; align-items:center; justify-content:space-between; background:var(--bg-raised); border-radius:16px 16px 0 0;">
         <h3 class="card-title">Assignment Selector</h3>
         <button onclick="closeShiftModal()" class="icon-btn" style="border:none; background:none;"><i class="fa-solid fa-times"></i></button>
@@ -218,9 +218,17 @@ $can_set_colors = ($is_dept_head || $is_hr || $is_ceo);
             <div class="section-hd"><span class="section-hd-label"><?php echo $groupName; ?></span><div class="section-hd-line"></div></div>
             <div class="grid-4 mb-20" style="grid-template-columns: repeat(4, 1fr); gap: 8px;">
                 <?php foreach ($shifts as $s): ?>
-                    <div onclick="saveShift('<?php echo $s['shift_code']; ?>')" class="pill-btn" style="justify-content:center; text-align:center; padding:12px 5px; cursor:pointer; flex-direction: column;">
-                        <div style="font-weight:800; font-size:11px;"><?php echo $s['shift_code']; ?></div>
-                        <?php if($s['time_in']): ?><div style="font-size:9px; color:var(--ink-4); font-weight:600;"><?php echo $s['time_in']->format('H:i');?>-<?php echo $s['time_out']->format('H:i');?></div><?php endif; ?>
+                    <div onclick="saveShift('<?php echo $s['shift_code']; ?>')" class="pill-btn" style="justify-content:center; text-align:center; padding:10px 5px; cursor:pointer; flex-direction: column; min-height:48px;">
+                        <div style="font-weight:800; font-size:11.5px;"><?php echo $s['shift_code']; ?></div>
+                        <?php if(!empty($s['time_in']) && !empty($s['time_out'])): ?>
+                            <div style="font-size:9.5px; color:var(--ink-4); font-weight:600; white-space:nowrap; margin-top:2px;">
+                                <?php 
+                                    $tIn12 = ($s['time_in'] instanceof DateTime) ? $s['time_in']->format('g:i A') : date('g:i A', strtotime($s['time_in']));
+                                    $tOut12 = ($s['time_out'] instanceof DateTime) ? $s['time_out']->format('g:i A') : date('g:i A', strtotime($s['time_out']));
+                                    echo $tIn12 . ' - ' . $tOut12;
+                                ?>
+                            </div>
+                        <?php endif; ?>
                     </div>
                 <?php endforeach; ?>
             </div>
