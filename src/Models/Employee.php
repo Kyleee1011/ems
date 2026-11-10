@@ -35,6 +35,48 @@ class Employee
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
+    public function createDepartment($deptName, $deptCode = null, $color = '#0F766E')
+    {
+        $deptName = trim($deptName);
+        if (empty($deptName)) {
+            throw new \Exception("Department name is required.");
+        }
+
+        // Check for duplicate department name (case-insensitive)
+        $stmtCheck = $this->pdo->prepare("SELECT dept_id FROM departments WHERE LOWER(dept_name) = LOWER(?)");
+        $stmtCheck->execute([$deptName]);
+        if ($stmtCheck->fetchColumn()) {
+            throw new \Exception("A department named '{$deptName}' already exists.");
+        }
+
+        // Auto-generate code if empty
+        if (empty($deptCode)) {
+            $words = preg_split('/\s+/', $deptName);
+            $deptCode = '';
+            foreach ($words as $w) {
+                if (!empty($w)) $deptCode .= strtoupper($w[0]);
+            }
+            if (strlen($deptCode) < 2) {
+                $deptCode = strtoupper(substr($deptName, 0, 4));
+            }
+        } else {
+            $deptCode = strtoupper(trim($deptCode));
+        }
+
+        $color = !empty($color) ? trim($color) : '#0F766E';
+
+        $stmt = $this->pdo->prepare("INSERT INTO departments (dept_name, dept_code, color) VALUES (?, ?, ?)");
+        $stmt->execute([$deptName, $deptCode, $color]);
+        $newId = (int)$this->pdo->lastInsertId();
+
+        try {
+            $stmtSched = $this->pdo->prepare("INSERT INTO scheduler_departments (dept_id, dept_name) VALUES (?, ?)");
+            $stmtSched->execute([$newId, $deptName]);
+        } catch (\Exception $e) {}
+
+        return $newId;
+    }
+
     public function getSupervisors()
     {
         $sql = "SELECT emp_id, first_name, last_name FROM employees WHERE approval_role IN ('DeptHead','Manager','CEO') AND IsActive = 1 ORDER BY first_name ASC";

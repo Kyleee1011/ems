@@ -99,6 +99,11 @@ $ceoName = $ceoEmployee ? $ceoEmployee['full_name'] : 'Executive Board';
         <?php echo htmlspecialchars($dept['dept_name']); ?> (<?php echo $dCount; ?>)
     </button>
     <?php endforeach; ?>
+    <?php if (!empty($canEditColors)): ?>
+    <button type="button" class="dept-chip" onclick="openCreateDeptModal()" style="border:1px dashed var(--teal, #008080); color:var(--teal, #008080); background:transparent; font-weight:700; cursor:pointer;" title="Create New Department">
+        <i class="fa-solid fa-plus" style="margin-right:4px;"></i> New Dept
+    </button>
+    <?php endif; ?>
 </div>
 
 <!-- REPORTING LINE BREADCRUMB (Visible in Department View) -->
@@ -265,6 +270,69 @@ $ceoName = $ceoEmployee ? $ceoEmployee['full_name'] : 'Executive Board';
             <button type="button" onclick="closeColorPickerModal()" class="btn btn-ghost" style="font-size:12px; height:34px;">Cancel</button>
             <button type="submit" class="btn btn-primary" style="font-size:12px; height:34px; padding:0 18px;">
                 <i class="fa-solid fa-check"></i> Apply Color
+            </button>
+        </div>
+    </form>
+</div>
+
+<!-- CREATE DEPARTMENT MODAL (HR / CEO ONLY) -->
+<div id="createDeptModalBackdrop" class="modal-overlay" style="position:fixed; inset:0; background:rgba(0,0,0,0.5); backdrop-filter:blur(4px); z-index:1000; display:none;" onclick="closeCreateDeptModal()"></div>
+<div id="createDeptModal" class="modal-container" style="position:fixed; top:50%; left:50%; transform:translate(-50%, -50%); width:460px; background:var(--bg-card, #fff); border-radius:16px; border:1px solid var(--border-color, #ccc); box-shadow:0 10px 30px rgba(0,0,0,0.2); z-index:1001; display:none; flex-direction:column;">
+    <div style="padding:16px 20px; border-bottom:1px solid var(--border-color, #eee); display:flex; justify-content:space-between; align-items:center;">
+        <h3 style="font-size:14px; font-weight:700; color:var(--text-color, #111);">
+            <i class="fa-solid fa-building" style="color:var(--teal, #008080); margin-right:8px;"></i>
+            Create New Department
+        </h3>
+        <button type="button" onclick="closeCreateDeptModal()" style="background:none; border:none; cursor:pointer; font-size:16px; color:#888;">&times;</button>
+    </div>
+    <form id="createDeptOrgForm" onsubmit="submitCreateDeptOrg(event)" style="padding:20px; margin:0;">
+        <?php echo csrfField(); ?>
+        <input type="hidden" name="action" value="create_department">
+        
+        <div id="createDeptOrgAlert" style="display:none; padding:10px 14px; border-radius:8px; font-size:12.5px; font-weight:600; margin-bottom:14px;"></div>
+
+        <div style="margin-bottom:14px;">
+            <label style="font-size:11px; font-weight:700; color:var(--text-muted, #666); display:block; margin-bottom:4px;">
+                DEPARTMENT NAME <span style="color:#ef4444;">*</span>
+            </label>
+            <input type="text" name="dept_name" id="newDeptOrgName" required placeholder="e.g. Quality Assurance" class="input-field" style="width:100%; height:36px; font-size:13px;">
+        </div>
+
+        <div style="margin-bottom:14px;">
+            <label style="font-size:11px; font-weight:700; color:var(--text-muted, #666); display:block; margin-bottom:4px;">
+                SHORT CODE <span style="font-size:10.5px; font-weight:normal; color:#888;">(Optional)</span>
+            </label>
+            <input type="text" name="dept_code" id="newDeptOrgCode" placeholder="e.g. QA" maxlength="20" class="input-field" style="width:100%; height:36px; font-size:13px; text-transform:uppercase;">
+        </div>
+
+        <div style="margin-bottom:18px;">
+            <label style="font-size:11px; font-weight:700; color:var(--text-muted, #666); display:block; margin-bottom:8px;">
+                DEPARTMENT COLOR THEME
+            </label>
+            <div style="display:grid; grid-template-columns:repeat(4, 1fr); gap:10px;" id="orgPaletteGrid">
+                <?php foreach (App\Controllers\OrgChartController::APPROVED_PALETTE as $hex => $pInfo): ?>
+                <label style="display:flex; flex-direction:column; align-items:center; gap:4px; cursor:pointer; padding:6px; border-radius:8px; border:2px solid <?php echo $hex === '#0F766E' ? $hex : 'transparent'; ?>;" class="new-dept-palette-label" id="new-palette-label-<?php echo substr($hex, 1); ?>">
+                    <input type="radio" name="color" value="<?php echo $hex; ?>" style="display:none;" onchange="previewNewDeptPalette('<?php echo $hex; ?>')" <?php echo $hex === '#0F766E' ? 'checked' : ''; ?>>
+                    <span style="width:34px; height:34px; border-radius:50%; background:<?php echo $hex; ?>; display:flex; align-items:center; justify-content:center; color:#fff; font-size:12px; box-shadow:0 2px 4px rgba(0,0,0,0.15);">
+                        <i class="fa-solid fa-check check-icon" style="display:<?php echo $hex === '#0F766E' ? 'block' : 'none'; ?>;"></i>
+                    </span>
+                    <span style="font-size:9.5px; font-weight:600; color:var(--text-color, #333); text-align:center;"><?php echo htmlspecialchars($pInfo['name']); ?></span>
+                </label>
+                <?php endforeach; ?>
+            </div>
+        </div>
+
+        <!-- Preview -->
+        <div style="margin-bottom:20px; padding:12px 14px; border-radius:10px; border:1.5px solid #0F766E; background:#CCFBF1;" id="newDeptZonePreviewBox">
+            <span style="font-size:11px; font-weight:700; text-transform:uppercase; color:#134E4A;" id="newDeptZonePreviewText">
+                Department Zone Preview: Soft Tint & Border
+            </span>
+        </div>
+
+        <div style="display:flex; justify-content:flex-end; gap:10px;">
+            <button type="button" onclick="closeCreateDeptModal()" class="btn btn-ghost" style="font-size:12px; height:34px;">Cancel</button>
+            <button type="submit" id="btnSubmitCreateDeptOrg" class="btn btn-primary" style="font-size:12px; height:34px; padding:0 18px;">
+                <i class="fa-solid fa-plus"></i> Create Department
             </button>
         </div>
     </form>
@@ -1137,6 +1205,100 @@ document.getElementById('deptColorForm').addEventListener('submit', function(e) 
         showToast(err, 'error');
     });
 });
+
+function openCreateDeptModal() {
+    const modal = document.getElementById('createDeptModal');
+    const backdrop = document.getElementById('createDeptModalBackdrop');
+    if (!modal) return;
+    document.getElementById('createDeptOrgForm').reset();
+    previewNewDeptPalette('#0F766E');
+    const alertBox = document.getElementById('createDeptOrgAlert');
+    if (alertBox) {
+        alertBox.style.display = 'none';
+        alertBox.textContent = '';
+    }
+    backdrop.style.display = 'block';
+    modal.style.display = 'flex';
+    document.getElementById('newDeptOrgName').focus();
+}
+
+function closeCreateDeptModal() {
+    const modal = document.getElementById('createDeptModal');
+    const backdrop = document.getElementById('createDeptModalBackdrop');
+    if (modal) modal.style.display = 'none';
+    if (backdrop) backdrop.style.display = 'none';
+}
+
+function previewNewDeptPalette(hex) {
+    document.querySelectorAll('.new-dept-palette-label').forEach(lbl => {
+        lbl.style.borderColor = 'transparent';
+        const check = lbl.querySelector('.check-icon');
+        if (check) check.style.display = 'none';
+    });
+    const selectedLbl = document.getElementById('new-palette-label-' + hex.replace('#', ''));
+    if (selectedLbl) {
+        selectedLbl.style.borderColor = hex;
+        const check = selectedLbl.querySelector('.check-icon');
+        if (check) check.style.display = 'block';
+    }
+    const previewBox = document.getElementById('newDeptZonePreviewBox');
+    const previewText = document.getElementById('newDeptZonePreviewText');
+    if (previewBox && previewText) {
+        const p = approvedPalette[hex] || approvedPalette['#0F766E'];
+        if (p) {
+            previewBox.style.borderColor = hex;
+            previewBox.style.backgroundColor = p.tint;
+            previewText.style.color = p.text;
+            previewText.textContent = 'Selected: ' + p.name;
+        }
+    }
+}
+
+async function submitCreateDeptOrg(e) {
+    e.preventDefault();
+    const form = document.getElementById('createDeptOrgForm');
+    const alertBox = document.getElementById('createDeptOrgAlert');
+    const submitBtn = document.getElementById('btnSubmitCreateDeptOrg');
+    const originalBtnHtml = submitBtn.innerHTML;
+
+    const formData = new FormData(form);
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Creating...';
+    alertBox.style.display = 'none';
+
+    try {
+        const res = await fetch('<?php echo baseUrl("orgchart"); ?>', {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        });
+        const data = await res.json();
+        if (data && data.success) {
+            closeCreateDeptModal();
+            showToast(data.message || 'Department created successfully!', 'success');
+            setTimeout(() => {
+                window.location.reload();
+            }, 700);
+        } else {
+            alertBox.style.display = 'block';
+            alertBox.style.background = '#fef2f2';
+            alertBox.style.color = '#b91c1c';
+            alertBox.style.border = '1px solid #fecaca';
+            alertBox.textContent = data.message || 'Error creating department.';
+        }
+    } catch (err) {
+        alertBox.style.display = 'block';
+        alertBox.style.background = '#fef2f2';
+        alertBox.style.color = '#b91c1c';
+        alertBox.style.border = '1px solid #fecaca';
+        alertBox.textContent = 'Communication error: ' + err.message;
+    } finally {
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = originalBtnHtml;
+    }
+}
 <?php endif; ?>
 
 // Export as PNG

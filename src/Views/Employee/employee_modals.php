@@ -9,7 +9,7 @@
     .modal-tab.active { color: var(--teal); border-bottom-color: var(--teal); }
 </style>
 
-<div id="modalBackdrop" class="modal-overlay" onclick="closeModal(); closeViewModal();"></div>
+<div id="modalBackdrop" class="modal-overlay" onclick="handleBackdropClick()"></div>
 
 <!-- EDIT MODAL -->
 <div id="editModal" class="modal-container" style="max-width: 1000px;">
@@ -55,7 +55,17 @@
                 <div class="section-hd-line"></div>
             </div>
             <div class="grid-3" style="gap: 15px;">
-                <div class="form-group"><label class="form-label">Department</label><select name="dept_id" id="edit_dept_id" class="input-field"><?php foreach($depts as $dept): ?><option value="<?php echo $dept['dept_id']; ?>"><?php echo htmlspecialchars($dept['dept_name']); ?></option><?php endforeach; ?></select></div>
+                <div class="form-group">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:5px;">
+                        <label class="form-label" style="margin-bottom:0;">Department</label>
+                        <?php if (in_array(strtoupper($user_role ?? ''), ['HR', 'CEO'])): ?>
+                            <a href="javascript:void(0)" onclick="openCreateDeptModal('edit_dept_id')" style="font-size:11px; font-weight:600; color:var(--teal); text-decoration:none;">
+                                <i class="fa-solid fa-plus"></i> New Dept
+                            </a>
+                        <?php endif; ?>
+                    </div>
+                    <select name="dept_id" id="edit_dept_id" class="input-field"><?php foreach($depts as $dept): ?><option value="<?php echo $dept['dept_id']; ?>"><?php echo htmlspecialchars($dept['dept_name']); ?></option><?php endforeach; ?></select>
+                </div>
                 <div class="form-group"><label class="form-label">Job Title</label><input type="text" name="job_title" id="edit_job_title" class="input-field"></div>
                 <div class="form-group">
                     <label class="form-label">Job Level</label>
@@ -176,7 +186,198 @@
     </div>
 </div>
 
+<!-- CREATE DEPARTMENT MODAL (HR / CEO ONLY) -->
+<div id="createDeptModal" class="modal-container" style="max-width: 520px; z-index: 102;">
+    <div class="modal-header">
+        <h3 class="card-title" style="font-size:15px; font-weight:700;"><i class="fa-solid fa-building" style="color: var(--teal); margin-right:8px;"></i> Create New Department</h3>
+        <button type="button" onclick="closeCreateDeptModal()" class="icon-btn" style="border:none; background:none; cursor:pointer; font-size:16px; color:var(--ink-4);"><i class="fa-solid fa-times"></i></button>
+    </div>
+    <form id="createDeptForm" onsubmit="submitCreateDeptForm(event)" style="display:flex; flex-direction:column; margin:0;">
+        <?= csrfField() ?>
+        <input type="hidden" name="action" value="create_department">
+        <div class="modal-body" style="padding: 20px;">
+            <div id="createDeptAlert" style="display:none; padding: 10px 14px; border-radius: 8px; font-size: 13px; font-weight: 600; margin-bottom: 15px;"></div>
+            
+            <div class="form-group mb-15">
+                <label class="form-label" style="font-weight: 600;">Department Name <span style="color:var(--red);">*</span></label>
+                <input type="text" name="dept_name" id="new_dept_name" required placeholder="e.g. Quality Assurance" class="input-field" style="width:100%;">
+            </div>
+
+            <div class="form-group mb-15">
+                <label class="form-label" style="font-weight: 600;">Short Code <span style="font-size:11px; color:var(--ink-4); font-weight:normal;">(Optional - auto-generated if blank)</span></label>
+                <input type="text" name="dept_code" id="new_dept_code" placeholder="e.g. QA" maxlength="20" class="input-field" style="width:100%; text-transform:uppercase;">
+            </div>
+
+            <div class="form-group mb-15">
+                <label class="form-label" style="font-weight: 600;">Department Color Theme</label>
+                <div style="display:flex; align-items:center; gap:12px; margin-bottom:10px;">
+                    <input type="color" id="new_dept_color_picker" value="#0F766E" onchange="syncDeptColor(this.value)" style="width:40px; height:36px; padding:2px; border-radius:6px; border:1px solid var(--border); cursor:pointer;">
+                    <input type="text" name="color" id="new_dept_color" value="#0F766E" maxlength="7" class="input-field" style="width:110px; font-family:'DM Mono'; text-transform:uppercase;" oninput="syncDeptColor(this.value)">
+                    <span id="new_dept_color_preview" style="font-size:12px; font-weight:600; padding:6px 14px; border-radius:20px; background:#CCFBF1; color:#0F766E; border:1px solid #0F766E;">Preview Badge</span>
+                </div>
+                <div style="font-size:11px; color:var(--ink-4); margin-bottom:6px;">Approved accessible palette presets:</div>
+                <div style="display:flex; flex-wrap:wrap; gap:8px;">
+                    <?php 
+                    $presetColors = [
+                        '#C2410C' => 'Orange (HR)',
+                        '#1D4ED8' => 'Blue (MIS / Tech)',
+                        '#0F766E' => 'Teal (Operations)',
+                        '#6D28D9' => 'Violet (Finance)',
+                        '#B45309' => 'Amber (Kitchen)',
+                        '#047857' => 'Emerald (Housekeeping)',
+                        '#BE123C' => 'Rose (F&B)',
+                        '#4338CA' => 'Indigo (Front Office)',
+                        '#0369A1' => 'Sky (Sales)',
+                        '#A21CAF' => 'Fuchsia (Entertainment)',
+                        '#374151' => 'Slate',
+                        '#0F172A' => 'Dark Ink'
+                    ];
+                    foreach ($presetColors as $hex => $cName): ?>
+                        <button type="button" onclick="syncDeptColor('<?= $hex ?>')" title="<?= $cName ?>" style="width:26px; height:26px; border-radius:50%; background:<?= $hex ?>; border:2px solid #fff; box-shadow:0 1px 3px rgba(0,0,0,0.25); cursor:pointer; padding:0; transition:transform 0.15s ease;" onmouseover="this.style.transform='scale(1.15)'" onmouseout="this.style.transform='scale(1)'"></button>
+                    <?php endforeach; ?>
+                </div>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="pill-btn" onclick="closeCreateDeptModal()">Cancel</button>
+            <button type="submit" id="btnSubmitCreateDept" class="btn-primary" style="display:inline-flex; align-items:center; gap:6px;">
+                <i class="fa-solid fa-plus"></i> Create Department
+            </button>
+        </div>
+    </form>
+</div>
+
 <script>
+    let activeDeptTargetSelectId = null;
+
+    function openCreateDeptModal(targetSelect = null) {
+        activeDeptTargetSelectId = targetSelect;
+        const modal = document.getElementById('createDeptModal');
+        const backdrop = document.getElementById('modalBackdrop');
+        if (!modal) return;
+        
+        document.getElementById('createDeptForm').reset();
+        syncDeptColor('#0F766E');
+        const alertBox = document.getElementById('createDeptAlert');
+        if (alertBox) {
+            alertBox.style.display = 'none';
+            alertBox.textContent = '';
+        }
+
+        if (backdrop) {
+            backdrop.style.display = 'block';
+            backdrop.style.zIndex = '101';
+        }
+        modal.style.display = 'flex';
+        document.getElementById('new_dept_name').focus();
+    }
+
+    function closeCreateDeptModal() {
+        const modal = document.getElementById('createDeptModal');
+        if (modal) modal.style.display = 'none';
+        
+        const editModal = document.getElementById('editModal');
+        const viewModal = document.getElementById('viewModal');
+        const editOpen = editModal && editModal.style.display === 'flex';
+        const viewOpen = viewModal && viewModal.style.display === 'flex';
+        
+        const backdrop = document.getElementById('modalBackdrop');
+        if (backdrop) {
+            if (!editOpen && !viewOpen) {
+                backdrop.style.display = 'none';
+                backdrop.style.zIndex = '100';
+            } else {
+                backdrop.style.zIndex = '100';
+            }
+        }
+    }
+
+    function handleBackdropClick() {
+        const createDeptModal = document.getElementById('createDeptModal');
+        if (createDeptModal && createDeptModal.style.display === 'flex') {
+            closeCreateDeptModal();
+            return;
+        }
+        closeModal();
+        closeViewModal();
+    }
+
+    function syncDeptColor(hex) {
+        if (!hex) return;
+        hex = hex.trim();
+        if (!hex.startsWith('#')) hex = '#' + hex;
+        const picker = document.getElementById('new_dept_color_picker');
+        const txt = document.getElementById('new_dept_color');
+        const preview = document.getElementById('new_dept_color_preview');
+        if (picker && /^#[0-9A-Fa-f]{6}$/.test(hex)) picker.value = hex;
+        if (txt) txt.value = hex.toUpperCase();
+        if (preview) {
+            preview.style.borderColor = hex;
+            preview.style.color = hex;
+            preview.style.backgroundColor = hex + '20';
+        }
+    }
+
+    async function submitCreateDeptForm(e) {
+        e.preventDefault();
+        const form = document.getElementById('createDeptForm');
+        const alertBox = document.getElementById('createDeptAlert');
+        const submitBtn = document.getElementById('btnSubmitCreateDept');
+        const originalBtnHtml = submitBtn.innerHTML;
+        
+        const formData = new FormData(form);
+        
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Creating...';
+        alertBox.style.display = 'none';
+
+        try {
+            const res = await fetch('<?= baseUrl("employee") ?>', {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            });
+
+            const data = await res.json();
+            if (data.success) {
+                // Dynamically update all department selects on the page
+                const deptSelects = document.querySelectorAll('select[name="dept_id"], #deptFilter, #edit_dept_id, #dept_id_onboarding');
+                deptSelects.forEach(select => {
+                    const opt = document.createElement('option');
+                    opt.value = data.dept_id;
+                    opt.textContent = data.dept_name;
+                    select.appendChild(opt);
+                });
+
+                // If a specific target select triggered this, auto-select the new department
+                if (activeDeptTargetSelectId) {
+                    const targetEl = document.getElementById(activeDeptTargetSelectId);
+                    if (targetEl) targetEl.value = data.dept_id;
+                }
+
+                closeCreateDeptModal();
+                alert(data.message);
+            } else {
+                alertBox.style.display = 'block';
+                alertBox.style.background = 'var(--red-bg)';
+                alertBox.style.color = 'var(--red)';
+                alertBox.style.border = '1px solid var(--red-bdr)';
+                alertBox.textContent = data.message || 'Error creating department.';
+            }
+        } catch (err) {
+            alertBox.style.display = 'block';
+            alertBox.style.background = 'var(--red-bg)';
+            alertBox.style.color = 'var(--red)';
+            alertBox.style.border = '1px solid var(--red-bdr)';
+            alertBox.textContent = 'Server communication error: ' + err.message;
+        } finally {
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = originalBtnHtml;
+        }
+    }
+
     // Overriding the previous switchViewTab to work with new modal structure
     function switchViewTab(tabName) {
         const contents = document.querySelectorAll('.view-tab-content');

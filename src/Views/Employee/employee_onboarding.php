@@ -39,8 +39,15 @@
         </div>
         <div class="grid-3" style="gap: 15px;">
             <div class="form-group">
-                <label class="form-label">Department</label>
-                <select name="dept_id" class="input-field">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:5px;">
+                    <label class="form-label" style="margin-bottom:0;">Department</label>
+                    <?php if (in_array(strtoupper($user_role ?? ''), ['HR', 'CEO'])): ?>
+                        <a href="javascript:void(0)" onclick="openCreateDeptModal('dept_id_onboarding')" style="font-size:11px; font-weight:600; color:var(--teal); text-decoration:none;">
+                            <i class="fa-solid fa-plus"></i> New Dept
+                        </a>
+                    <?php endif; ?>
+                </div>
+                <select name="dept_id" id="dept_id_onboarding" class="input-field">
                     <option value="">Select Department</option>
                     <?php if(!empty($depts)): foreach($depts as $dept): ?>
                         <option value="<?php echo $dept['dept_id']; ?>"><?php echo htmlspecialchars($dept['dept_name']); ?></option>

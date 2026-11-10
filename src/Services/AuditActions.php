@@ -63,6 +63,7 @@ class AuditActions
     // Org Chart
     public const ORG_CHART_UPDATED = 'ORG_CHART_UPDATED';
     public const DEPARTMENT_COLOR_UPDATED = 'DEPARTMENT_COLOR_UPDATED';
+    public const DEPARTMENT_CREATED = 'DEPARTMENT_CREATED';
 
     // System
     public const EXPORT_CSV = 'EXPORT_CSV';

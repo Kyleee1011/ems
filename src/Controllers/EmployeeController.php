@@ -53,6 +53,12 @@ require_once dirname(dirname(__DIR__)) . '/config_session.php';
 
                 $this->handlePostActions($_POST['action'], $message, $messageType);
             } catch (Exception $e) {
+                if (!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest') {
+                    header('Content-Type: application/json');
+                    http_response_code(400);
+                    echo json_encode(['success' => false, 'message' => $e->getMessage()]);
+                    exit;
+                }
                 $message = "Error: " . $e->getMessage();
                 $messageType = "error";
             }
@@ -260,6 +266,41 @@ require_once dirname(dirname(__DIR__)) . '/config_session.php';
                 }
             }
             $message = "Saved successfully!"; $messageType = "success";
+        } elseif ($action == 'create_department') {
+            $is_hr_or_ceo = (strcasecmp($this->userRole, 'HR') === 0 || strcasecmp($this->userRole, 'CEO') === 0);
+            if (!$is_hr_or_ceo) {
+                throw new \Exception("Unauthorized: Only HR and CEO can create departments.");
+            }
+
+            $deptName = trim($_POST['dept_name'] ?? '');
+            $deptCode = trim($_POST['dept_code'] ?? '');
+            $color = trim($_POST['color'] ?? '#0F766E');
+
+            $newDeptId = $this->employeeModel->createDepartment($deptName, $deptCode, $color);
+
+            \App\Services\AuditService::log(
+                \App\Services\AuditActions::DEPARTMENT_CREATED,
+                'department',
+                (string)$newDeptId,
+                null,
+                ['dept_name' => $deptName, 'dept_code' => $deptCode, 'color' => $color]
+            );
+
+            if (!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest') {
+                header('Content-Type: application/json');
+                echo json_encode([
+                    'success' => true,
+                    'dept_id' => $newDeptId,
+                    'dept_name' => $deptName,
+                    'dept_code' => $deptCode,
+                    'color' => $color,
+                    'message' => "Department '{$deptName}' created successfully!"
+                ]);
+                exit;
+            }
+
+            $message = "Department '{$deptName}' created successfully!";
+            $messageType = "success";
         } elseif ($action == 'upload_document') {
             if (isset($_FILES['doc_file']) && $_FILES['doc_file']['error'] === UPLOAD_ERR_OK) {
                 $fp = FileUploadService::handleFileUpload($_FILES['doc_file'], $_POST['ac_no'].'_'.$_POST['doc_name'], 'documents');

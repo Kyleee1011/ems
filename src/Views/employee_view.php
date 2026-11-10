@@ -12,6 +12,9 @@ require BASE_PATH . '/partials/layout_sidebar.php';
     </div>
     <div class="header-actions">
         <button class="pill-btn" onclick="exportData()"><i class="fa-solid fa-file-export"></i> Export CSV</button>
+        <?php if (in_array(strtoupper($user_role ?? ''), ['HR', 'CEO'])): ?>
+            <button class="pill-btn" onclick="openCreateDeptModal()"><i class="fa-solid fa-building"></i> New Department</button>
+        <?php endif; ?>
         <a href="?tab=onboarding" class="btn-primary"><i class="fa-solid fa-user-plus"></i> New Employee</a>
     </div>
 </div>

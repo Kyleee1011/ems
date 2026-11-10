@@ -79,6 +79,10 @@ class OrgChartController
                 $this->updateColor();
                 return;
             }
+            if ($action === 'create_department') {
+                $this->createDepartment();
+                return;
+            }
             $this->handlePost($userRole, $userDeptId);
             return;
         }
@@ -279,6 +283,72 @@ class OrgChartController
         } catch (Exception $e) {
             http_response_code(500);
             echo json_encode(['success' => false, 'message' => 'Database error: ' . $e->getMessage()]);
+        }
+        exit;
+    }
+
+    /**
+     * Creates a new department (HR / CEO only)
+     */
+    public function createDepartment(): void
+    {
+        if (session_status() === PHP_SESSION_NONE) {
+            session_start();
+        }
+        header('Content-Type: application/json');
+
+        $userRole = $_SESSION['approval_role'] ?? 'Employee';
+        $canEditAll = (strcasecmp($userRole, 'HR') === 0 || strcasecmp($userRole, 'CEO') === 0);
+
+        if (!$canEditAll) {
+            http_response_code(403);
+            echo json_encode(['success' => false, 'message' => 'Forbidden: Only HR and Executive Leadership can create departments.']);
+            exit;
+        }
+
+        if (!AppHelpers::validateCsrfToken($_POST['csrf_token'] ?? null)) {
+            http_response_code(400);
+            echo json_encode(['success' => false, 'message' => 'Invalid CSRF token. Please refresh.']);
+            exit;
+        }
+
+        $deptName = trim($_POST['dept_name'] ?? '');
+        $deptCode = trim($_POST['dept_code'] ?? '');
+        $color = strtoupper(trim((string)($_POST['color'] ?? '#0F766E')));
+
+        if ($deptName === '') {
+            http_response_code(422);
+            echo json_encode(['success' => false, 'message' => 'Department name is required.']);
+            exit;
+        }
+
+        if (!empty($color) && !preg_match('/^#[0-9A-Fa-f]{6}$/', $color)) {
+            $color = '#0F766E';
+        }
+
+        try {
+            $employeeModel = new \App\Models\Employee($this->pdo);
+            $newDeptId = $employeeModel->createDepartment($deptName, $deptCode, $color);
+
+            AuditService::log(
+                AuditActions::DEPARTMENT_CREATED,
+                'department',
+                (string)$newDeptId,
+                null,
+                ['dept_name' => $deptName, 'dept_code' => $deptCode, 'color' => $color]
+            );
+
+            echo json_encode([
+                'success' => true,
+                'message' => "Department '{$deptName}' created successfully.",
+                'dept_id' => $newDeptId,
+                'dept_name' => $deptName,
+                'dept_code' => $deptCode,
+                'color' => $color
+            ]);
+        } catch (\Exception $e) {
+            http_response_code(400);
+            echo json_encode(['success' => false, 'message' => $e->getMessage()]);
         }
         exit;
     }
